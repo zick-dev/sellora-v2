@@ -38,27 +38,13 @@ bearer_scheme = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
-    """
-    Hash a plain text password using bcrypt.
-    The hash includes a random salt, so identical passwords
-    produce different hashes — this prevents rainbow table attacks.
-
-    Example:
-        hash_password("mypassword123")
-        → "$2b$12$randomsalt...hashedvalue"
-    """
-    return pwd_context.hash(password)
+    # bcrypt has a 72-byte limit — truncate to prevent errors
+    return pwd_context.hash(password[:72])
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """
-    Check if a plain text password matches a stored bcrypt hash.
-    Returns True if they match, False otherwise.
-
-    Used during login to validate the entered password.
-    """
-    return pwd_context.verify(plain, hashed)
-
+    # Truncate here too so verification matches hashing
+    return pwd_context.verify(plain[:72], hashed)
 
 def create_access_token(user_id: str) -> str:
     """
