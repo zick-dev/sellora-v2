@@ -721,9 +721,15 @@ export default function DashboardLayout({
               display: 'flex', padding: '8px 0 12px',
               zIndex: 20,
             }}>
-              {NAV_ITEMS.map(item => (
-                <MobileNavItem key={item.href} item={item} />
-              ))}
+              {NAV_ITEMS.filter(item => [
+                  '/dashboard',
+                  '/products',
+                  '/orders',
+                  '/leads',
+                  '/ai',
+                ].includes(item.href)).map(item => (
+                  <MobileNavItem key={item.href} item={item} />
+                ))}
             </nav>
           </div>
         ) : (
