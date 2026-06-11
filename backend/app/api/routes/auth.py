@@ -332,3 +332,55 @@ async def reset_password(
     await db.flush()
 
     return {"message": "Password reset successfully"}
+
+
+@router.put(
+    "/change-password",
+    summary="Change password for logged-in user",
+)
+async def change_password(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Allows a logged-in email/password user to change their password.
+    Requires current password for verification.
+    Not available for Google OAuth users.
+    """
+    # Google users have no password to change
+    if not current_user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google account users cannot change password here.",
+        )
+
+    # Verify current password
+    if not verify_password(payload.get("current_password", ""), current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+
+    # Set new password
+    current_user.password_hash = hash_password(payload.get("new_password", ""))
+    await db.flush()
+
+    return {"message": "Password changed successfully"}
+
+@router.put(
+    "/me",
+    response_model=UserOut,
+    summary="Update current user profile",
+)
+async def update_me(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update the logged-in user's name."""
+    if payload.get("name"):
+        current_user.name = payload["name"].strip()
+    await db.flush()
+    await db.refresh(current_user)
+    return UserOut.model_validate(current_user)

@@ -4,22 +4,21 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 
-// ─── Design tokens ────────────────────────────────────────────────
 const C = {
-  bg:          '#0a0a0f',
-  card:        '#12121a',
-  cardBorder:  'rgba(255,255,255,0.08)',
-  input:       '#1a1a2e',
-  inputBorder: 'rgba(255,255,255,0.1)',
-  purple:      '#7c3aed',
-  pink:        '#ec4899',
-  green:       '#25d366',
-  success:     '#10b981',
-  muted:       '#6b7280',
-  subtext:     '#9ca3af',
-  text:        '#ffffff',
-  amber:       '#f59e0b',
-  red:         '#ef4444',
+  bg:         '#0a0a0f',
+  card:       '#12121a',
+  cardBorder: 'rgba(255,255,255,0.08)',
+  input:      '#1a1a2e',
+  inputBorder:'rgba(255,255,255,0.1)',
+  purple:     '#7c3aed',
+  pink:       '#ec4899',
+  green:      '#25d366',
+  success:    '#10b981',
+  muted:      '#6b7280',
+  subtext:    '#9ca3af',
+  text:       '#ffffff',
+  amber:      '#f59e0b',
+  red:        '#ef4444',
 };
 
 interface Store {
@@ -28,6 +27,11 @@ interface Store {
   slug: string;
   description: string | null;
   logo_url: string | null;
+  banner_url: string | null;
+  theme_color: string;
+  whatsapp: string | null;
+  instagram: string | null;
+  categories: string;
   is_active: boolean;
 }
 
@@ -42,37 +46,45 @@ interface Product {
   is_available: boolean;
 }
 
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+function cleanPhone(phone: string): string {
+  let p = phone.replace(/\s/g, '');
+  if (p.startsWith('0')) p = '234' + p.slice(1);
+  return p;
+}
+
+function waLink(phone: string): string {
+  return 'https://wa.me/' + cleanPhone(phone);
+}
+
 export default function StorefrontPage() {
   const { slug } = useParams();
 
-  const [store, setStore]       = useState<Store | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [notFound, setNotFound] = useState(false);
-
-  // Order modal state
-  const [ordering, setOrdering]   = useState<Product | null>(null);
-  const [form, setForm]           = useState({ name: '', phone: '', note: '', quantity: 1 });
-  const [placing, setPlacing]     = useState(false);
-  const [success, setSuccess]     = useState(false);
-  const [orderNum, setOrderNum]   = useState('');
-  const [formError, setFormError] = useState('');
-  const [interestId, setInterestId] = useState<string | null>(null);
-
-  // Category filter
+  const [store, setStore]           = useState<Store | null>(null);
+  const [products, setProducts]     = useState<Product[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [notFound, setNotFound]     = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
+
+  const [cart, setCart]             = useState<CartItem[]>([]);
+  const [showCart, setShowCart]     = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', note: '' });
+  const [placing, setPlacing]       = useState(false);
+  const [formError, setFormError]   = useState('');
+  const [success, setSuccess]       = useState(false);
+  const [orderNums, setOrderNums]   = useState<string[]>([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        // Get store by slug
-        const storeRes = await api.get(`/api/store/slug/${slug}`);
+        const storeRes = await api.get('/api/store/slug/' + slug);
         setStore(storeRes.data);
-
-        // Get public products
-        const productsRes = await api.get(
-          `/api/products/public/${storeRes.data.id}`
-        );
+        const productsRes = await api.get('/api/products/public/' + storeRes.data.id);
         setProducts(productsRes.data);
       } catch {
         setNotFound(true);
@@ -83,706 +95,384 @@ export default function StorefrontPage() {
     load();
   }, [slug]);
 
-  // Get unique categories
-  const categories = [
-    'All',
-    ...Array.from(
-      new Set(
-        products
-          .map(p => p.category)
-          .filter(Boolean) as string[]
-      )
-    ),
-  ];
+  const themeColor = store?.theme_color || C.purple;
+
+  const storeCategories: string[] = (() => {
+    try { return JSON.parse(store?.categories || '[]'); } catch { return []; }
+  })();
+
+  const productCategories = ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean) as string[]))];
+  const allCategories = ['All', ...new Set([...storeCategories, ...productCategories.slice(1)])];
 
   const filtered = activeCategory === 'All'
     ? products
     : products.filter(p => p.category === activeCategory);
 
-  // Track abandoned interest when order modal opens
-  async function openOrderModal(product: Product) {
-    setOrdering(product);
-    setFormError('');
-    setSuccess(false);
-    setForm({ name: '', phone: '', note: '', quantity: 1 });
-    if (store) {
-      try {
-        const res = await api.post('/api/abandoned/', {
-          store_id: store.id,
-          product_id: product.id,
-        });
-        setInterestId(res.data.id);
-      } catch {}
-    }
+  const cartTotal = cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  function addToCart(product: Product) {
+    setCart(prev => {
+      const existing = prev.find(i => i.product.id === product.id);
+      if (existing) {
+        return prev.map(i => i.product.id === product.id
+          ? { ...i, quantity: Math.min(i.quantity + 1, product.stock) }
+          : i
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
   }
 
-  async function placeOrder() {
-    if (!ordering || !form.name || !form.phone) {
+  function removeFromCart(productId: string) {
+    setCart(prev => prev.filter(i => i.product.id !== productId));
+  }
+
+  function updateQty(productId: string, qty: number) {
+    if (qty <= 0) { removeFromCart(productId); return; }
+    setCart(prev => prev.map(i => i.product.id === productId ? { ...i, quantity: qty } : i));
+  }
+
+  function getCartQty(productId: string) {
+    return cart.find(i => i.product.id === productId)?.quantity || 0;
+  }
+
+  async function handleCheckout() {
+    if (!checkoutForm.name || !checkoutForm.phone) {
       setFormError('Please fill in your name and WhatsApp number.');
       return;
     }
+    if (cart.length === 0) { setFormError('Your cart is empty.'); return; }
     setPlacing(true);
     setFormError('');
     try {
-      const res = await api.post('/api/orders/', {
-        product_id: ordering.id,
-        customer_name: form.name,
-        customer_phone: form.phone,
-        customer_note: form.note || undefined,
-        quantity: form.quantity,
-      });
-      // Mark interest as converted
-      if (interestId) {
-        await api.put(`/api/abandoned/${interestId}/convert`).catch(() => {});
+      const nums: string[] = [];
+      for (const item of cart) {
+        const res = await api.post('/api/orders/', {
+          product_id:     item.product.id,
+          customer_name:  checkoutForm.name,
+          customer_phone: checkoutForm.phone,
+          customer_note:  checkoutForm.note || undefined,
+          quantity:       item.quantity,
+        });
+        nums.push(res.data.order_number || res.data.id.slice(0, 8).toUpperCase());
       }
-      setOrderNum(res.data.order_number || res.data.id.slice(0, 8).toUpperCase());
+      setOrderNums(nums);
+      setCart([]);
       setSuccess(true);
-      setOrdering(null);
+      setShowCheckout(false);
+      setShowCart(false);
     } catch (err: any) {
-      setFormError(
-        err.response?.data?.detail || 'Failed to place order. Please try again.'
-      );
+      setFormError(err.response?.data?.detail || 'Failed to place order. Please try again.');
     } finally {
       setPlacing(false);
     }
   }
 
-  // ── Loading ──────────────────────────────────────────────────────
   if (loading) return (
-    <div style={{
-      minHeight: '100vh', background: C.bg,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: '50%',
-        border: `3px solid rgba(124,58,237,0.2)`,
-        borderTopColor: C.purple,
-        animation: 'spin 0.8s linear infinite',
-      }} />
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
-  // ── Not Found ────────────────────────────────────────────────────
   if (notFound) return (
-    <div style={{
-      minHeight: '100vh', background: C.bg,
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', gap: 16,
-    }}>
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
       <div style={{ fontSize: 64 }}>🏪</div>
-      <h1 style={{ color: C.text, fontSize: 24, fontWeight: 700 }}>
-        Store not found
-      </h1>
-      <p style={{ color: C.muted, fontSize: 15 }}>
-        This store link may have changed or been removed.
-      </p>
-      <p style={{ color: C.muted, fontSize: 13, marginTop: 8 }}>
-        Powered by{' '}
-        <span style={{ color: C.purple, fontWeight: 700 }}>Sellora</span>
-      </p>
+      <h1 style={{ color: C.text, fontSize: 24, fontWeight: 700 }}>Store not found</h1>
+      <p style={{ color: C.muted, fontSize: 15 }}>This store link may have changed or been removed.</p>
+      <p style={{ color: C.muted, fontSize: 13 }}>Powered by <span style={{ color: C.purple, fontWeight: 700 }}>Sellora</span></p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
-  // ── Order Success Screen ─────────────────────────────────────────
   if (success) return (
-    <div style={{
-      minHeight: '100vh', background: C.bg,
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      padding: '24px 20px', textAlign: 'center',
-    }}>
-      {/* Glowing checkmark */}
-      <div style={{
-        width: 80, height: 80, borderRadius: '50%',
-        background: 'rgba(16,185,129,0.15)',
-        border: `2px solid ${C.success}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 20,
-        boxShadow: '0 0 40px rgba(16,185,129,0.3)',
-      }}>
-        <svg width="36" height="36" viewBox="0 0 24 24"
-          fill="none" stroke={C.success} strokeWidth="2.5">
-          <polyline points="20 6 9 17 4 12"
-            strokeLinecap="round" strokeLinejoin="round"/>
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 20px', textAlign: 'center' }}>
+      <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid ' + C.success, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, boxShadow: '0 0 40px rgba(16,185,129,0.3)' }}>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={C.success} strokeWidth="2.5">
+          <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
-
-      {/* Order number */}
-      <div style={{
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 20, padding: '6px 16px', marginBottom: 20,
-        color: C.subtext, fontSize: 13, fontWeight: 600,
-      }}>
-        Order #{orderNum}
-      </div>
-
-      <h1 style={{
-        color: C.text, fontSize: 28, fontWeight: 800, marginBottom: 4,
-      }}>
-        Order Placed
-      </h1>
-      <h2 style={{
-        fontSize: 28, fontWeight: 800, marginBottom: 16,
-        background: `linear-gradient(90deg, ${C.purple}, ${C.pink})`,
-        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-      }}>
-        Successfully!
-      </h2>
-      <p style={{ color: C.subtext, fontSize: 15, marginBottom: 28, maxWidth: 320 }}>
-        Thank you for shopping with us. Your unique order link
-        has been generated and shared.
+      <h1 style={{ color: C.text, fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Order Placed!</h1>
+      <p style={{ color: C.subtext, fontSize: 15, marginBottom: 20, maxWidth: 300 }}>
+        Thank you! Your order has been sent to the seller. They will contact you shortly.
       </p>
-
-      {/* WhatsApp info card */}
-      <div style={{
-        width: '100%', maxWidth: 380,
-        background: C.card, border: `1px solid ${C.cardBorder}`,
-        borderRadius: 16, padding: '20px',
-        marginBottom: 24, textAlign: 'left',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'rgba(37,211,102,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24"
-              fill="none" stroke={C.green} strokeWidth="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <div>
-            <p style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>
-              Sent to WhatsApp
-            </p>
-            <p style={{ color: C.muted, fontSize: 12 }}>
-              Seller usually responds in ~5 mins
-            </p>
-          </div>
+      {orderNums.length > 0 && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 12, padding: '12px 20px', marginBottom: 20 }}>
+          {orderNums.map(num => (
+            <p key={num} style={{ color: themeColor, fontSize: 14, fontWeight: 700 }}>Order #{num}</p>
+          ))}
         </div>
-        <p style={{ color: C.subtext, fontSize: 13, lineHeight: 1.6 }}>
-          Your order details have been forwarded to the seller.
-          They will contact you shortly to confirm payment and delivery.
-        </p>
-      </div>
-
-      {/* Back to store */}
-      <button
-        onClick={() => setSuccess(false)}
-        style={{
-          width: '100%', maxWidth: 380,
-          padding: '16px 0',
-          background: `linear-gradient(90deg, ${C.purple}, ${C.pink})`,
-          border: 'none', borderRadius: 12,
-          color: C.text, fontSize: 15, fontWeight: 700,
-          cursor: 'pointer', marginBottom: 12,
-        }}
-      >
-        Back to Store 🛍
+      )}
+      {store?.whatsapp && (
+        <a
+          href={waLink(store.whatsapp)}
+          target="_blank" rel="noreferrer"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)', color: C.green, fontSize: 14, fontWeight: 700, textDecoration: 'none', marginBottom: 16 }}
+        >
+          💬 Chat with seller on WhatsApp
+        </a>
+      )}
+      <button onClick={() => setSuccess(false)} style={{ padding: '12px 24px', borderRadius: 12, background: themeColor, border: 'none', color: C.text, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+        Continue Shopping
       </button>
-
-      <p style={{ color: C.muted, fontSize: 12, marginTop: 16 }}>
-        Powered by <span style={{ color: C.purple, fontWeight: 700 }}>Sellora</span>
+      <p style={{ color: C.muted, fontSize: 12, marginTop: 20 }}>
+        Powered by <span style={{ color: themeColor, fontWeight: 700 }}>Sellora</span>
       </p>
-
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
-  // ── Main Storefront ──────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: C.bg }}>
+    <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: cart.length > 0 ? 80 : 0 }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-        {/* Hero */}
-        <div style={{
-          padding: '40px 20px 32px',
-          background: `linear-gradient(180deg, rgba(124,58,237,0.15) 0%, transparent 100%)`,
-          borderBottom: `1px solid ${C.cardBorder}`,
-        }}>
-          {/* Store logo or emoji */}
-          {store?.logo_url ? (
-            <img
-              src={store.logo_url}
-              alt={store.store_name}
-              style={{
-                width: 64, height: 64, borderRadius: 16,
-                objectFit: 'cover', marginBottom: 16,
-                border: `1px solid ${C.cardBorder}`,
-              }}
-            />
-          ) : (
-            <div style={{
-              width: 64, height: 64, borderRadius: 16,
-              background: `linear-gradient(135deg, ${C.purple}, ${C.pink})`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28, marginBottom: 16,
-            }}>
-              🏪
-            </div>
-          )}
+        {store?.banner_url && (
+          <div style={{ width: '100%', height: 160, overflow: 'hidden', position: 'relative' }}>
+            <img src={store.banner_url} alt="Store banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(10,10,15,0.8))' }} />
+          </div>
+        )}
 
-          <h1 style={{
-            color: C.text, fontSize: 26, fontWeight: 800,
-            marginBottom: 6, letterSpacing: '-0.3px',
-          }}>
-            {store?.store_name}
-          </h1>
+        <div style={{ padding: store?.banner_url ? '0 20px 20px' : '32px 20px 20px', marginTop: store?.banner_url ? -40 : 0, position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 12 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 16, flexShrink: 0, background: store?.logo_url ? 'transparent' : ('linear-gradient(135deg, ' + themeColor + ', #ec4899)'), border: '3px solid ' + C.bg, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
+              {store?.logo_url ? (
+                <img src={store.logo_url} alt={store.store_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : '🏪'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 2 }}>{store?.store_name}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.success, display: 'inline-block' }} />
+                <span style={{ color: C.success, fontSize: 11, fontWeight: 600 }}>Open</span>
+                <span style={{ color: C.muted, fontSize: 11 }}>•</span>
+                <span style={{ color: C.muted, fontSize: 11 }}>{products.length} products</span>
+              </div>
+            </div>
+          </div>
 
           {store?.description && (
-            <p style={{
-              color: C.subtext, fontSize: 14,
-              lineHeight: 1.6, marginBottom: 16,
-            }}>
-              {store.description}
-            </p>
+            <p style={{ color: C.subtext, fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>{store.description}</p>
           )}
 
-          {/* Badges */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: `1px solid ${C.cardBorder}`,
-              borderRadius: 20, padding: '4px 12px',
-              color: C.subtext, fontSize: 12,
-            }}>
-              {products.length} products
-            </span>
-            <span style={{
-              background: 'rgba(16,185,129,0.1)',
-              border: '1px solid rgba(16,185,129,0.2)',
-              borderRadius: 20, padding: '4px 12px',
-              color: C.success, fontSize: 12,
-            }}>
-              ⚡ Fast replies
-            </span>
-          </div>
+          {(store?.whatsapp || store?.instagram) && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {store.whatsapp && (
+                <a href={waLink(store.whatsapp)} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: C.green, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                  💬 WhatsApp
+                </a>
+              )}
+              {store.instagram && (
+                <a href={'https://instagram.com/' + store.instagram} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.2)', color: C.pink, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                  {'📸 @' + store.instagram}
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Category filter */}
-        {categories.length > 1 && (
-          <div style={{
-            display: 'flex', gap: 8, padding: '16px 20px',
-            overflowX: 'auto', scrollbarWidth: 'none',
-          }}>
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  padding: '6px 16px', borderRadius: 20, fontSize: 13,
-                  fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
-                  border: activeCategory === cat
-                    ? 'none'
-                    : `1px solid ${C.cardBorder}`,
-                  background: activeCategory === cat
-                    ? C.purple
-                    : 'transparent',
-                  color: activeCategory === cat ? C.text : C.subtext,
-                  transition: 'all 0.15s',
-                }}
-              >
+        {allCategories.length > 1 && (
+          <div style={{ display: 'flex', gap: 8, padding: '0 20px 16px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {allCategories.map(cat => (
+              <button key={cat} onClick={() => setActiveCategory(cat)} style={{ padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer', border: activeCategory === cat ? 'none' : '1px solid ' + C.cardBorder, background: activeCategory === cat ? themeColor : 'transparent', color: activeCategory === cat ? C.text : C.subtext, transition: 'all 0.15s' }}>
                 {cat}
               </button>
             ))}
           </div>
         )}
 
-        {/* Products grid */}
-        <div style={{ padding: '8px 20px 80px' }}>
+        <div style={{ padding: '0 20px 80px' }}>
           {filtered.length === 0 ? (
-            <div style={{
-              textAlign: 'center', padding: '60px 0',
-            }}>
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🛍️</div>
-              <p style={{ color: C.muted, fontSize: 15 }}>
-                No products available yet
-              </p>
+              <p style={{ color: C.muted, fontSize: 15 }}>No products available yet</p>
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 12,
-            }}>
-              {filtered.map(product => (
-                <div
-                  key={product.id}
-                  style={{
-                    background: C.card,
-                    border: `1px solid ${C.cardBorder}`,
-                    borderRadius: 16, overflow: 'hidden',
-                  }}
-                >
-                  {/* Product image */}
-                  <div style={{
-                    aspectRatio: '1',
-                    background: '#1a1a26',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}>
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        style={{
-                          width: '100%', height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%', height: '100%',
-                        display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: 36,
-                      }}>
-                        🛍️
-                      </div>
-                    )}
-
-                    {/* Stock badge */}
-                    {product.stock <= 3 && product.stock > 0 && (
-                      <div style={{
-                        position: 'absolute', top: 8, left: 8,
-                        background: C.amber, borderRadius: 6,
-                        padding: '2px 8px', fontSize: 11, fontWeight: 700,
-                        color: '#000',
-                      }}>
-                        {product.stock} left
-                      </div>
-                    )}
-                    {product.stock === 0 && (
-                      <div style={{
-                        position: 'absolute', top: 8, left: 8,
-                        background: C.red, borderRadius: 6,
-                        padding: '2px 8px', fontSize: 11, fontWeight: 700,
-                        color: C.text,
-                      }}>
-                        Sold out
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Product info */}
-                  <div style={{ padding: '12px' }}>
-                    <p style={{
-                      color: C.text, fontSize: 13, fontWeight: 600,
-                      marginBottom: 2, lineHeight: 1.3,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}>
-                      {product.name}
-                    </p>
-                    {product.category && (
-                      <p style={{
-                        color: C.muted, fontSize: 11, marginBottom: 6,
-                      }}>
-                        {product.category}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {filtered.map(product => {
+                const qty = getCartQty(product.id);
+                const outOfStock = product.stock === 0 || !product.is_available;
+                return (
+                  <div key={product.id} style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, overflow: 'hidden' }}>
+                    <div style={{ aspectRatio: '1', background: '#1a1a26', position: 'relative', overflow: 'hidden' }}>
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>🛍️</div>
+                      )}
+                      {product.stock <= 3 && product.stock > 0 && (
+                        <div style={{ position: 'absolute', top: 8, left: 8, background: C.amber, borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: '#000' }}>
+                          {product.stock} left
+                        </div>
+                      )}
+                      {outOfStock && (
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ color: C.text, fontSize: 12, fontWeight: 700, background: 'rgba(0,0,0,0.7)', padding: '4px 10px', borderRadius: 6 }}>Sold Out</span>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ padding: '10px 10px 12px' }}>
+                      <p style={{ color: C.text, fontSize: 13, fontWeight: 600, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</p>
+                      {product.category && (
+                        <p style={{ color: C.muted, fontSize: 11, marginBottom: 6 }}>{product.category}</p>
+                      )}
+                      <p style={{ color: themeColor, fontSize: 15, fontWeight: 800, marginBottom: 8 }}>
+                        {'N' + Number(product.price).toLocaleString()}
                       </p>
-                    )}
-                    <p style={{
-                      color: C.text, fontSize: 16, fontWeight: 800,
-                      marginBottom: 10,
-                    }}>
-                      ₦{Number(product.price).toLocaleString()}
-                    </p>
-                    <button
-                      onClick={() => openOrderModal(product)}
-                      disabled={product.stock === 0 || !product.is_available}
-                      style={{
-                        width: '100%', padding: '9px 0',
-                        background: product.stock === 0 || !product.is_available
-                          ? 'rgba(255,255,255,0.05)'
-                          : C.purple,
-                        border: 'none', borderRadius: 8,
-                        color: product.stock === 0 || !product.is_available
-                          ? C.muted
-                          : C.text,
-                        fontSize: 12, fontWeight: 700,
-                        cursor: product.stock === 0 || !product.is_available
-                          ? 'not-allowed'
-                          : 'pointer',
-                      }}
-                    >
-                      {product.stock === 0 ? 'Out of stock' : 'Order Now'}
-                    </button>
+                      {outOfStock ? (
+                        <div style={{ width: '100%', padding: '8px 0', background: 'rgba(255,255,255,0.05)', borderRadius: 8, textAlign: 'center', color: C.muted, fontSize: 12, fontWeight: 600 }}>
+                          Out of stock
+                        </div>
+                      ) : qty === 0 ? (
+                        <button onClick={() => addToCart(product)} style={{ width: '100%', padding: '8px 0', background: themeColor, border: 'none', borderRadius: 8, color: C.text, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                          Add to Cart
+                        </button>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 8, padding: '4px 8px' }}>
+                          <button onClick={() => updateQty(product.id, qty - 1)} style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: C.text, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                          <span style={{ color: themeColor, fontSize: 13, fontWeight: 700 }}>{qty}</span>
+                          <button onClick={() => updateQty(product.id, Math.min(qty + 1, product.stock))} style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: C.text, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center', padding: '20px',
-          borderTop: `1px solid ${C.cardBorder}`,
-        }}>
+        <div style={{ textAlign: 'center', padding: '20px', borderTop: '1px solid ' + C.cardBorder }}>
           <p style={{ color: C.muted, fontSize: 12 }}>
-            Powered by{' '}
-            <span style={{ color: C.purple, fontWeight: 700 }}>Sellora</span>
+            Powered by <span style={{ color: themeColor, fontWeight: 700 }}>Sellora</span>
           </p>
         </div>
       </div>
 
-      {/* ── Order Modal ─────────────────────────────────────────── */}
-      {ordering && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 50,
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        }}>
-          {/* Backdrop */}
-          <div
-            onClick={() => setOrdering(null)}
-            style={{
-              position: 'absolute', inset: 0,
-              background: 'rgba(0,0,0,0.7)',
-              backdropFilter: 'blur(4px)',
-            }}
-          />
+      {cart.length > 0 && !showCart && !showCheckout && (
+        <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 40, maxWidth: 440, width: 'calc(100% - 40px)' }}>
+          <button onClick={() => setShowCart(true)} style={{ width: '100%', padding: '14px 20px', background: 'linear-gradient(90deg, ' + themeColor + ', #ec4899)', border: 'none', borderRadius: 14, color: C.text, fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(124,58,237,0.4)' }}>
+            <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 8, padding: '2px 10px', fontSize: 13, fontWeight: 800 }}>
+              {cartCount + ' item' + (cartCount !== 1 ? 's' : '')}
+            </span>
+            <span>View Cart</span>
+            <span style={{ fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
+          </button>
+        </div>
+      )}
 
-          {/* Sheet */}
-          <div style={{
-            position: 'relative', width: '100%', maxWidth: 480,
-            background: C.card,
-            borderRadius: '20px 20px 0 0',
-            border: `1px solid ${C.cardBorder}`,
-            padding: '20px 20px 32px',
-            animation: 'slideup 0.25s ease',
-          }}>
-            {/* Drag handle */}
-            <div style={{
-              width: 40, height: 4, borderRadius: 2,
-              background: 'rgba(255,255,255,0.15)',
-              margin: '0 auto 20px',
-            }} />
+      {showCart && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={() => setShowCart(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: C.card, borderRadius: '20px 20px 0 0', border: '1px solid ' + C.cardBorder, padding: '20px 20px 32px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 20px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ color: C.text, fontSize: 18, fontWeight: 800 }}>{'Your Cart (' + cartCount + ')'}</h3>
+              <button onClick={() => setShowCart(false)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              {cart.map(item => (
+                <div key={item.product.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: C.input, borderRadius: 12, padding: '10px 12px' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 10, background: '#1a1a26', overflow: 'hidden', flexShrink: 0 }}>
+                    {item.product.image_url ? (
+                      <img src={item.product.image_url} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🛍️</div>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ color: C.text, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</p>
+                    <p style={{ color: themeColor, fontSize: 13, fontWeight: 700 }}>{'N' + Number(item.product.price).toLocaleString()}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button onClick={() => updateQty(item.product.id, item.quantity - 1)} style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: C.text, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                    <span style={{ color: C.text, fontSize: 13, fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{item.quantity}</span>
+                    <button onClick={() => updateQty(item.product.id, Math.min(item.quantity + 1, item.product.stock))} style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: C.text, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  </div>
+                  <button onClick={() => removeFromCart(item.product.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 16, padding: 0, display: 'flex', alignItems: 'center' }}>×</button>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', borderTop: '1px solid ' + C.cardBorder, borderBottom: '1px solid ' + C.cardBorder, marginBottom: 16 }}>
+              <span style={{ color: C.subtext, fontSize: 15 }}>Total</span>
+              <span style={{ color: C.text, fontSize: 18, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
+            </div>
+            <button onClick={() => { setShowCart(false); setShowCheckout(true); }} style={{ width: '100%', padding: '15px 0', background: 'linear-gradient(90deg, ' + themeColor + ', #ec4899)', border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+              Proceed to Checkout
+            </button>
+          </div>
+        </div>
+      )}
 
-            {/* Header */}
-            <div style={{
-              display: 'flex', alignItems: 'flex-start',
-              justifyContent: 'space-between', marginBottom: 20,
-            }}>
+      {showCheckout && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={() => setShowCheckout(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: C.card, borderRadius: '20px 20px 0 0', border: '1px solid ' + C.cardBorder, padding: '20px 20px 32px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 20px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
-                <h3 style={{
-                  color: C.text, fontSize: 18, fontWeight: 800, marginBottom: 4,
-                }}>
-                  {ordering.name}
-                </h3>
-                <p style={{
-                  fontSize: 22, fontWeight: 800,
-                  background: `linear-gradient(90deg, ${C.purple}, ${C.pink})`,
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                }}>
-                  ₦{Number(ordering.price).toLocaleString()}
-                </p>
+                <h3 style={{ color: C.text, fontSize: 18, fontWeight: 800 }}>Checkout</h3>
+                <p style={{ color: C.muted, fontSize: 13 }}>{cartCount + ' item' + (cartCount !== 1 ? 's' : '') + ' • N' + cartTotal.toLocaleString()}</p>
               </div>
-              <button
-                onClick={() => setOrdering(null)}
-                style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: 'none', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: C.muted, fontSize: 18,
-                }}
-              >
-                ×
-              </button>
+              <button onClick={() => { setShowCheckout(false); setShowCart(true); }} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
             </div>
 
-            {/* Error */}
+            <div style={{ background: C.input, borderRadius: 12, padding: '12px 14px', marginBottom: 20 }}>
+              <p style={{ color: C.subtext, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Order Summary</p>
+              {cart.map(item => (
+                <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: C.subtext, fontSize: 13 }}>{item.product.name + ' x' + item.quantity}</span>
+                  <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{'N' + (Number(item.product.price) * item.quantity).toLocaleString()}</span>
+                </div>
+              ))}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Total</span>
+                <span style={{ color: themeColor, fontSize: 14, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
+              </div>
+            </div>
+
             {formError && (
-              <div style={{
-                background: 'rgba(239,68,68,0.1)',
-                border: '1px solid rgba(239,68,68,0.3)',
-                borderRadius: 10, padding: '10px 14px',
-                color: C.red, fontSize: 13, marginBottom: 16,
-              }}>
+              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', color: C.red, fontSize: 13, marginBottom: 16 }}>
                 {formError}
               </div>
             )}
 
-            {/* Form fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-              {/* Name */}
-              <input
-                type="text"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-                placeholder="Your full name *"
-                style={{
-                  width: '100%', background: C.input,
-                  border: `1px solid ${C.inputBorder}`,
-                  borderRadius: 12, padding: '13px 16px',
-                  color: C.text, fontSize: 14, outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-
-              {/* Phone */}
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={e => setForm({ ...form, phone: e.target.value })}
-                placeholder="WhatsApp number * (e.g. +234 803 123 4567)"
-                style={{
-                  width: '100%', background: C.input,
-                  border: `1px solid ${C.inputBorder}`,
-                  borderRadius: 12, padding: '13px 16px',
-                  color: C.text, fontSize: 14, outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-
-              {/* Quantity */}
-              <div style={{
-                display: 'flex', alignItems: 'center',
-                justifyContent: 'space-between',
-                background: C.input,
-                border: `1px solid ${C.inputBorder}`,
-                borderRadius: 12, padding: '12px 16px',
-              }}>
-                <span style={{ color: C.subtext, fontSize: 14 }}>Quantity</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <button
-                    onClick={() => setForm(f => ({
-                      ...f, quantity: Math.max(1, f.quantity - 1)
-                    }))}
-                    style={{
-                      width: 28, height: 28, borderRadius: 8,
-                      background: 'rgba(255,255,255,0.1)',
-                      border: 'none', cursor: 'pointer',
-                      color: C.text, fontSize: 16, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    −
-                  </button>
-                  <span style={{ color: C.text, fontSize: 16, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>
-                    {form.quantity}
-                  </span>
-                  <button
-                    onClick={() => setForm(f => ({
-                      ...f,
-                      quantity: Math.min(ordering.stock, f.quantity + 1)
-                    }))}
-                    style={{
-                      width: 28, height: 28, borderRadius: 8,
-                      background: 'rgba(255,255,255,0.1)',
-                      border: 'none', cursor: 'pointer',
-                      color: C.text, fontSize: 16, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Note */}
-              <textarea
-                value={form.note}
-                onChange={e => setForm({ ...form, note: e.target.value })}
-                placeholder="Any note for the seller? (optional)"
-                rows={2}
-                style={{
-                  width: '100%', background: C.input,
-                  border: `1px solid ${C.inputBorder}`,
-                  borderRadius: 12, padding: '13px 16px',
-                  color: C.text, fontSize: 14, outline: 'none',
-                  resize: 'none', fontFamily: 'inherit',
-                  boxSizing: 'border-box',
-                }}
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <input type="text" value={checkoutForm.name} onChange={e => setCheckoutForm({ ...checkoutForm, name: e.target.value })} placeholder="Your full name *" style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '13px 16px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+              <input type="tel" value={checkoutForm.phone} onChange={e => setCheckoutForm({ ...checkoutForm, phone: e.target.value })} placeholder="WhatsApp number * (e.g. 08031234567)" style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '13px 16px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+              <textarea value={checkoutForm.note} onChange={e => setCheckoutForm({ ...checkoutForm, note: e.target.value })} placeholder="Any note for the seller? (optional)" rows={2} style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '13px 16px', color: C.text, fontSize: 14, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
             </div>
 
-            {/* Secure order banner */}
-            <div style={{
-              background: 'rgba(124,58,237,0.08)',
-              border: '1px solid rgba(124,58,237,0.2)',
-              borderRadius: 12, padding: '12px 16px',
-              marginTop: 16, marginBottom: 16,
-              display: 'flex', alignItems: 'flex-start', gap: 10,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke={C.purple} strokeWidth="2"
-                style={{ marginTop: 1, flexShrink: 0 }}>
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
+            <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 12, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 10 }}>
+              <span style={{ flexShrink: 0 }}>🔒</span>
               <p style={{ color: C.subtext, fontSize: 12, lineHeight: 1.5 }}>
-                <strong style={{ color: C.text }}>Secure Order</strong> — Your order
-                details will be sent directly to the seller via WhatsApp.
-                Pay on delivery or via bank transfer.
+                Your order details will be sent directly to the seller. Pay on delivery or via bank transfer.
               </p>
             </div>
 
-            {/* Total */}
-            <div style={{
-              display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 16,
-            }}>
-              <span style={{ color: C.subtext, fontSize: 14 }}>Order Subtotal</span>
-              <span style={{ color: C.text, fontSize: 16, fontWeight: 700 }}>
-                ₦{(Number(ordering.price) * form.quantity).toLocaleString()}
-              </span>
-            </div>
-
-            {/* Confirm button */}
             <button
-              onClick={placeOrder}
-              disabled={placing || !form.name || !form.phone}
-              style={{
-                width: '100%', padding: '16px 0',
-                background: placing || !form.name || !form.phone
-                  ? 'rgba(124,58,237,0.3)'
-                  : `linear-gradient(90deg, ${C.purple}, ${C.pink})`,
-                border: 'none', borderRadius: 12,
-                color: C.text, fontSize: 15, fontWeight: 800,
-                cursor: placing || !form.name || !form.phone
-                  ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center',
-                justifyContent: 'center', gap: 8,
-              }}
+              onClick={handleCheckout}
+              disabled={placing || !checkoutForm.name || !checkoutForm.phone}
+              style={{ width: '100%', padding: '15px 0', background: placing || !checkoutForm.name || !checkoutForm.phone ? 'rgba(124,58,237,0.3)' : ('linear-gradient(90deg, ' + themeColor + ', #ec4899)'), border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 800, cursor: placing || !checkoutForm.name || !checkoutForm.phone ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               {placing ? (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{
-                    width: 16, height: 16, borderRadius: '50%',
-                    border: '2px solid rgba(255,255,255,0.3)',
-                    borderTopColor: 'white',
-                    animation: 'spin 0.8s linear infinite',
-                  }} />
+                  <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
                   Placing order...
                 </span>
               ) : (
-                <span>
-                  🛍 Confirm Order — ₦{(Number(ordering.price) * form.quantity).toLocaleString()}
-                </span>
+                <span>{'Place Order — N' + cartTotal.toLocaleString()}</span>
               )}
             </button>
-
-            <p style={{
-              color: C.muted, fontSize: 11,
-              textAlign: 'center', marginTop: 10,
-            }}>
-              By clicking confirm, you agree to our Terms of Service
-            </p>
           </div>
         </div>
       )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes slideup {
-          from { transform: translateY(100%); opacity: 0; }
-          to   { transform: translateY(0); opacity: 1; }
-        }
         ::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
