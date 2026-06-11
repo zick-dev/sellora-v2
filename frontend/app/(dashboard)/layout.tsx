@@ -210,7 +210,7 @@ function Sidebar({
         {/* View My Store */}
         {store && (
           <a
-            href={`https://sellora.io/${store.slug}`}
+            href={`/store/${store.slug}`}
             target="_blank" rel="noreferrer"
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
@@ -409,7 +409,7 @@ function MobileDrawer({
         {/* Bottom */}
         <div style={{ borderTop: `1px solid ${C.sidebarBorder}`, padding: '12px' }}>
           {store && (
-            <a href={`https://sellora.io/${store.slug}`} target="_blank" rel="noreferrer"
+            <a href={`/store/${store.slug}`} target="_blank" rel="noreferrer"
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '11px 14px', borderRadius: 12, marginBottom: 4,

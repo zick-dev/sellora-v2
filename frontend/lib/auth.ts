@@ -41,7 +41,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
 
   // Log in or sign up with Google ID token
-  googleAuth: (token: string) => Promise<void>;
+  googleAuth: (token: string) => Promise<{ is_new_user: boolean; has_store: boolean }>;
 
   // Fetch current user profile from backend
   loadUser: () => Promise<void>;
@@ -129,16 +129,29 @@ export const useAuthStore = create<AuthState>((set) => ({
      * Creates account if new user, logs in if existing user.
      */
     set({ isLoading: true });
-    try {
-      const res = await api.post<TokenResponse>("/api/auth/google", {
-        token,
-      });
-      saveTokens(set, res.data);
+  try {
+    const res = await api.post('/api/auth/google', { token });
+    
+    // Save tokens
+    localStorage.setItem('access_token', res.data.access_token);
+    localStorage.setItem('refresh_token', res.data.refresh_token);
+    
+    set({
+      user: res.data.user,
+      token: res.data.access_token,
+      isLoading: false,
+    });
+
+    // Return flags so the calling page can redirect correctly
+    return {
+      is_new_user: res.data.is_new_user,
+      has_store: res.data.has_store,
+    };
   } catch (error) {
-  set({ isLoading: false });
-  throw error;
-        }
-  },
+    set({ isLoading: false });
+    throw error;
+  }
+},
 
   // ── loadUser ────────────────────────────────────────────────────
   loadUser: async () => {

@@ -49,17 +49,23 @@ export default function LoginPage() {
 
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (response) => {
-      setGoogleLoading(true);
-      setError("");
-      try {
-        await googleAuth(response.access_token);
-        toast.success("Welcome to Sellora!");
-        router.push("/dashboard");
-      } catch {
-        setError("Google sign-in failed — try again");
-        setGoogleLoading(false);
-      }
-    },
+  setGoogleLoading(true);
+  setError('');
+  try {
+    const result = await googleAuth(response.access_token);
+    toast.success('Welcome to Sellora!');
+    
+    // Smart redirect based on user state
+    if (result.has_store) {
+      router.push('/dashboard');
+    } else {
+      router.push('/onboarding');
+    }
+  } catch {
+    setError('Google sign-in failed — try again');
+    setGoogleLoading(false);
+  }
+},
     onError: () => {
       setError("Google sign-in failed — try again");
       setGoogleLoading(false);

@@ -169,20 +169,15 @@ async def login(
 )
 async def google_auth(
     payload: GoogleAuthRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    Authenticate using a Google ID token from the frontend.
+    Authenticate using a Google access token from the frontend.
 
-    Smart routing logic:
-    - New user (no account) → create account and log in
-    - Existing Google user → log in directly
-    - Existing email user → link Google ID to account, log in
-
-    This means if someone signed up with email, then later
-    uses Google with the same email, their accounts are merged.
+    Returns token + user + is_new_user flag so frontend knows
+    whether to redirect to dashboard or onboarding.
     """
-    # Step 1: Verify the Google token with Google's servers
+    # Step 1: Verify the Google token
     google_user = await verify_google_token(payload.token)
     if not google_user:
         raise HTTPException(
@@ -190,45 +185,58 @@ async def google_auth(
             detail="Invalid Google token",
         )
 
-    # Step 2: Try to find existing account by Google ID
-    # (fastest lookup for returning Google users)
+    is_new_user = False
+
+    # Step 2: Find existing account by Google ID
     result = await db.execute(
         select(User).where(User.google_id == google_user["id"])
     )
     user = result.scalar_one_or_none()
 
     if not user:
-        # Step 3: Try to find existing account by email
-        # (handles case where user signed up with email first)
+        # Step 3: Find by email
         result = await db.execute(
             select(User).where(User.email == google_user["email"])
         )
         user = result.scalar_one_or_none()
 
         if user:
-            # Found by email — link the Google ID to existing account
-            # Now future Google logins will find them by google_id (faster)
+            # Link Google ID to existing email account
             user.google_id = google_user["id"]
             user.avatar_url = google_user.get("picture")
             await db.flush()
         else:
-            # Completely new user — create their account
+            # Brand new user
+            is_new_user = True
             user = User(
                 name=google_user["name"],
                 email=google_user["email"],
                 google_id=google_user["id"],
                 avatar_url=google_user.get("picture"),
                 auth_provider="google",
-                # Google users are auto-verified since Google
-                # already confirmed their email
                 is_verified=google_user.get("email_verified", False),
             )
             db.add(user)
             await db.flush()
             await db.refresh(user)
 
-    return make_token_response(user)
+    # Step 4: Check if user has a store
+    from app.models.store import Store
+    store_result = await db.execute(
+        select(Store).where(Store.user_id == user.id)
+    )
+    has_store = store_result.scalar_one_or_none() is not None
 
+    # Build response with extra flags
+    token_response = make_token_response(user)
+
+    # Add redirect hint to response
+    # frontend uses this to decide where to go
+    response_data = token_response.model_dump()
+    response_data["is_new_user"] = is_new_user
+    response_data["has_store"] = has_store
+
+    return response_data
 
 @router.get(
     "/me",

@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import Link from 'next/link';
+import api from '@/lib/api';
 
-// ─── Design tokens (duplicated so this page is self-contained) ────────────────
 const C = {
   bg:          '#0d0d14',
   card:        '#13131f',
@@ -24,34 +24,6 @@ const C = {
   teal:        '#06b6d4',
 };
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type StatCard = {
-  label: string;
-  value: string;
-  change: string;
-  changeType: 'up' | 'down' | 'stable';
-  color: string;
-  icon: React.ReactNode;
-};
-
-type Order = {
-  id: string;
-  customer: string;
-  product: string;
-  amount: string;
-  status: 'Delivered' | 'Processing' | 'Pending' | 'Shipped';
-  time: string;
-};
-
-type Lead = {
-  id: string;
-  name: string;
-  product: string;
-  time: string;
-  avatar: string;
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
@@ -59,137 +31,70 @@ function getGreeting() {
   return 'Good evening';
 }
 
-function StatusBadge({ status }: { status: Order['status'] }) {
-  const map: Record<Order['status'], { bg: string; color: string }> = {
-    Delivered:  { bg: 'rgba(16,185,129,0.12)',  color: '#10b981' },
-    Processing: { bg: 'rgba(6,182,212,0.12)',   color: '#06b6d4' },
-    Pending:    { bg: 'rgba(245,158,11,0.12)',  color: '#f59e0b' },
-    Shipped:    { bg: 'rgba(139,92,246,0.12)',  color: '#8b5cf6' },
+function timeAgo(dateString: string): string {
+  const seconds = Math.floor(
+    (new Date().getTime() - new Date(dateString).getTime()) / 1000
+  );
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    delivered:  { bg: 'rgba(16,185,129,0.12)', color: '#10b981' },
+    processing: { bg: 'rgba(6,182,212,0.12)',  color: '#06b6d4' },
+    pending:    { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
+    confirmed:  { bg: 'rgba(139,92,246,0.12)', color: '#8b5cf6' },
+    cancelled:  { bg: 'rgba(239,68,68,0.12)',  color: '#ef4444' },
   };
-  const s = map[status];
+  const s = map[status] || { bg: 'rgba(107,114,128,0.12)', color: '#6b7280' };
   return (
     <span style={{
       background: s.bg, color: s.color,
       fontSize: 11, fontWeight: 700,
       padding: '3px 9px', borderRadius: 20,
-      letterSpacing: 0.3,
+      letterSpacing: 0.3, textTransform: 'capitalize',
     }}>
       {status}
     </span>
   );
 }
 
-// ─── Placeholder data (replace with real API calls) ───────────────────────────
-const PLACEHOLDER_ORDERS: Order[] = [
-  { id: '#SEL-88210', customer: 'Amina Johnson',   product: 'Premium Soy Candle',  amount: '₦12,500', status: 'Delivered',  time: '15m ago' },
-  { id: '#SEL-88209', customer: 'Chidi Okoro',     product: 'Minimalist Watch',    amount: '₦45,000', status: 'Processing', time: '45m ago' },
-  { id: '#SEL-88208', customer: 'Sarah Williams',  product: 'Silk Scarf Set',      amount: '₦8,200',  status: 'Pending',    time: '2h ago'  },
-  { id: '#SEL-88207', customer: 'Emmanuel Taiwo',  product: 'Leather Wallet',      amount: '₦15,000', status: 'Shipped',    time: '5h ago'  },
-  { id: '#SEL-88206', customer: 'Fatima Musa',     product: 'Earthy Pot Set',      amount: '₦22,000', status: 'Delivered',  time: '1d ago'  },
-];
-
-const PLACEHOLDER_LEADS: Lead[] = [
-  { id: '1', name: 'Kelechi A.',  product: 'Premium Soy Candle', time: '12m ago', avatar: 'K' },
-  { id: '2', name: 'Grace E.',    product: 'Minimalist Watch',   time: '45m ago', avatar: 'G' },
-  { id: '3', name: 'David C.',    product: 'Silk Scarf Set',     time: '2h ago',  avatar: 'D' },
-];
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-function StatCard({ card }: { card: StatCard }) {
-  return (
-    <div style={{
-      background: C.card, border: `1px solid ${C.cardBorder}`,
-      borderRadius: 14, padding: '20px 20px 16px',
-      flex: '1 1 180px', minWidth: 0,
-      animation: 'fadein 0.4s ease',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: `${card.color}18`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: card.color,
-        }}>
-          {card.icon}
-        </div>
-        <span style={{
-          fontSize: 11, fontWeight: 700,
-          color: card.changeType === 'up' ? C.success : card.changeType === 'down' ? '#ef4444' : C.mutedLight,
-          background: card.changeType === 'up' ? 'rgba(16,185,129,0.1)' : card.changeType === 'down' ? 'rgba(239,68,68,0.1)' : C.inputBorder,
-          padding: '3px 7px', borderRadius: 20,
-        }}>
-          {card.change}
-        </span>
-      </div>
-      <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>
-        {card.label}
-      </p>
-      <p style={{ color: C.text, fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px' }}>
-        {card.value}
-      </p>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardOverviewPage() {
   const { user, store } = useDashboard();
-  const [orders] = useState<Order[]>(PLACEHOLDER_ORDERS);
-  const [leads]  = useState<Lead[]>(PLACEHOLDER_LEADS);
 
-  const STAT_CARDS: StatCard[] = [
-    {
-      label: 'Total Revenue',
-      value: '₦284,500',
-      change: '+12.5%',
-      changeType: 'up',
-      color: C.purpleLight,
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" strokeLinecap="round" strokeLinejoin="round"/>
-          <polyline points="17 6 23 6 23 12" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ),
-    },
-    {
-      label: 'New Orders',
-      value: '24',
-      change: '+4.2%',
-      changeType: 'up',
-      color: C.pink,
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-          <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" strokeLinecap="round"/>
-        </svg>
-      ),
-    },
-    {
-      label: 'Active Products',
-      value: '12',
-      change: 'Stable',
-      changeType: 'stable',
-      color: C.teal,
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-        </svg>
-      ),
-    },
-    {
-      label: 'Pending Shipments',
-      value: '4',
-      change: '-2',
-      changeType: 'down',
-      color: C.orange,
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14" strokeLinecap="round"/>
-        </svg>
-      ),
-    },
-  ];
+  const [orders, setOrders]     = useState<any[]>([]);
+  const [leads, setLeads]       = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(() => {
+    if (!store?.id) { setLoading(false); return; }
+    const load = async () => {
+      try {
+        const [ordersRes, leadsRes, productsRes] = await Promise.all([
+          api.get('/api/orders/' + store.id),
+          api.get('/api/abandoned/' + store.id),
+          api.get('/api/products/store/' + store.id),
+        ]);
+        setOrders(ordersRes.data);
+        setLeads(leadsRes.data);
+        setProducts(productsRes.data);
+      } catch { /* silently fail */ }
+      finally { setLoading(false); }
+    };
+    load();
+  }, [store?.id]);
+
+  const totalRevenue   = orders.filter((o: any) => o.status !== 'cancelled').reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
+  const pendingCount   = orders.filter((o: any) => o.status === 'pending').length;
+  const activeProducts = products.filter((p: any) => p.is_available).length;
+  const newLeads       = leads.filter((l: any) => !l.follow_up_sent).length;
+  const recentOrders   = orders.slice(0, 5);
+  const recentLeads    = leads.filter((l: any) => !l.follow_up_sent).slice(0, 3);
+  const storeUrl       = store ? '/store/' + store.slug : '#';
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -199,7 +104,6 @@ export default function DashboardOverviewPage() {
         display: 'flex', alignItems: 'flex-start',
         justifyContent: 'space-between', marginBottom: 28,
         flexWrap: 'wrap', gap: 16,
-        animation: 'fadein 0.3s ease',
       }}>
         <div>
           <h1 style={{ color: C.text, fontSize: 26, fontWeight: 800, marginBottom: 4 }}>
@@ -208,226 +112,227 @@ export default function DashboardOverviewPage() {
           {store && (
             <p style={{ color: C.muted, fontSize: 14 }}>
               Your store is live at{' '}
-              <a
-                href={`/store/${store.slug}`}
-                target="_blank" rel="noreferrer"
-                style={{ color: C.purpleLight, textDecoration: 'none' }}
-              >
-                {typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/store/{store.slug} ↗ 
+              <a href={storeUrl} target="_blank" rel="noreferrer"
+                style={{ color: C.purpleLight, textDecoration: 'none' }}>
+                localhost:3000/store/{store.slug}
               </a>
             </p>
           )}
         </div>
-        <Link href={store ? `/store/${store.slug}` : '#'}
-          target="_blank" rel="noreferrer"
+        <Link href={storeUrl} target="_blank" rel="noreferrer"
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
             padding: '10px 18px',
-            background: `linear-gradient(90deg, ${C.purple}, ${C.pink})`,
+            background: 'linear-gradient(90deg, #7c3aed, #ec4899)',
             borderRadius: 10, color: C.text,
             fontWeight: 700, fontSize: 13, textDecoration: 'none',
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round"/>
-            <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round"/>
-          </svg>
+          }}>
           View Storefront
         </Link>
       </div>
 
       {/* Stat cards */}
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
-        {STAT_CARDS.map(card => <StatCard key={card.label} card={card} />)}
+        {[
+          { label: 'Total Revenue',   value: loading ? '—' : ('N' + totalRevenue.toLocaleString()),  sub: orders.length > 0 ? orders.length + ' orders' : 'No orders yet' },
+          { label: 'Pending Orders',  value: loading ? '—' : String(pendingCount),                   sub: pendingCount > 0 ? 'Need attention' : 'All clear' },
+          { label: 'Active Products', value: loading ? '—' : String(activeProducts),                 sub: products.length > 0 ? products.length + ' total' : 'No products yet' },
+          { label: 'New Leads',       value: loading ? '—' : String(newLeads),                       sub: newLeads > 0 ? 'Need follow-up' : 'All followed up' },
+        ].map(card => (
+          <div key={card.label} className="stat-card">
+            <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>
+              {card.label}
+            </p>
+            <p style={{ color: C.text, fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>
+              {card.value}
+            </p>
+            <p style={{ color: C.muted, fontSize: 12 }}>{card.sub}</p>
+          </div>
+        ))}
       </div>
 
       {/* Main grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div className="dash-grid">
 
         {/* Recent Orders */}
-        <div style={{
-          background: C.card, border: `1px solid ${C.cardBorder}`,
-          borderRadius: 14, padding: '20px 0',
-          animation: 'fadein 0.45s ease',
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0 20px 16px',
-            borderBottom: `1px solid ${C.cardBorder}`,
-          }}>
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 14, padding: '20px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px 16px', borderBottom: '1px solid ' + C.cardBorder }}>
             <div>
               <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700 }}>Recent Orders</h2>
               <p style={{ color: C.muted, fontSize: 12, marginTop: 2 }}>Monitor your latest store activity</p>
             </div>
-            <Link href="/orders" style={{
-              color: C.purpleLight, fontSize: 13, textDecoration: 'none', fontWeight: 600,
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>
+            <Link href="/orders" style={{ color: C.purpleLight, fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>
               View All
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M9 18l6-6-6-6" strokeLinecap="round"/>
-              </svg>
             </Link>
           </div>
 
-          {/* Table header */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '110px 1fr 1fr 90px 90px',
-            padding: '10px 20px',
-            borderBottom: `1px solid ${C.cardBorder}`,
-          }}>
-            {['Order ID', 'Customer', 'Product', 'Amount', 'Status'].map(h => (
-              <span key={h} style={{ color: C.muted, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                {h}
-              </span>
-            ))}
-          </div>
-
-          {/* Rows */}
-          {orders.map((order, i) => (
-            <div key={order.id} style={{
-              display: 'grid',
-              gridTemplateColumns: '110px 1fr 1fr 90px 90px',
-              padding: '14px 20px',
-              borderBottom: i < orders.length - 1 ? `1px solid ${C.cardBorder}` : 'none',
-              alignItems: 'center',
-            }}>
-              <span style={{ color: C.purpleLight, fontSize: 13, fontWeight: 600 }}>{order.id}</span>
-              <span style={{ color: C.text, fontSize: 13 }}>{order.customer}</span>
-              <span style={{ color: C.subtext, fontSize: 13 }}>{order.product}</span>
-              <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{order.amount}</span>
-              <StatusBadge status={order.status} />
+          {loading ? (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <span style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
             </div>
-          ))}
+          ) : recentOrders.length === 0 ? (
+            <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>📦</div>
+              <p style={{ color: C.text, fontSize: 15, fontWeight: 600, marginBottom: 6 }}>No orders yet</p>
+              <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Share your store link to start receiving orders</p>
+              <Link href={storeUrl} target="_blank" style={{ display: 'inline-block', padding: '9px 18px', borderRadius: 8, background: C.purple, color: C.text, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+                View Your Store
+              </Link>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <div style={{ minWidth: 400 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 90px 90px', padding: '10px 20px', borderBottom: '1px solid ' + C.cardBorder }}>
+                  {['Order ID', 'Customer', 'Amount', 'Status'].map(h => (
+                    <span key={h} style={{ color: C.muted, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>{h}</span>
+                  ))}
+                </div>
+                {recentOrders.map((order: any, i: number) => (
+                  <div key={order.id} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 90px 90px', padding: '14px 20px', borderBottom: i < recentOrders.length - 1 ? '1px solid ' + C.cardBorder : 'none', alignItems: 'center' }}>
+                    <span style={{ color: C.purpleLight, fontSize: 13, fontWeight: 600 }}>
+                      {'#' + (order.order_number || order.id.slice(0, 8).toUpperCase())}
+                    </span>
+                    <div>
+                      <p style={{ color: C.text, fontSize: 13 }}>{order.customer_name}</p>
+                      <p style={{ color: C.muted, fontSize: 11 }}>{timeAgo(order.created_at)}</p>
+                    </div>
+                    <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>
+                      {'N' + Number(order.total_price).toLocaleString()}
+                    </span>
+                    <StatusBadge status={order.status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Abandoned Interests */}
-          <div style={{
-            background: C.card, border: `1px solid ${C.cardBorder}`,
-            borderRadius: 14, padding: '18px 18px',
-            animation: 'fadein 0.5s ease',
-          }}>
+          {/* Leads */}
+          <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 14, padding: '18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
-                <h3 style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Abandoned Interests</h3>
-                <p style={{ color: C.muted, fontSize: 11, marginTop: 2 }}>AI detected potential customers</p>
+                <h3 style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Abandoned Leads</h3>
+                <p style={{ color: C.muted, fontSize: 11, marginTop: 2 }}>Potential customers to follow up</p>
               </div>
-              <span style={{
-                background: C.pink, color: 'white',
-                fontSize: 10, fontWeight: 700,
-                padding: '3px 8px', borderRadius: 20,
-              }}>
-                {leads.length} New Leads
-              </span>
+              {newLeads > 0 && (
+                <span style={{ background: C.pink, color: 'white', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20 }}>
+                  {newLeads + ' New'}
+                </span>
+              )}
             </div>
 
-            {leads.map(lead => (
-              <div key={lead.id} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                marginBottom: 12,
-              }}>
-                <div style={{
-                  width: 34, height: 34, borderRadius: '50%',
-                  background: C.purple, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <span style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>{lead.avatar}</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{lead.name}</p>
-                  <p style={{ color: C.muted, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {lead.product}
-                  </p>
-                </div>
-                <button style={{
-                  background: C.success, border: 'none', borderRadius: 8,
-                  color: 'white', fontSize: 11, fontWeight: 700,
-                  padding: '5px 10px', cursor: 'pointer', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round"/>
-                  </svg>
-                  Follow Up
-                </button>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <span style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
               </div>
-            ))}
+            ) : recentLeads.length === 0 ? (
+              <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🎯</div>
+                <p style={{ color: C.muted, fontSize: 13 }}>No leads yet</p>
+                <p style={{ color: C.muted, fontSize: 11, marginTop: 4 }}>Leads appear when customers browse your store</p>
+              </div>
+            ) : (
+              <div>
+                {recentLeads.map((lead: any) => (
+                  <div key={lead.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: C.purple, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>
+                        {lead.customer_name ? lead.customer_name[0].toUpperCase() : '?'}
+                      </span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{lead.customer_name || 'Anonymous'}</p>
+                      <p style={{ color: C.muted, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.product_name || 'Unknown product'}</p>
+                    </div>
+                    {lead.customer_phone && (
+                      <button
+                        onClick={() => {
+                          const clean = lead.customer_phone.replace(/\s+/g, '').replace(/^0/, '234');
+                          const msg = encodeURIComponent('Hi! We noticed you were interested in ' + (lead.product_name || 'our product') + '. Still available!');
+                          window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+                        }}
+                        style={{ background: C.success, border: 'none', borderRadius: 8, color: 'white', fontSize: 11, fontWeight: 700, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}>
+                        Follow Up
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-            <Link href="/leads" style={{
-              display: 'block', width: '100%', padding: '10px',
-              background: C.input, borderRadius: 10, textAlign: 'center',
-              color: C.subtext, fontSize: 13, textDecoration: 'none',
-              fontWeight: 600, marginTop: 4,
-            }}>
-              Recover More Leads
+            <Link href="/leads" style={{ display: 'block', width: '100%', padding: '10px', background: C.input, borderRadius: 10, textAlign: 'center', color: C.subtext, fontSize: 13, textDecoration: 'none', fontWeight: 600, marginTop: 4 }}>
+              View All Leads
             </Link>
           </div>
 
           {/* Quick Actions */}
-          <div style={{
-            background: C.card, border: `1px solid ${C.cardBorder}`,
-            borderRadius: 14, padding: '18px',
-            animation: 'fadein 0.55s ease',
-          }}>
-            <h3 style={{ color: C.text, fontSize: 14, fontWeight: 700, marginBottom: 14 }}>
-              Quick Actions
-            </h3>
+          <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 14, padding: '18px' }}>
+            <h3 style={{ color: C.text, fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Quick Actions</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { label: 'Add Product', href: '/products', icon: '+', color: C.purple },
-                { label: 'Export Reports', href: '#', icon: '↓', color: C.teal },
-                { label: 'Share Store', href: '#', icon: '↗', color: C.success },
-                { label: 'Settings', href: '/storefront', icon: '⚙', color: C.orange },
+                { label: 'Add Product', href: '/products',  color: C.purple  },
+                { label: 'View Orders', href: '/orders',    color: C.teal    },
+                { label: 'Share Store', href: storeUrl,     color: C.success },
+                { label: 'Settings',   href: '/storefront', color: C.orange  },
               ].map(a => (
-                <Link key={a.label} href={a.href} style={{
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: 8, padding: '16px 8px',
-                  background: C.input, borderRadius: 10,
-                  textDecoration: 'none',
-                  border: `1px solid ${C.inputBorder}`,
-                }}>
-                  <span style={{ color: a.color, fontSize: 18 }}>{a.icon}</span>
-                  <span style={{ color: C.subtext, fontSize: 12, fontWeight: 600, textAlign: 'center' }}>
-                    {a.label}
-                  </span>
+                <Link key={a.label} href={a.href} target={a.label === 'Share Store' ? '_blank' : undefined}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 8px', background: C.input, borderRadius: 10, textDecoration: 'none', border: '1px solid ' + C.inputBorder }}>
+                  <span style={{ color: a.color, fontSize: 13, fontWeight: 700 }}>{a.label}</span>
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Seller Tip */}
-          <div style={{
-            background: C.card, border: `1px solid ${C.cardBorder}`,
-            borderRadius: 14, padding: '16px 18px',
-            display: 'flex', gap: 12, alignItems: 'flex-start',
-            animation: 'fadein 0.6s ease',
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: C.purpleDim, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: C.purpleLight,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round"/>
-              </svg>
+          {/* Getting started tip */}
+          {!loading && orders.length === 0 && (
+            <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 14, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: C.purpleDim, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.purpleLight, fontSize: 16 }}>
+                💡
+              </div>
+              <div>
+                <p style={{ color: C.text, fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Getting Started</p>
+                <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.6 }}>
+                  Add products to your store, then share your store link on WhatsApp and Instagram to start receiving orders!
+                </p>
+              </div>
             </div>
-            <div>
-              <p style={{ color: C.text, fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
-                Seller Tip: AI Recovery
-              </p>
-              <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.6 }}>
-                Sellers using Lead Recovery see an average 25% increase in conversions. Follow up with your leads soon!
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .stat-card {
+          background: #13131f;
+          border: 1px solid #1e1e30;
+          border-radius: 14px;
+          padding: 20px 20px 16px;
+          flex: 1 1 140px;
+          min-width: 0;
+        }
+        .dash-grid {
+          display: grid;
+          grid-template-columns: 1fr 320px;
+          gap: 20px;
+        }
+        @media (max-width: 768px) {
+          .dash-grid {
+            grid-template-columns: 1fr;
+          }
+          .stat-card {
+            flex: 1 1 calc(50% - 7px);
+          }
+        }
+        @media (max-width: 480px) {
+          .stat-card {
+            flex: 1 1 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

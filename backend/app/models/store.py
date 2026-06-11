@@ -71,6 +71,31 @@ class Store(Base):
     # Store logo / banner image URL (uploaded later in settings)
     logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+                    # Store banner — wide hero image shown at top of storefront
+    banner_url: Mapped[str | None] = mapped_column(
+        String(500), nullable=True
+    )
+
+    # Primary theme color for the storefront buttons and accents
+    theme_color: Mapped[str] = mapped_column(
+        String(20), default='#7c3aed', nullable=False
+    )
+
+    # Seller WhatsApp number for customer contact
+    whatsapp: Mapped[str | None] = mapped_column(
+        String(30), nullable=True
+    )
+
+    # Seller Instagram handle e.g. @luxethreads
+    instagram: Mapped[str | None] = mapped_column(
+        String(100), nullable=True
+    )
+
+    # JSON array of category names e.g. '["Fashion","Electronics"]'
+    categories: Mapped[str] = mapped_column(
+        Text, default='[]', nullable=False
+    )
+
     # ── Status ───────────────────────────────────────────────────
     # False until store is fully set up and ready for customers
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
