@@ -32,7 +32,7 @@ from app.models.order import Order                            # noqa: F401
 from app.models.abandoned_interest import AbandonedInterest  # noqa: F401
 
 # Import routers
-from app.api.routes import auth, store, products, orders, abandoned
+from app.api.routes import auth, store, products, orders, abandoned, subscription , ai
 
 # ── Rate limiter ──────────────────────────────────────────────────
 # Limits requests per IP address to prevent brute force attacks
@@ -125,6 +125,8 @@ app.include_router(store.router, prefix=API_PREFIX)
 app.include_router(products.router, prefix=API_PREFIX)
 app.include_router(orders.router, prefix=API_PREFIX)
 app.include_router(abandoned.router, prefix=API_PREFIX)
+app.include_router(subscription.router, prefix=API_PREFIX)
+app.include_router(ai.router, prefix=API_PREFIX)
 
 
 # ── Health check ──────────────────────────────────────────────────

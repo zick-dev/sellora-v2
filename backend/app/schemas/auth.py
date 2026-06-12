@@ -14,6 +14,8 @@ FastAPI uses these automatically:
 - Response is serialized using the response_model schema
 """
 
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -77,6 +79,8 @@ class UserOut(BaseModel):
     avatar_url: str | None    # Profile photo URL (from Google or upload)
     auth_provider: str        # "email" or "google" — affects UI display
     is_verified: bool         # Shows verification badge in UI
+    plan:           str
+    plan_expires_at: datetime | None
 
     # from_attributes=True allows creating this from a SQLAlchemy model
     # e.g. UserOut.model_validate(user_db_object)

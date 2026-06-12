@@ -1,0 +1,94 @@
+"""
+backend/app/api/routes/ai.py
+──────────────────────────────
+AI Tools powered by Claude — Pro plan required.
+
+Endpoints:
+    POST /api/ai/generate — generate AI content (reply, FAQ, promo)
+"""
+
+from datetime import datetime, timezone
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.core.database import get_db
+from app.core.security import get_current_user
+from app.models.user import User
+
+router = APIRouter(prefix="/ai", tags=["AI Tools"])
+
+
+def user_is_pro(user: User) -> bool:
+    """Check if user has an active Pro subscription."""
+    return (
+        user.plan == "pro" and
+        user.plan_expires_at is not None and
+        user.plan_expires_at > datetime.now(timezone.utc)
+    )
+
+
+@router.post(
+    "/generate",
+    summary="Generate AI content (Pro only)",
+)
+async def generate_ai_content(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate AI content using Claude.
+    Pro plan required. API key stays on the server — never exposed.
+    """
+    # ── Pro plan enforcement ──────────────────────────────────────
+    if not user_is_pro(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="AI Tools are a Pro feature. Upgrade to unlock Claude-powered tools.",
+        )
+
+    # ── Check API key is configured ───────────────────────────────
+    if not settings.ANTHROPIC_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI Tools are coming soon! We're putting the finishing touches on this feature.",
+        )
+
+    prompt = payload.get("prompt", "")
+    if not prompt or len(prompt) > 4000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Prompt is required and must be under 4000 characters.",
+        )
+
+    # ── Call Claude API from the backend ──────────────────────────
+    async with httpx.AsyncClient(timeout=60) as client:
+        res = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": settings.ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 1024,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+        )
+
+    if res.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI generation failed. Please try again.",
+        )
+
+    data = res.json()
+    text = "".join(
+        block.get("text", "")
+        for block in data.get("content", [])
+        if block.get("type") == "text"
+    )
+    return {"text": text}

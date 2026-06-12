@@ -114,6 +114,12 @@ class User(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+        # Subscription
+    plan:                      Mapped[str]            = mapped_column(String(20), default="free", nullable=False)
+    plan_expires_at:           Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    flutterwave_customer_id:   Mapped[str | None]      = mapped_column(String(100), nullable=True)
+    flutterwave_tx_ref:        Mapped[str | None]      = mapped_column(String(100), nullable=True)
+
     def __repr__(self) -> str:
         """Human-readable representation for debugging"""
         return f"<User id={self.id} email={self.email}>"

@@ -7,12 +7,14 @@ Public routes:
   POST /api/abandoned/              — track interest when customer opens order form
   PUT  /api/abandoned/{id}/convert  — mark as converted when order placed
 
-Seller routes:
+Seller routes (Pro plan required):
   GET /api/abandoned/{store_id}           — list unconverted leads
   PUT /api/abandoned/{id}/follow-up       — mark follow-up sent
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +27,15 @@ from app.models.user import User
 from app.schemas.abandoned import AbandonedCreate, AbandonedOut
 
 router = APIRouter(prefix="/abandoned", tags=["Abandoned Interests"])
+
+
+def user_is_pro(user: User) -> bool:
+    """Check if user has an active Pro subscription."""
+    return (
+        user.plan == "pro" and
+        user.plan_expires_at is not None and
+        user.plan_expires_at > datetime.now(timezone.utc)
+    )
 
 
 @router.post(
@@ -40,8 +51,11 @@ async def track_interest(
     """
     Called when customer opens the order form on storefront.
     Captures their interest even if they don't complete the order.
+
+    NOTE: No Pro check here — we collect leads for ALL sellers.
+    Free sellers just can't VIEW them until they upgrade. When they
+    upgrade, their leads are already waiting — a nice incentive!
     """
-    # Verify product exists
     result = await db.execute(
         select(Product).where(Product.id == payload.product_id)
     )
@@ -67,7 +81,7 @@ async def track_interest(
 @router.get(
     "/{store_id}",
     response_model=list[AbandonedOut],
-    summary="Get abandoned interests for seller",
+    summary="Get abandoned interests for seller (Pro only)",
 )
 async def get_abandoned(
     store_id: str,
@@ -84,6 +98,13 @@ async def get_abandoned(
     )
     if not store_result.scalar_one_or_none():
         raise HTTPException(status_code=403, detail="Access denied")
+
+    # ── Pro plan enforcement ──────────────────────────────────────
+    if not user_is_pro(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Lead Recovery is a Pro feature. Upgrade to access your abandoned leads.",
+        )
 
     result = await db.execute(
         select(AbandonedInterest).where(
@@ -115,7 +136,10 @@ async def mark_converted(
     interest_id: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """Called when customer completes an order — removes from leads list."""
+    """
+    Called when customer completes an order — removes from leads list.
+    Public route — no Pro check, conversion tracking works for everyone.
+    """
     result = await db.execute(
         select(AbandonedInterest).where(AbandonedInterest.id == interest_id)
     )
@@ -131,7 +155,7 @@ async def mark_converted(
 @router.put(
     "/{interest_id}/follow-up",
     response_model=AbandonedOut,
-    summary="Mark follow-up as sent",
+    summary="Mark follow-up as sent (Pro only)",
 )
 async def mark_follow_up(
     interest_id: str,
@@ -139,6 +163,13 @@ async def mark_follow_up(
     db: AsyncSession = Depends(get_db),
 ):
     """Called when seller sends a WhatsApp follow-up to a lead."""
+    # ── Pro plan enforcement ──────────────────────────────────────
+    if not user_is_pro(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Lead Recovery is a Pro feature. Upgrade to follow up with leads.",
+        )
+
     result = await db.execute(
         select(AbandonedInterest).where(AbandonedInterest.id == interest_id)
     )

@@ -50,6 +50,14 @@ class Settings(BaseSettings):
     # The sender email shown in password reset emails
     FROM_EMAIL: str = "security@sellora.io"
 
+    # ── Flutterwave Payment Gateway ───────────────────────────────
+    # Used for handling subscription payments
+    FLUTTERWAVE_PUBLIC_KEY: str = "b78a7a80-e29e-48ab-b493-df3fdabe4f33"
+    FLUTTERWAVE_SECRET_KEY: str = "dV4cg3ilUxaDXl2ZvyJG4FzYp3lPsGV0"
+    FLUTTERWAVE_ENCRYPTION_KEY: str    = "tK9La1qAUBVppfgzmC6YtYygyVrHlPQaW06un3jyeVE="  # For encrypting sensitive data in requests
+    FLUTTERWAVE_WEBHOOK_SECRET: str = "sellora_webhook_secret"  # Secret used to verify incoming webhook signatures from Flutterwave
+
+
     # ── Anthropic AI ─────────────────────────────────────────────
     # Claude API key for AI reply suggestions, FAQ generation etc.
     # Optional — AI features are disabled if not provided

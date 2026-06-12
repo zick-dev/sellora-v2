@@ -1,5 +1,6 @@
 'use client';
 
+import api from '@/lib/api';
 import { useState } from 'react';
 
 const C = {
@@ -48,19 +49,14 @@ export default function AIToolsPage() {
   const [copied, setCopied] = useState('');
 
   async function callClaude(prompt: string): Promise<string> {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    const data = await response.json();
-    return data.content?.[0]?.text || 'No response generated.';
+  try {
+    const res = await api.post('/api/ai/generate', { prompt });
+    return res.data.text || 'No response generated.';
+  } catch (err: any) {
+    // Surface the backend's message (Pro required / coming soon)
+    throw new Error(err.response?.data?.detail || 'AI generation failed.');
   }
-
+  }
   async function generateReply() {
     if (!customerMsg.trim()) return;
     setReplyLoading(true);
@@ -74,9 +70,9 @@ Be concise, professional, and use Nigerian context where appropriate.
 Only output the reply message, nothing else.`
       );
       setReplyResult(result);
-    } catch {
-      setReplyResult('Failed to generate reply. Please try again.');
-    } finally {
+    } catch (err: any) {
+  setReplyResult(err.message || 'Failed to generate reply. Please try again.');
+} finally {
       setReplyLoading(false);
     }
   }
@@ -97,9 +93,9 @@ A: [answer]
 Keep answers concise and relevant to Nigerian e-commerce context.`
       );
       setFaqResult(result);
-    } catch {
-      setFaqResult('Failed to generate FAQ. Please try again.');
-    } finally {
+    } catch (err: any) {
+  setReplyResult(err.message || 'Failed to generate reply. Please try again.');
+} finally {
       setFaqLoading(false);
     }
   }
@@ -126,9 +122,9 @@ Write a short, engaging WhatsApp/Instagram caption that:
 Only output the promotional message, nothing else.`
       );
       setPromoResult(result);
-    } catch {
-      setPromoResult('Failed to generate promo. Please try again.');
-    } finally {
+    } catch (err: any) {
+  setReplyResult(err.message || 'Failed to generate reply. Please try again.');
+} finally {
       setPromoLoading(false);
     }
   }
