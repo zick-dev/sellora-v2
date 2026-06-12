@@ -635,6 +635,7 @@ export default function DashboardLayout({
 
         if (userRes.status === 401) { router.push('/login'); return; }
 
+        if (storeRes.status === 401) { router.push('/login'); return; }
         if (storeRes.status === 404) { router.push('/onboarding'); return; }
 
         const userData  = await userRes.json();

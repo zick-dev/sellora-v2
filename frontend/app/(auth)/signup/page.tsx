@@ -43,7 +43,7 @@ export default function SignupPage() {
     try {
       await signup(name, email, password);
       toast.success("Account created! Let's set up your store.");
-      router.push("/onboarding");
+      window.location.href = '/onboarding';
     } catch (err: any) {
       setError(
         err.response?.data?.detail ||
@@ -61,6 +61,8 @@ export default function SignupPage() {
   try {
     const result = await googleAuth(response.access_token);
     toast.success('Welcome to Sellora!');
+     // Small delay to ensure token is saved to localStorage
+    window.location.href = '/dashboard';
     
     // Smart redirect based on user state
     if (result.has_store) {

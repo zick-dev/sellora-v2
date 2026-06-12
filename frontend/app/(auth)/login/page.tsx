@@ -39,7 +39,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.response?.data?.detail || "Invalid email or password");
     } finally {
@@ -54,6 +54,8 @@ export default function LoginPage() {
   try {
     const result = await googleAuth(response.access_token);
     toast.success('Welcome to Sellora!');
+     // Small delay to ensure token is saved to localStorage
+    window.location.href = '/dashboard';
     
     // Smart redirect based on user state
     if (result.has_store) {
