@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ThemeProvider } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,11 +35,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="bg-[#0a0a0f] text-white antialiased">
+      <body className="antialiased">
         {/* Google OAuth provider — wraps entire app so any page can use Google Sign In */}
         <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}
         >
+          <ThemeProvider>
           {children}
 
           {/* Toast notifications — appears on top of everything */}
@@ -67,6 +69,7 @@ export default function RootLayout({
               },
             }}
           />
+          </ThemeProvider>
         </GoogleOAuthProvider>
       </body>
     </html>

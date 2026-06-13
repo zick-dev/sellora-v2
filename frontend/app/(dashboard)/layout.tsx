@@ -3,29 +3,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const C = {
-  bg:          '#0d0d14',
-  sidebar:     '#0a0a12',
-  sidebarBorder:'#1a1a2e',
-  card:        '#13131f',
-  cardBorder:  '#1e1e30',
-  input:       '#1a1a2e',
-  inputBorder: '#2a2a3e',
-  purple:      '#7c3aed',
-  purpleHov:   '#6d28d9',
-  purpleLight: '#8b5cf6',
-  purpleDim:   'rgba(124,58,237,0.12)',
-  muted:       '#6b7280',
-  mutedLight:  '#9ca3af',
-  text:        '#ffffff',
-  subtext:     '#c4c4d4',
-  success:     '#10b981',
-  pink:        '#ec4899',
-  orange:      '#f59e0b',
-  topbar:      '#0a0a12',
-};
+import { useTheme, DARK } from '@/lib/theme';
 
 // ─── Store context (shared across dashboard pages) ────────────────────────────
 type StoreData = {
@@ -152,6 +130,18 @@ const NAV_ITEMS = [
     },
 ];
 
+// ─── Theme toggle button ──────────────────────────────────────────────────────
+function ThemeToggle() {
+  const { theme, toggleTheme, C } = useTheme();
+  return (
+    <button onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      style={{ width: 34, height: 34, borderRadius: 9, background: C.purpleDim, border: 'none', cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.text }}>
+      {theme === 'dark' ? '☀️' : '🌙'}
+    </button>
+  );
+}
+
+
 // ─── Sidebar (desktop) ────────────────────────────────────────────────────────
 function Sidebar({
   user,
@@ -163,6 +153,7 @@ function Sidebar({
   onLogout: () => void;
 }) {
   const pathname = usePathname();
+  const { C } = useTheme();
 
   return (
     <aside style={{
@@ -326,6 +317,7 @@ function MobileDrawer({
   onLogout: () => void;
 }) {
   const pathname = usePathname();
+  const { C } = useTheme();
 
   if (!open) return null;
 
@@ -490,6 +482,7 @@ function Topbar({
   store: StoreData;
   onMenuClick: () => void;
 }) {
+  const { C } = useTheme();
   return (
     <header style={{
       height: 56, background: C.topbar,
@@ -525,16 +518,7 @@ function Topbar({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* Bell */}
-        <button style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          color: C.mutedLight, padding: 4,
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" strokeLinecap="round"/>
-            <path d="M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round"/>
-          </svg>
-        </button>
+        <ThemeToggle />
         {/* Avatar */}
         <div style={{
           width: 30, height: 30, borderRadius: '50%',
@@ -562,6 +546,7 @@ function Topbar({
 
 // ─── Desktop topbar ───────────────────────────────────────────────────────────
 function DesktopTopbar({ user, store }: { user: UserData; store: StoreData }) {
+  const { C } = useTheme();
   return (
     <header style={{
       height: 56, background: C.topbar,
@@ -570,16 +555,7 @@ function DesktopTopbar({ user, store }: { user: UserData; store: StoreData }) {
       justifyContent: 'flex-end', padding: '0 24px', gap: 14,
       position: 'sticky', top: 0, zIndex: 30,
     }}>
-      {/* Bell */}
-      <button style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        color: C.mutedLight, padding: 4,
-      }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" strokeLinecap="round"/>
-          <path d="M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round"/>
-        </svg>
-      </button>
+      <ThemeToggle />
 
       {/* Avatar */}
       <div style={{
@@ -612,6 +588,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { C } = useTheme();
   const [user, setUser]       = useState<UserData>(null);
   const [store, setStore]     = useState<StoreData>(null);
   const [loading, setLoading] = useState(true);
@@ -769,6 +746,7 @@ export default function DashboardLayout({
 // ─── Mobile bottom nav item ───────────────────────────────────────────────────
 function MobileNavItem({ item }: { item: typeof NAV_ITEMS[0] }) {
   const pathname = usePathname();
+  const { C } = useTheme();
   const active = pathname === item.href;
   return (
     <Link href={item.href} style={{
@@ -784,4 +762,4 @@ function MobileNavItem({ item }: { item: typeof NAV_ITEMS[0] }) {
 }
 
 // re-export token colors so child pages can import them
-export { C };
+export const C = DARK;
