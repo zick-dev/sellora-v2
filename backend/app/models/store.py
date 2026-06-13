@@ -16,7 +16,7 @@ Relationships:
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -95,7 +95,10 @@ class Store(Base):
     categories: Mapped[str] = mapped_column(
         Text, default='[]', nullable=False
     )
-
+    # Discount popup settings (lead capture bait)
+    popup_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    popup_discount: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
+    popup_message: Mapped[str] = mapped_column(String(200), default='Get a discount on your order!', nullable=False)
     # ── Status ───────────────────────────────────────────────────
     # False until store is fully set up and ready for customers
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

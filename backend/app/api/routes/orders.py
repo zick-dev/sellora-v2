@@ -12,7 +12,7 @@ Seller routes (JWT required):
 """
 
 import random
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -72,7 +72,12 @@ async def create_order(
 
     # Calculate totals
     unit_price = float(product.price)
-    total_price = unit_price * payload.quantity
+    subtotal = unit_price * payload.quantity
+
+    # Apply discount if present (validate range 0-90%)
+    discount_percent = max(0, min(payload.discount_percent or 0, 90))
+    discount_amount = round(subtotal * discount_percent / 100)
+    total_price = subtotal - discount_amount
 
     # Generate unique order number
     order_number = generate_order_number()
@@ -89,6 +94,8 @@ async def create_order(
         quantity=payload.quantity,
         unit_price=unit_price,
         total_price=total_price,
+        discount_percent=discount_percent,
+        discount_code=payload.discount_code,
         order_number=order_number,
         status="pending",
     )

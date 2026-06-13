@@ -23,6 +23,9 @@ class StoreSetupRequest(BaseModel):
     store_name: str = Field(..., min_length=1, max_length=150)
     slug: str       = Field(..., min_length=1, max_length=100)
     description: str | None = Field(None, max_length=1000)
+    popup_enabled:  bool | None = None
+    popup_discount: int | None = Field(None, ge=1, le=90)
+    popup_message:  str | None = Field(None, max_length=200)
 
     @field_validator("slug")
     @classmethod
@@ -59,6 +62,9 @@ class StoreUpdateRequest(BaseModel):
     whatsapp:    str | None = Field(None, max_length=30)
     instagram:   str | None = Field(None, max_length=100)
     categories:  str | None = None
+    popup_enabled:  bool | None = None
+    popup_discount: int | None = Field(None, ge=1, le=90)
+    popup_message:  str | None = Field(None, max_length=200)
 
 
 # ── Response Schemas ──────────────────────────────────────────────
@@ -82,6 +88,9 @@ class StoreOut(BaseModel):
     whatsapp:    str | None
     instagram:   str | None
     categories:  str
+    popup_enabled:  bool
+    popup_discount: int
+    popup_message:  str
 
     # Computed field — full public URL for sharing
     @property

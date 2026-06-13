@@ -54,12 +54,14 @@ api.interceptors.response.use(
   },
   (error) => {
     // Log errors in development
-    if (process.env.NODE_ENV === "development") {
-      console.error(
-        `❌ ${error.response?.status} ${error.config?.url}`,
-        error.response?.data
-      );
-    }
+      if (process.env.NODE_ENV === "development" &&
+      error.response?.status !== 403 &&
+      error.response?.status !== 401) {
+    console.error(
+      `❌ ${error.response?.status} ${error.config?.url}`,
+      error.response?.data
+    );
+  }
 
     // If token is expired or invalid, clear storage and redirect to login
     if (error.response?.status === 401 && typeof window !== "undefined") {

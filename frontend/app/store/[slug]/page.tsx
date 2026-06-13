@@ -33,6 +33,9 @@ interface Store {
   instagram: string | null;
   categories: string;
   is_active: boolean;
+  popup_enabled?: boolean;
+  popup_discount?: number;
+  popup_message?: string;
 }
 
 interface Product {
@@ -79,6 +82,14 @@ export default function StorefrontPage() {
   const [success, setSuccess]       = useState(false);
   const [orderNums, setOrderNums]   = useState<string[]>([]);
 
+  // Discount popup state
+  const [showPopup, setShowPopup]               = useState(false);
+  const [popupPhone, setPopupPhone]             = useState('');
+  const [popupSubmitting, setPopupSubmitting]   = useState(false);
+  const [discountUnlocked, setDiscountUnlocked] = useState(false);
+  const [discountCode, setDiscountCode]         = useState('');
+
+  // Load store + products
   useEffect(() => {
     const load = async () => {
       try {
@@ -95,6 +106,49 @@ export default function StorefrontPage() {
     load();
   }, [slug]);
 
+  // Show discount popup after 12 seconds (if enabled and not dismissed before)
+  useEffect(() => {
+    if (!store?.popup_enabled) return;
+    const dismissed = sessionStorage.getItem('sellora_popup_dismissed_' + store.id);
+    const unlocked = sessionStorage.getItem('sellora_discount_' + store.id);
+    if (unlocked) {
+      setDiscountUnlocked(true);
+      setDiscountCode(unlocked);
+      return;
+    }
+    if (dismissed) return;
+    const timer = setTimeout(() => setShowPopup(true), 12000);
+    return () => clearTimeout(timer);
+  }, [store]);
+
+  function dismissPopup() {
+    setShowPopup(false);
+    if (store) sessionStorage.setItem('sellora_popup_dismissed_' + store.id, '1');
+  }
+
+  async function unlockDiscount() {
+    if (!popupPhone.trim() || popupPhone.trim().length < 10 || !store) return;
+    setPopupSubmitting(true);
+    const code = 'SAVE' + (store.popup_discount || 10);
+    try {
+      await api.post('/api/abandoned/', {
+        store_id:       store.id,
+        product_id:     null,
+        customer_name:  'Popup Lead',
+        customer_phone: popupPhone.trim(),
+        source:         'popup',
+      });
+    } catch {
+      // Fail silently — still give them the discount so UX never breaks
+    } finally {
+      setDiscountCode(code);
+      setDiscountUnlocked(true);
+      sessionStorage.setItem('sellora_discount_' + store.id, code);
+      setShowPopup(false);
+      setPopupSubmitting(false);
+    }
+  }
+
   const themeColor = store?.theme_color || C.purple;
 
   const storeCategories: string[] = (() => {
@@ -108,7 +162,9 @@ export default function StorefrontPage() {
     ? products
     : products.filter(p => p.category === activeCategory);
 
-  const cartTotal = cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+  const discountAmount = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
+  const cartTotal = cartSubtotal - discountAmount;
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   function addToCart(product: Product) {
@@ -149,11 +205,13 @@ export default function StorefrontPage() {
       const nums: string[] = [];
       for (const item of cart) {
         const res = await api.post('/api/orders/', {
-          product_id:     item.product.id,
-          customer_name:  checkoutForm.name,
-          customer_phone: checkoutForm.phone,
-          customer_note:  checkoutForm.note || undefined,
-          quantity:       item.quantity,
+          product_id:       item.product.id,
+          customer_name:    checkoutForm.name,
+          customer_phone:   checkoutForm.phone,
+          customer_note:    checkoutForm.note || undefined,
+          quantity:         item.quantity,
+          discount_percent: discountUnlocked && store ? (store.popup_discount || 0) : 0,
+          discount_code:    discountUnlocked ? discountCode : undefined,
         });
         nums.push(res.data.order_number || res.data.id.slice(0, 8).toUpperCase());
       }
@@ -396,6 +454,12 @@ export default function StorefrontPage() {
                 </div>
               ))}
             </div>
+            {discountAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', marginBottom: 4 }}>
+                <span style={{ color: C.success, fontSize: 13 }}>{'Discount (' + discountCode + ')'}</span>
+                <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-N' + discountAmount.toLocaleString()}</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', borderTop: '1px solid ' + C.cardBorder, borderBottom: '1px solid ' + C.cardBorder, marginBottom: 16 }}>
               <span style={{ color: C.subtext, fontSize: 15 }}>Total</span>
               <span style={{ color: C.text, fontSize: 18, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
@@ -428,6 +492,12 @@ export default function StorefrontPage() {
                   <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{'N' + (Number(item.product.price) * item.quantity).toLocaleString()}</span>
                 </div>
               ))}
+              {discountAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: C.success, fontSize: 13 }}>{'Discount (' + discountCode + ')'}</span>
+                  <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-N' + discountAmount.toLocaleString()}</span>
+                </div>
+              )}
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Total</span>
                 <span style={{ color: themeColor, fontSize: 14, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
@@ -468,6 +538,49 @@ export default function StorefrontPage() {
               )}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Discount Popup ─────────────────────────────────────── */}
+      {showPopup && !discountUnlocked && store && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={dismissPopup} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: C.card, borderRadius: '20px 20px 0 0', border: '1px solid rgba(124,58,237,0.3)', padding: '28px 24px 36px', textAlign: 'center' }}>
+            <button onClick={dismissPopup} style={{ position: 'absolute', top: 14, right: 14, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 16 }}>×</button>
+            <div style={{ fontSize: 44, marginBottom: 10 }}>🎁</div>
+            <h3 style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 6 }}>
+              {'Get ' + (store.popup_discount || 10) + '% OFF!'}
+            </h3>
+            <p style={{ color: C.subtext, fontSize: 14, marginBottom: 20, lineHeight: 1.5 }}>
+              {store.popup_message || 'Enter your WhatsApp number to unlock this discount'}
+            </p>
+            <input
+              type="tel"
+              value={popupPhone}
+              onChange={e => setPopupPhone(e.target.value)}
+              placeholder="Your WhatsApp number"
+              style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '14px 16px', color: C.text, fontSize: 15, outline: 'none', boxSizing: 'border-box', marginBottom: 12, textAlign: 'center' }}
+            />
+            <button
+              onClick={unlockDiscount}
+              disabled={popupSubmitting || popupPhone.trim().length < 10}
+              style={{ width: '100%', padding: '14px 0', background: popupSubmitting || popupPhone.trim().length < 10 ? 'rgba(124,58,237,0.3)' : 'linear-gradient(90deg, ' + themeColor + ', #ec4899)', border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 800, cursor: popupSubmitting || popupPhone.trim().length < 10 ? 'not-allowed' : 'pointer' }}>
+              {popupSubmitting ? 'Unlocking...' : '🔓 Unlock My Discount'}
+            </button>
+            <p style={{ color: C.muted, fontSize: 11, marginTop: 12 }}>
+              The seller may contact you on WhatsApp with offers
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Discount unlocked banner ───────────────────────────── */}
+      {discountUnlocked && store && (
+        <div style={{ position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 45, background: 'rgba(16,185,129,0.95)', borderRadius: 10, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}>
+          <span style={{ fontSize: 14 }}>🎉</span>
+          <span style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>
+            {(store.popup_discount || 10) + '% discount active — code ' + discountCode}
+          </span>
         </div>
       )}
 

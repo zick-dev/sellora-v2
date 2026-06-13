@@ -56,25 +56,29 @@ async def track_interest(
     Free sellers just can't VIEW them until they upgrade. When they
     upgrade, their leads are already waiting — a nice incentive!
     """
-    result = await db.execute(
-        select(Product).where(Product.id == payload.product_id)
-    )
-    product = result.scalar_one_or_none()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
+    # Verify product exists (popup leads have no product yet)
+    product = None
+    if payload.product_id:
+        result = await db.execute(
+            select(Product).where(Product.id == payload.product_id)
+        )
+        product = result.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
 
     interest = AbandonedInterest(
-        store_id=payload.store_id,
-        product_id=payload.product_id,
-        customer_name=payload.customer_name,
-        customer_phone=payload.customer_phone,
-    )
+    store_id=payload.store_id,
+    product_id=payload.product_id,
+    customer_name=payload.customer_name,
+    customer_phone=payload.customer_phone,
+    source=payload.source or 'checkout',
+        )
     db.add(interest)
     await db.flush()
     await db.refresh(interest)
 
     out = AbandonedOut.model_validate(interest)
-    out.product_name = product.name
+    out.product_name = product.name if product else None
     return out
 
 

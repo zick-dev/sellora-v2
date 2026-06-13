@@ -35,7 +35,7 @@ class AbandonedInterest(Base):
     product_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("products.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,  # Can be null for popup leads without a specific product
     )
 
     # ── Customer Info (may be partial if they didn't fill form) ──
@@ -45,6 +45,9 @@ class AbandonedInterest(Base):
     # ── Status ───────────────────────────────────────────────────
     # True when customer eventually placed an order
     is_converted: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Where the lead came from: 'checkout' or 'popup'
+    source: Mapped[str] = mapped_column(String(20), default='checkout', nullable=False)
 
     # True when seller has sent a follow-up WhatsApp message
     follow_up_sent: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -42,6 +42,10 @@ class Order(Base):
         nullable=False,
     )
 
+        # Discount applied via popup code
+    discount_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    discount_code: Mapped[str | None] = mapped_column(String(30), nullable=True)
+
     # ── Customer Details (entered by customer on storefront) ─────
     customer_name: Mapped[str] = mapped_column(String(150), nullable=False)
     customer_phone: Mapped[str] = mapped_column(String(30), nullable=False)

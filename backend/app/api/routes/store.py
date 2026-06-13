@@ -167,14 +167,28 @@ async def update_my_store(
         )
 
     # Only update fields that were actually sent
-    if payload.store_name  is not None: store.store_name  = payload.store_name
-    if payload.description is not None: store.description = payload.description
-    if payload.logo_url    is not None: store.logo_url    = payload.logo_url
-    if payload.banner_url  is not None: store.banner_url  = payload.banner_url
-    if payload.theme_color is not None: store.theme_color = payload.theme_color
-    if payload.whatsapp    is not None: store.whatsapp    = payload.whatsapp
-    if payload.instagram   is not None: store.instagram   = payload.instagram
-    if payload.categories  is not None: store.categories  = payload.categories
+    if payload.store_name is not None:
+        store.store_name = payload.store_name
+    if payload.description is not None:
+        store.description = payload.description
+    if payload.logo_url is not None:
+        store.logo_url = payload.logo_url
+    if payload.banner_url is not None:
+        store.banner_url = payload.banner_url
+    if payload.theme_color is not None:
+        store.theme_color = payload.theme_color
+    if payload.whatsapp is not None:
+        store.whatsapp = payload.whatsapp
+    if payload.instagram is not None:
+        store.instagram = payload.instagram
+    if payload.categories is not None:
+        store.categories = payload.categories
+    if payload.popup_enabled is not None:
+        store.popup_enabled = payload.popup_enabled
+    if payload.popup_discount is not None:
+        store.popup_discount = payload.popup_discount
+    if payload.popup_message is not None:
+        store.popup_message = payload.popup_message
 
     await db.flush()
     await db.refresh(store)

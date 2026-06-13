@@ -19,6 +19,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timedelta, timezone
 
 from app.core.database import get_db
 from app.core.security import (
@@ -42,6 +43,8 @@ from app.schemas.auth import (
 )
 from app.services.email_service import send_password_reset_email
 from app.services.google_auth_service import verify_google_token
+
+
 
 # Rate limiter — limits requests per IP address
 limiter = Limiter(key_func=get_remote_address)
@@ -90,7 +93,10 @@ async def signup(
         email=payload.email,
         password_hash=hash_password(payload.password),
         auth_provider="email",
+        plan="pro",
+        plan_expires_at=datetime.now(timezone.utc) + timedelta(days=21),
         is_verified=False,
+
     )
     db.add(user)
     await db.flush()
@@ -194,6 +200,8 @@ async def google_auth(
                 google_id=google_user["id"],
                 avatar_url=google_user.get("picture"),
                 auth_provider="google",
+                plan="pro",
+                plan_expires_at=datetime.now(timezone.utc) + timedelta(days=21),
                 is_verified=google_user.get("email_verified", False),
             )
             db.add(user)

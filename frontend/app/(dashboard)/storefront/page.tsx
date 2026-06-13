@@ -42,6 +42,9 @@ interface Store {
   categories: string;
   is_active: boolean;
   created_at: string;
+  popup_enabled: boolean;
+  popup_discount: number;
+  popup_message: string;
 }
 
 export default function StorefrontPage() {
@@ -51,18 +54,21 @@ export default function StorefrontPage() {
   const [copied, setCopied]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [error, setError]         = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup'>('general');
   const [catInput, setCatInput]   = useState('');
 
   const [form, setForm] = useState({
-    store_name:  '',
-    description: '',
-    logo_url:    '',
-    banner_url:  '',
-    theme_color: '#7c3aed',
-    whatsapp:    '',
-    instagram:   '',
-    categories:  '[]',
+    store_name:     '',
+    description:    '',
+    logo_url:       '',
+    banner_url:     '',
+    theme_color:    '#7c3aed',
+    whatsapp:       '',
+    instagram:      '',
+    categories:     '[]',
+    popup_enabled:  false,
+    popup_discount: 10,
+    popup_message:  'Get a discount on your order!',
   });
 
   const categories: string[] = (() => {
@@ -75,14 +81,17 @@ export default function StorefrontPage() {
         const res = await api.get('/api/store/me');
         setStore(res.data);
         setForm({
-          store_name:  res.data.store_name || '',
-          description: res.data.description || '',
-          logo_url:    res.data.logo_url || '',
-          banner_url:  res.data.banner_url || '',
-          theme_color: res.data.theme_color || '#7c3aed',
-          whatsapp:    res.data.whatsapp || '',
-          instagram:   res.data.instagram || '',
-          categories:  res.data.categories || '[]',
+          store_name:     res.data.store_name || '',
+          description:    res.data.description || '',
+          logo_url:       res.data.logo_url || '',
+          banner_url:     res.data.banner_url || '',
+          theme_color:    res.data.theme_color || '#7c3aed',
+          whatsapp:       res.data.whatsapp || '',
+          instagram:      res.data.instagram || '',
+          categories:     res.data.categories || '[]',
+          popup_enabled:  res.data.popup_enabled ?? false,
+          popup_discount: res.data.popup_discount ?? 10,
+          popup_message:  res.data.popup_message || 'Get a discount on your order!',
         });
       } finally {
         setLoading(false);
@@ -97,14 +106,17 @@ export default function StorefrontPage() {
     setError('');
     try {
       const res = await api.put('/api/store/me', {
-        store_name:  form.store_name,
-        description: form.description || null,
-        logo_url:    form.logo_url || null,
-        banner_url:  form.banner_url || null,
-        theme_color: form.theme_color,
-        whatsapp:    form.whatsapp || null,
-        instagram:   form.instagram || null,
-        categories:  form.categories,
+        store_name:     form.store_name,
+        description:    form.description || null,
+        logo_url:       form.logo_url || null,
+        banner_url:     form.banner_url || null,
+        theme_color:    form.theme_color,
+        whatsapp:       form.whatsapp || null,
+        instagram:      form.instagram || null,
+        categories:     form.categories,
+        popup_enabled:  form.popup_enabled,
+        popup_discount: form.popup_discount,
+        popup_message:  form.popup_message,
       });
       setStore(res.data);
       setSaved(true);
@@ -157,6 +169,7 @@ export default function StorefrontPage() {
     { key: 'appearance', label: 'Appearance', icon: '🎨' },
     { key: 'contact',    label: 'Contact',    icon: '📱' },
     { key: 'categories', label: 'Categories', icon: '🏷️' },
+    { key: 'popup',      label: 'Popup',      icon: '🎁' },
   ];
 
   if (loading) return (
@@ -197,9 +210,9 @@ export default function StorefrontPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: C.card, borderRadius: 12, padding: 4, border: '1px solid ' + C.cardBorder }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: C.card, borderRadius: 12, padding: 4, border: '1px solid ' + C.cardBorder, flexWrap: 'wrap' }}>
         {tabs.map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', background: activeTab === tab.key ? C.purple : 'transparent', color: activeTab === tab.key ? C.text : C.muted, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ flex: '1 1 80px', padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', background: activeTab === tab.key ? C.purple : 'transparent', color: activeTab === tab.key ? C.text : C.muted, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
             <span style={{ marginRight: 4 }}>{tab.icon}</span>
             {tab.label}
           </button>
@@ -373,6 +386,82 @@ export default function StorefrontPage() {
             <p style={{ color: C.muted, fontSize: 12, marginTop: 16 }}>
               {categories.length + ' categor' + (categories.length !== 1 ? 'ies' : 'y') + ' — shown as filter buttons on your store'}
             </p>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'popup' && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Discount Popup</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 20 }}>
+            Capture leads by offering a discount. Customers enter their WhatsApp number to unlock it — and you get their contact for follow-up.
+          </p>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: C.input, borderRadius: 12, marginBottom: 16 }}>
+            <div>
+              <p style={{ color: C.text, fontSize: 14, fontWeight: 600 }}>Enable popup</p>
+              <p style={{ color: C.muted, fontSize: 12 }}>Show the discount popup to customers</p>
+            </div>
+            <button
+              onClick={() => setForm({ ...form, popup_enabled: !form.popup_enabled })}
+              style={{
+                width: 48, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer',
+                background: form.popup_enabled ? C.success : 'rgba(255,255,255,0.15)',
+                position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: 3, left: form.popup_enabled ? 23 : 3,
+                width: 22, height: 22, borderRadius: '50%', background: 'white',
+                transition: 'left 0.2s',
+              }} />
+            </button>
+          </div>
+
+          {form.popup_enabled && (
+            <>
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Discount Percentage</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[5, 10, 15, 20].map(pct => (
+                    <button
+                      key={pct}
+                      onClick={() => setForm({ ...form, popup_discount: pct })}
+                      style={{
+                        flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
+                        border: form.popup_discount === pct ? '2px solid ' + C.purple : '1px solid ' + C.inputBorder,
+                        background: form.popup_discount === pct ? 'rgba(124,58,237,0.1)' : C.input,
+                        color: form.popup_discount === pct ? C.purple : C.subtext,
+                        fontSize: 14, fontWeight: 700,
+                      }}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Popup Message</label>
+                <textarea
+                  value={form.popup_message}
+                  onChange={e => setForm({ ...form, popup_message: e.target.value })}
+                  placeholder="Get 10% off your first order!"
+                  rows={2}
+                  maxLength={200}
+                  style={{ ...inputBase, resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
+                <p style={{ color: C.subtext, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Preview</p>
+                <div style={{ fontSize: 32, marginBottom: 6 }}>🎁</div>
+                <p style={{ color: C.text, fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
+                  {'Get ' + form.popup_discount + '% OFF!'}
+                </p>
+                <p style={{ color: C.muted, fontSize: 13 }}>{form.popup_message}</p>
+              </div>
+            </>
           )}
         </div>
       )}

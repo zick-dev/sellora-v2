@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import ProLock from '@/components/ProLock';
 
 const C = {
   bg:         '#0a0a0f',
@@ -43,19 +44,24 @@ export default function LeadsPage() {
   const [loading, setLoading]   = useState(true);
   const [filter, setFilter]     = useState<'all' | 'new' | 'followed'>('all');
   const [updating, setUpdating] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const storeRes = await api.get('/api/store/me');
-        const leadsRes = await api.get(`/api/abandoned/${storeRes.data.id}`);
-        setLeads(leadsRes.data);
-      } finally {
-        setLoading(false);
+  const load = async () => {
+    try {
+      const storeRes = await api.get('/api/store/me');
+      const leadsRes = await api.get(`/api/abandoned/${storeRes.data.id}`);
+      setLeads(leadsRes.data);
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setLocked(true);
       }
-    };
-    load();
-  }, []);
+    } finally {
+      setLoading(false);
+    }
+  };
+  load();
+}, []);
 
   async function markFollowUp(id: string) {
     setUpdating(id);
@@ -116,6 +122,19 @@ export default function LeadsPage() {
 
   return (
     <div style={{ padding: '0 0 80px' }}>
+
+  if (locked) return (
+  <ProLock
+    title="Lead Recovery is a Pro feature"
+    description="See every customer who showed interest but didn't complete checkout — and win them back on WhatsApp."
+    features={[
+      'View captured leads with phone numbers',
+      'Track discount popup signups',
+      'One-tap WhatsApp follow-up',
+      'Never lose a potential sale again',
+    ]}
+  />
+);
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>

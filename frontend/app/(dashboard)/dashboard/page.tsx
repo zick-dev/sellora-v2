@@ -74,14 +74,14 @@ export default function DashboardOverviewPage() {
     if (!store?.id) { setLoading(false); return; }
     const load = async () => {
       try {
-        const [ordersRes, leadsRes, productsRes] = await Promise.all([
-          api.get('/api/orders/' + store.id),
-          api.get('/api/abandoned/' + store.id),
-          api.get('/api/products/store/' + store.id),
-        ]);
-        setOrders(ordersRes.data);
-        setLeads(leadsRes.data);
-        setProducts(productsRes.data);
+              const [ordersRes, leadsRes, productsRes] = await Promise.allSettled([
+        api.get('/api/orders/' + store.id),
+        api.get('/api/abandoned/' + store.id),
+        api.get('/api/products/store/' + store.id),
+      ]);
+      if (ordersRes.status === 'fulfilled')   setOrders(ordersRes.value.data);
+      if (leadsRes.status === 'fulfilled')    setLeads(leadsRes.value.data);
+      if (productsRes.status === 'fulfilled') setProducts(productsRes.value.data);
       } catch { /* silently fail */ }
       finally { setLoading(false); }
     };

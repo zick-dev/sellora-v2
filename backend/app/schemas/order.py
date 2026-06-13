@@ -15,6 +15,8 @@ class OrderCreate(BaseModel):
     customer_phone: str
     customer_note: str | None = None
     quantity: int = 1
+    discount_percent: int = 0
+    discount_code: str | None = None
 
 
 class OrderStatusUpdate(BaseModel):
@@ -33,6 +35,8 @@ class OrderOut(BaseModel):
     quantity: int
     unit_price: float
     total_price: float
+    discount_percent: int
+    discount_code: str | None
     order_number: str | None
     status: str
     created_at: datetime
