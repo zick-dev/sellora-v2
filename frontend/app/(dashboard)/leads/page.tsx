@@ -29,6 +29,7 @@ interface Lead {
   follow_up_sent: boolean;
   created_at: string;
   product_name: string | null;
+  source: string;
 }
 
 const AVATAR_COLORS = [
@@ -120,21 +121,22 @@ export default function LeadsPage() {
     </div>
   );
 
+  if (locked) return (
+    <ProLock
+      title="Lead Recovery is a Pro feature"
+      description="See every customer who showed interest but didn't complete checkout — and win them back on WhatsApp."
+      features={[
+        'View captured leads with phone numbers',
+        'Track discount popup signups',
+        'One-tap WhatsApp follow-up',
+        'Never lose a potential sale again',
+      ]}
+    />
+  );
+
   return (
     <div style={{ padding: '0 0 80px' }}>
 
-  if (locked) return (
-  <ProLock
-    title="Lead Recovery is a Pro feature"
-    description="See every customer who showed interest but didn't complete checkout — and win them back on WhatsApp."
-    features={[
-      'View captured leads with phone numbers',
-      'Track discount popup signups',
-      'One-tap WhatsApp follow-up',
-      'Never lose a potential sale again',
-    ]}
-  />
-);
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
@@ -321,6 +323,23 @@ export default function LeadsPage() {
                       </span>
                     </div>
                   )}
+
+                  {/* Source badge */}
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    background: lead.source === 'popup' ? 'rgba(236,72,153,0.08)' : 'rgba(16,185,129,0.08)',
+                    border: '1px solid ' + (lead.source === 'popup' ? 'rgba(236,72,153,0.18)' : 'rgba(16,185,129,0.18)'),
+                    borderRadius: 6, padding: '3px 8px',
+                    marginBottom: 10, marginLeft: lead.product_name ? 6 : 0,
+                  }}>
+                    <span style={{ fontSize: 10 }}>{lead.source === 'popup' ? '🎁' : '🛒'}</span>
+                    <span style={{
+                      color: lead.source === 'popup' ? C.pink : C.success,
+                      fontSize: 11, fontWeight: 600,
+                    }}>
+                      {lead.source === 'popup' ? 'Discount Popup' : 'Checkout'}
+                    </span>
+                  </div>
 
                   {/* Status + actions */}
                   <div style={{
