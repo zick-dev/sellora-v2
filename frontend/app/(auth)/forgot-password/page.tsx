@@ -94,7 +94,7 @@ function ForgotPasswordView({
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/auth/forgot-password', {
+      const res = await fetch('https://sellora-v2-production.up.railway.app/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -282,7 +282,7 @@ function CheckEmailView({ email }: { email: string }) {
     if (!canResend) return;
     setResending(true);
     try {
-      await fetch('http://localhost:8000/api/auth/forgot-password', {
+      await fetch('https://sellora-v2-production.up.railway.app/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
