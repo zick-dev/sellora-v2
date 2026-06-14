@@ -139,3 +139,8 @@ async def root():
         "environment": settings.APP_ENV,
         "docs": "/docs" if settings.DEBUG else "disabled",
     }
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """Dedicated health check for Railway deployment."""
+    return {"status": "ok"}
