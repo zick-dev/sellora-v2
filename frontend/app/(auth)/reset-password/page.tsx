@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -491,7 +491,7 @@ function ResetForm({ token }: { token: string }) {
 }
 
 // ─── Page root ────────────────────────────────────────────────────────────────
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -525,5 +525,13 @@ export default function ResetPasswordPage() {
         </footer>
       </main>
     </>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0d0d14' }} />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
