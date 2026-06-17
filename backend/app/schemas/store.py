@@ -48,7 +48,21 @@ class StoreSetupRequest(BaseModel):
     def validate_store_name(cls, v: str) -> str:
         return v.strip()
 
+    """
+    Store customization settings.
 
+    These settings allow merchants to control the appearance
+    and behavior of their storefront without requiring code
+    changes or theme modifications.
+
+    Includes:
+
+    - Branding configuration
+    - Theme selection
+    - Currency settings
+    - Storefront feature toggles
+    - Homepage section visibility
+    """
 class StoreUpdateRequest(BaseModel):
     """
     Data for updating store details from Store Settings page.
@@ -65,10 +79,79 @@ class StoreUpdateRequest(BaseModel):
     popup_enabled:  bool | None = None
     popup_discount: int | None = Field(None, ge=1, le=90)
     popup_message:  str | None = Field(None, max_length=200)
+    # ── Store Branding ──────────────────────────────────────────────
+
+    primary_color: str | None = Field(
+        None,
+        max_length=20,
+        description="Primary storefront color"
+    )
+
+    secondary_color: str | None = Field(
+        None,
+        max_length=20,
+        description="Secondary storefront color"
+    )
+
+    accent_color: str | None = Field(
+        None,
+        max_length=20,
+        description="CTA and highlight color"
+    )
+
+    theme: str | None = Field(
+        None,
+        max_length=50,
+        description="Storefront theme preset"
+    )
+
+    base_currency: str | None = Field(
+        None,
+        max_length=10,
+        description="Store's default currency"
+    )
+
+    # ── Storefront Features ─────────────────────────────────────────
+
+    show_wishlist: bool | None = None
+
+    show_newsletter: bool | None = None
+
+    show_testimonials: bool | None = None
+
+    show_recently_viewed: bool | None = None
+
+    show_currency_converter: bool | None = None
+
+    show_brand_showcase: bool | None = None
+
+    # ── Homepage Sections ───────────────────────────────────────────
+
+    hero_enabled: bool | None = None
+
+    featured_categories_enabled: bool | None = None
+
+    trending_products_enabled: bool | None = None
+
+    best_sellers_enabled: bool | None = None
+
+    promo_banner_enabled: bool | None = None
 
 
 # ── Response Schemas ──────────────────────────────────────────────
+    """
+    Complete storefront configuration returned to the frontend.
 
+    Used by:
+
+    - Dashboard Settings
+    - Merchant Storefront Preview
+    - Public Storefront Rendering
+
+    Provides all branding, appearance, currency,
+    and feature-toggle settings required to build
+    a dynamic storefront experience.
+    """
 class StoreOut(BaseModel):
     """
     Store data returned to the frontend.
@@ -91,6 +174,43 @@ class StoreOut(BaseModel):
     popup_enabled:  bool
     popup_discount: int
     popup_message:  str
+    # ── Store Branding ──────────────────────────────────────────────
+
+    primary_color: str
+
+    secondary_color: str
+
+    accent_color: str
+
+    theme: str
+
+    base_currency: str
+
+    # ── Storefront Features ─────────────────────────────────────────
+
+    show_wishlist: bool
+
+    show_newsletter: bool
+
+    show_testimonials: bool
+
+    show_recently_viewed: bool
+
+    show_currency_converter: bool
+
+    show_brand_showcase: bool
+
+    # ── Homepage Sections ───────────────────────────────────────────
+
+    hero_enabled: bool
+
+    featured_categories_enabled: bool
+
+    trending_products_enabled: bool
+
+    best_sellers_enabled: bool
+
+    promo_banner_enabled: bool
 
     # Computed field — full public URL for sharing
     @property

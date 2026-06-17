@@ -177,6 +177,16 @@ async def update_my_store(
         store.banner_url = payload.banner_url
     if payload.theme_color is not None:
         store.theme_color = payload.theme_color
+    if payload.primary_color is not None:
+        store.primary_color = payload.primary_color
+    if payload.secondary_color is not None:
+        store.secondary_color = payload.secondary_color
+    if payload.accent_color is not None:
+        store.accent_color = payload.accent_color
+    if payload.theme is not None:
+        store.theme = payload.theme
+    if payload.base_currency is not None:
+        store.base_currency = payload.base_currency
     if payload.whatsapp is not None:
         store.whatsapp = payload.whatsapp
     if payload.instagram is not None:
@@ -190,7 +200,11 @@ async def update_my_store(
     if payload.popup_message is not None:
         store.popup_message = payload.popup_message
 
-    await db.flush()
+    # Persist all store updates to the database.
+    await db.commit()
+
+    # Refresh instance with latest database values.
     await db.refresh(store)
+
 
     return store

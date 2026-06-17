@@ -9,14 +9,14 @@ storefront, and the slug is the unique URL customers visit.
 
 Relationships:
 - One store → One user (owner)
-- One store → Many products (added later)
-- One store → Many orders (added later)
+- One store → Many products
+- One store → Many orders
 """
 
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, Integer
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,7 +28,7 @@ class Store(Base):
     Represents a seller's storefront on Sellora.
 
     Created once during onboarding. The slug becomes the
-    public URL: sellora.io/<slug>
+    public URL: <domain>/store/<slug>
     """
 
     __tablename__ = "stores"
@@ -46,59 +46,112 @@ class Store(Base):
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,    # Enforces one store per user at DB level
+        unique=True,  # Enforces one store per user at DB level
         nullable=False,
         index=True,
     )
 
     # ── Store Identity ───────────────────────────────────────────
-    # Display name shown on the storefront and dashboard
+    # Display name shown on the storefront header and dashboard
     store_name: Mapped[str] = mapped_column(String(150), nullable=False)
 
-    # URL-safe unique identifier: sellora.io/<slug>
-    # Lowercase, hyphens only — generated from store_name on frontend
+    # URL-safe unique identifier: <domain>/store/<slug>
+    # Lowercase, hyphens only — generated from store_name on the frontend
     slug: Mapped[str] = mapped_column(
         String(100),
         unique=True,
         nullable=False,
         index=True,
-        comment="URL slug: sellora.io/<slug>"
+        comment="URL slug: <domain>/store/<slug>",
     )
 
     # Optional seller pitch shown on the storefront header
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Store logo / banner image URL (uploaded later in settings)
+    # Store logo (square) and banner (wide hero) image URLs.
+    # URL-only for now; Cloudinary upload replaces these inputs in update #3.
     logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    banner_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
-                    # Store banner — wide hero image shown at top of storefront
-    banner_url: Mapped[str | None] = mapped_column(
-        String(500), nullable=True
-    )
-
-    # Primary theme color for the storefront buttons and accents
+    # ── Branding ─────────────────────────────────────────────────
+    # CANONICAL ACCENT: theme_color is the single merchant-set accent the
+    # storefront and settings page actually read today (buttons, prices,
+    # highlights). Kept as the source of truth deliberately — other backend
+    # code may reference it, so we don't rename it blind. The premium neutral
+    # palette (backgrounds, text, borders) is fixed in the frontend, NOT
+    # stored per-store, which is how most premium DTC stores are built.
     theme_color: Mapped[str] = mapped_column(
-        String(20), default='#7c3aed', nullable=False
+        String(20),
+        default="#7c3aed",
+        nullable=False,
+        comment="Canonical merchant accent color used by the storefront UI",
     )
 
-    # Seller WhatsApp number for customer contact
-    whatsapp: Mapped[str | None] = mapped_column(
-        String(30), nullable=True
+    # Extended palette — reserved for the richer design system / dark-mode
+    # work (update #4). NOT yet wired into the storefront; documented so it
+    # isn't mistaken for the live accent. Safe to leave at defaults for now.
+    primary_color: Mapped[str] = mapped_column(
+        String(20), default="#0F172A", nullable=False
+    )
+    secondary_color: Mapped[str] = mapped_column(
+        String(20), default="#FFFFFF", nullable=False
+    )
+    accent_color: Mapped[str] = mapped_column(
+        String(20), default="#00A87A", nullable=False
+    )
+    theme: Mapped[str] = mapped_column(
+        String(50), default="minimal", nullable=False
     )
 
-    # Seller Instagram handle e.g. @luxethreads
-    instagram: Mapped[str | None] = mapped_column(
-        String(100), nullable=True
+    # ── Currency ─────────────────────────────────────────────────
+    # The single source of truth for pricing. Under pay-on-delivery this is
+    # also the amount the buyer physically hands over, so it is ALWAYS the
+    # binding currency at cart/checkout/confirmation. Any buyer-side display
+    # toggle (see show_currency_converter) only shows approximate estimates.
+    base_currency: Mapped[str] = mapped_column(
+        String(10),
+        default="USD",
+        nullable=False,
+        comment="Merchant's pricing & settlement currency (binding under POD)",
     )
+
+    # ── Storefront Feature Toggles ───────────────────────────────
+    # Per-store switches for optional storefront sections. A merchant can
+    # hide any of these so empty/irrelevant sections never render.
+    show_wishlist: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_newsletter: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_testimonials: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_recently_viewed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_currency_converter: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_brand_showcase: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # ── Homepage Section Toggles ─────────────────────────────────
+    hero_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    featured_categories_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    trending_products_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    best_sellers_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    promo_banner_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # ── Future AI Features ───────────────────────────────────────
+    ai_assistant_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    personalization_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # ── Contact / Social ─────────────────────────────────────────
+    # Seller WhatsApp number for direct customer contact
+    whatsapp: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    # Seller Instagram handle e.g. luxethreads (stored without the @)
+    instagram: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # JSON array of category names e.g. '["Fashion","Electronics"]'
-    categories: Mapped[str] = mapped_column(
-        Text, default='[]', nullable=False
-    )
-    # Discount popup settings (lead capture bait)
+    categories: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+
+    # ── Discount Popup (lead capture) ────────────────────────────
     popup_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     popup_discount: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
-    popup_message: Mapped[str] = mapped_column(String(200), default='Get a discount on your order!', nullable=False)
+    popup_message: Mapped[str] = mapped_column(
+        String(200), default="Get a discount on your order!", nullable=False
+    )
+
     # ── Status ───────────────────────────────────────────────────
     # False until store is fully set up and ready for customers
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -108,7 +161,6 @@ class Store(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
     )
-
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
