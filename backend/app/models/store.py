@@ -16,7 +16,7 @@ Relationships:
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -151,6 +151,10 @@ class Store(Base):
     popup_message: Mapped[str] = mapped_column(
         String(200), default="Get a discount on your order!", nullable=False
     )
+
+        # Delivery fee settings
+    delivery_fee: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    free_delivery_above: Mapped[float] = mapped_column(Numeric(12, 2), default=10000, nullable=False)
 
     # ── Status ───────────────────────────────────────────────────
     # False until store is fully set up and ready for customers

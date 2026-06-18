@@ -11,7 +11,7 @@ Flow:
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Integer, Numeric, String, ForeignKey
+from sqlalchemy import DateTime, Integer, Numeric, String, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -45,6 +45,10 @@ class Order(Base):
         # Discount applied via popup code
     discount_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     discount_code: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    
+    # Delivery details
+    delivery_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    delivery_fee_applied: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
 
     # ── Customer Details (entered by customer on storefront) ─────
     customer_name: Mapped[str] = mapped_column(String(150), nullable=False)

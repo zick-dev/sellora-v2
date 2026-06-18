@@ -54,7 +54,7 @@ export default function StorefrontPage() {
   const [copied, setCopied]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [error, setError]         = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup' | 'delivery'>('general');
   const [catInput, setCatInput]   = useState('');
 
   const [form, setForm] = useState({
@@ -69,6 +69,8 @@ export default function StorefrontPage() {
     popup_enabled:  false,
     popup_discount: 10,
     popup_message:  'Get a discount on your order!',
+    delivery_fee:          0,
+    free_delivery_above:   10000,
   });
 
   const categories: string[] = (() => {
@@ -92,6 +94,8 @@ export default function StorefrontPage() {
           popup_enabled:  res.data.popup_enabled ?? false,
           popup_discount: res.data.popup_discount ?? 10,
           popup_message:  res.data.popup_message || 'Get a discount on your order!',
+          delivery_fee:          res.data.delivery_fee ?? 0,
+          free_delivery_above:   res.data.free_delivery_above ?? 10000,
         });
       } finally {
         setLoading(false);
@@ -117,6 +121,8 @@ export default function StorefrontPage() {
         popup_enabled:  form.popup_enabled,
         popup_discount: form.popup_discount,
         popup_message:  form.popup_message,
+        delivery_fee:          form.delivery_fee ?? 0,
+        free_delivery_above:   form.free_delivery_above ?? 10000,
       });
       setStore(res.data);
       setSaved(true);
@@ -170,6 +176,7 @@ export default function StorefrontPage() {
     { key: 'contact',    label: 'Contact',    icon: '📱' },
     { key: 'categories', label: 'Categories', icon: '🏷️' },
     { key: 'popup',      label: 'Popup',      icon: '🎁' },
+    { key: 'delivery', label: 'Delivery', icon: '🚚' },
   ];
 
   if (loading) return (
@@ -465,6 +472,61 @@ export default function StorefrontPage() {
           )}
         </div>
       )}
+      
+    {activeTab === 'delivery' && (
+  <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+    <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Delivery Fee</h2>
+    <p style={{ color: C.muted, fontSize: 13, marginBottom: 20 }}>
+      Set a delivery fee for orders below your free delivery threshold. Customers pay this on delivery.
+    </p>
+
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div>
+        <label style={labelStyle}>Delivery Fee Amount</label>
+        <div style={{ position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>₦</span>
+          <input
+            type="number"
+            min="0"
+            value={form.delivery_fee}
+            onChange={e => setForm({ ...form, delivery_fee: Number(e.target.value) })}
+            placeholder="e.g. 500"
+            style={{ ...inputBase, paddingLeft: 32 }}
+          />
+        </div>
+        <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Set to 0 for always-free delivery</p>
+      </div>
+
+      <div>
+        <label style={labelStyle}>Free Delivery Above</label>
+        <div style={{ position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>₦</span>
+          <input
+            type="number"
+            min="0"
+            value={form.free_delivery_above}
+            onChange={e => setForm({ ...form, free_delivery_above: Number(e.target.value) })}
+            placeholder="e.g. 10000"
+            style={{ ...inputBase, paddingLeft: 32 }}
+          />
+        </div>
+        <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Orders above this amount get free delivery</p>
+      </div>
+
+          {form.delivery_fee > 0 && (
+            <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 12, padding: 16 }}>
+              <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Preview</p>
+              <p style={{ color: C.muted, fontSize: 13 }}>
+                Orders below <span style={{ color: C.text, fontWeight: 700 }}>{'₦' + Number(form.free_delivery_above).toLocaleString()}</span> → delivery fee of <span style={{ color: C.purple, fontWeight: 700 }}>{'₦' + Number(form.delivery_fee).toLocaleString()}</span>
+              </p>
+              <p style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>
+                Orders above <span style={{ color: C.text, fontWeight: 700 }}>{'₦' + Number(form.free_delivery_above).toLocaleString()}</span> → <span style={{ color: C.success, fontWeight: 700 }}>Free delivery</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
 
       <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '15px 0', marginTop: 20, background: saving ? 'rgba(124,58,237,0.4)' : C.purple, border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         {saving ? (

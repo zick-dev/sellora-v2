@@ -79,6 +79,8 @@ class StoreUpdateRequest(BaseModel):
     popup_enabled:  bool | None = None
     popup_discount: int | None = Field(None, ge=1, le=90)
     popup_message:  str | None = Field(None, max_length=200)
+    delivery_fee: float | None = None
+    free_delivery_above:float | None = None
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str | None = Field(
@@ -174,6 +176,8 @@ class StoreOut(BaseModel):
     popup_enabled:  bool
     popup_discount: int
     popup_message:  str
+    delivery_fee:   float
+    free_delivery_above:float
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str

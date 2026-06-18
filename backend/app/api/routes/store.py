@@ -199,7 +199,10 @@ async def update_my_store(
         store.popup_discount = payload.popup_discount
     if payload.popup_message is not None:
         store.popup_message = payload.popup_message
-
+    if payload.delivery_fee is not None:
+        store.delivery_fee = payload.delivery_fee
+    if payload.free_delivery_above is not None:
+        store.free_delivery_above = payload.free_delivery_above
     # Persist all store updates to the database.
     await db.commit()
 

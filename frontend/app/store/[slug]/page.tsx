@@ -36,6 +36,8 @@ interface Store {
   popup_enabled?: boolean;
   popup_discount?: number;
   popup_message?: string;
+  delivery_fee?: number;
+  free_delivery_above?: number;
 }
 
 interface Product {
@@ -88,6 +90,9 @@ export default function StorefrontPage() {
   const [discountUnlocked, setDiscountUnlocked] = useState(false);
   const [discountCode, setDiscountCode]         = useState('');
   const [selectedProduct, setSelectedProduct]   = useState<Product | null>(null);
+
+  const [provideAddress, setProvideAddress] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -149,7 +154,10 @@ export default function StorefrontPage() {
 
   const cartSubtotal = cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
   const discountAmount = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
-  const cartTotal = cartSubtotal - discountAmount;
+  const discountedSubtotal = cartSubtotal - discountAmount;
+  const deliveryFee = store && (store.delivery_fee || 0) > 0 && discountedSubtotal < (store.free_delivery_above || 0)
+    ? (store.delivery_fee || 0) : 0;
+  const cartTotal = discountedSubtotal + deliveryFee;
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   function addToCart(product: Product) {
@@ -177,6 +185,7 @@ export default function StorefrontPage() {
       const nums: string[] = [];
       for (const item of cart) {
         const res = await api.post('/api/orders/', {
+          delivery_address: provideAddress ? deliveryAddress : null,
           product_id: item.product.id, customer_name: checkoutForm.name,
           customer_phone: checkoutForm.phone, customer_note: checkoutForm.note || undefined,
           quantity: item.quantity,
@@ -398,6 +407,18 @@ export default function StorefrontPage() {
                 <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-N' + discountAmount.toLocaleString()}</span>
               </div>
             )}
+            {deliveryFee > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', marginBottom: 4 }}>
+                <span style={{ color: C.subtext, fontSize: 13 }}>Delivery fee</span>
+                <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{'N' + deliveryFee.toLocaleString()}</span>
+              </div>
+            )}
+            {deliveryFee === 0 && store && (store.delivery_fee || 0) > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', marginBottom: 4 }}>
+                <span style={{ color: C.success, fontSize: 13 }}>Delivery</span>
+                <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>Free!</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', borderTop: '1px solid ' + C.cardBorder, borderBottom: '1px solid ' + C.cardBorder, marginBottom: 16 }}>
               <span style={{ color: C.subtext, fontSize: 15 }}>Total</span>
               <span style={{ color: C.text, fontSize: 18, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
@@ -433,6 +454,18 @@ export default function StorefrontPage() {
                   <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-N' + discountAmount.toLocaleString()}</span>
                 </div>
               )}
+              {deliveryFee > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: C.subtext, fontSize: 13 }}>Delivery fee</span>
+                  <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{'N' + deliveryFee.toLocaleString()}</span>
+                </div>
+              )}
+              {deliveryFee === 0 && store && (store.delivery_fee || 0) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: C.success, fontSize: 13 }}>Delivery</span>
+                  <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>Free!</span>
+                </div>
+              )}
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Total</span>
                 <span style={{ color: themeColor, fontSize: 14, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
@@ -443,6 +476,20 @@ export default function StorefrontPage() {
               <input type="text" value={checkoutForm.name} onChange={e => setCheckoutForm({ ...checkoutForm, name: e.target.value })} placeholder="Your full name *" style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '13px 16px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               <input type="tel" value={checkoutForm.phone} onChange={e => setCheckoutForm({ ...checkoutForm, phone: e.target.value })} placeholder="WhatsApp number * (e.g. 08031234567)" style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '13px 16px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               <textarea value={checkoutForm.note} onChange={e => setCheckoutForm({ ...checkoutForm, note: e.target.value })} placeholder="Any note for the seller? (optional)" rows={2} style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '13px 16px', color: C.text, fontSize: 14, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+              <div style={{ background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setProvideAddress(!provideAddress)}>
+                  <div style={{ width: 20, height: 20, borderRadius: 5, border: '2px solid ' + (provideAddress ? C.purple : C.inputBorder), background: provideAddress ? C.purple : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                    {provideAddress && <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>V</span>}
+                  </div>
+                  <p style={{ color: C.text, fontSize: 14, fontWeight: 600 }}>I want to provide my delivery address</p>
+                </div>
+                {provideAddress && (
+                  <textarea value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="Enter your full delivery address..." rows={3} style={{ width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + C.inputBorder, marginTop: 12, paddingTop: 12, color: C.text, fontSize: 13, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                )}
+                {!provideAddress && (
+                  <p style={{ color: C.muted, fontSize: 12, marginTop: 6, marginLeft: 30 }}>Or the seller will ask for your address on WhatsApp</p>
+                )}
+              </div>
             </div>
             <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 12, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 10 }}>
               <span style={{ flexShrink: 0 }}>🔒</span>

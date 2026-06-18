@@ -70,14 +70,26 @@ async def create_order(
             detail=f"Only {product.stock} units available"
         )
 
-    # Calculate totals
+   # Calculate totals
     unit_price = float(product.price)
     subtotal = unit_price * payload.quantity
 
     # Apply discount if present (validate range 0-90%)
     discount_percent = max(0, min(payload.discount_percent or 0, 90))
     discount_amount = round(subtotal * discount_percent / 100)
-    total_price = subtotal - discount_amount
+    discounted_subtotal = subtotal - discount_amount
+
+    # Apply delivery fee if order is below free_delivery_above threshold
+    store_result = await db.execute(
+        select(Store).where(Store.id == product.store_id)
+    )
+    store = store_result.scalar_one_or_none()
+    delivery_fee_applied = 0.0
+    if store and float(store.delivery_fee or 0) > 0:
+        if discounted_subtotal < float(store.free_delivery_above or 0):
+            delivery_fee_applied = float(store.delivery_fee)
+
+    total_price = discounted_subtotal + delivery_fee_applied
 
     # Generate unique order number
     order_number = generate_order_number()
@@ -96,6 +108,8 @@ async def create_order(
         total_price=total_price,
         discount_percent=discount_percent,
         discount_code=payload.discount_code,
+        delivery_address=payload.delivery_address,
+        delivery_fee_applied=delivery_fee_applied,
         order_number=order_number,
         status="pending",
     )
