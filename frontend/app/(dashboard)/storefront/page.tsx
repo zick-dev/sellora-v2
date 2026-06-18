@@ -36,6 +36,7 @@ interface Store {
 export default function StorefrontPage() {
   const { C } = useTheme();
   const [store, setStore]         = useState<Store | null>(null);
+  const [isPro, setIsPro]         = useState(false);
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
   const [copied, setCopied]       = useState(false);
@@ -69,7 +70,13 @@ export default function StorefrontPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.get('/api/store/me');
+        const [storeResult, subResult] = await Promise.allSettled([
+          api.get('/api/store/me'),
+          api.get('/api/subscription/status'),
+        ]);
+        if (subResult.status === 'fulfilled') setIsPro(subResult.value.data.is_pro || false);
+        if (storeResult.status !== 'fulfilled') return;
+        const res = storeResult.value;
         setStore(res.data);
         setForm({
           store_name:     res.data.store_name || '',
@@ -280,6 +287,42 @@ export default function StorefrontPage() {
                 <div style={{ position: 'absolute', top: 3, left: form.show_trust_bar ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
               </div>
             </div>
+          </div>
+
+          {/* Custom Domain — Pro Feature */}
+          <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 12, right: 12, background: 'linear-gradient(90deg, #7c3aed, #ec4899)', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: '#fff' }}>PRO</div>
+            <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Custom Domain</h2>
+            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>
+              Use your own domain (e.g. <span style={{ color: C.purple, fontWeight: 600 }}>shop.yourbrand.com</span>) instead of the default Sellora URL. Available on Pro plan.
+            </p>
+            {isPro ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <input
+                  type="text"
+                  placeholder="shop.yourbrand.com"
+                  style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
+                />
+                <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 10, padding: '12px 14px' }}>
+                  <p style={{ color: C.subtext, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Setup Instructions:</p>
+                  <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.6 }}>
+                    1. Add a CNAME record in your DNS pointing to <span style={{ color: C.purple, fontFamily: 'monospace' }}>cname.sellora.com</span><br/>
+                    2. Enter your domain above and contact support to complete setup.<br/>
+                    3. SSL certificate will be issued automatically.
+                  </p>
+                </div>
+                <button style={{ padding: '10px 20px', borderRadius: 9, background: C.purple, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}>
+                  Request Domain Setup
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <p style={{ color: C.muted, fontSize: 13 }}>Upgrade to Pro to use a custom domain.</p>
+                <a href="/upgrade" style={{ padding: '9px 18px', borderRadius: 9, background: 'linear-gradient(90deg, #7c3aed, #ec4899)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>
+                  Upgrade to Pro →
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -389,22 +389,75 @@ export default function StorefrontPage() {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ background:'#fafafa', borderTop:'1px solid #f0f0f0', padding:'28px 20px' }}>
-        <div style={{ maxWidth:1200, margin:'0 auto', display:'flex', flexWrap:'wrap', gap:20, alignItems:'center', justifyContent:'space-between' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            {store?.logo_url
-              ? <img src={store.logo_url} alt={store.store_name} style={{ width:26, height:26, borderRadius:6, objectFit:'cover' }} />
-              : <div style={{ width:26, height:26, borderRadius:6, background:accent, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>🏪</div>}
-            <span style={{ color:'#111', fontWeight:700, fontSize:14 }}>{store?.store_name}</span>
+      <footer style={{ background:'#111', borderTop:'1px solid #222', padding:'40px 20px 28px' }}>
+        <div style={{ maxWidth:1200, margin:'0 auto' }}>
+          {/* Top row */}
+          <div style={{ display:'flex', flexWrap:'wrap', gap:32, justifyContent:'space-between', marginBottom:32 }}>
+            {/* Brand */}
+            <div style={{ maxWidth:280 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                {store?.logo_url
+                  ? <img src={store.logo_url} alt={store.store_name} style={{ width:36, height:36, borderRadius:8, objectFit:'cover' }} />
+                  : <div style={{ width:36, height:36, borderRadius:8, background:accent, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🏪</div>}
+                <span style={{ color:'#fff', fontWeight:800, fontSize:16 }}>{store?.store_name}</span>
+              </div>
+              {store?.description && <p style={{ color:'#888', fontSize:13, lineHeight:1.6 }}>{store.description}</p>}
+            </div>
+            {/* Links */}
+            <div style={{ display:'flex', gap:40, flexWrap:'wrap' }}>
+              <div>
+                <p style={{ color:'#555', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12 }}>Connect</p>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {store?.whatsapp && <a href={waLink(store.whatsapp)} target="_blank" rel="noreferrer" style={{ color:'#888', fontSize:13, textDecoration:'none', display:'flex', alignItems:'center', gap:6' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.099 1.51 5.833L.057 23.7a.75.75 0 00.919.919l5.867-1.453A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.964-1.355l-.357-.212-3.692.915.931-3.594-.232-.371A9.722 9.722 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+                    WhatsApp
+                  </a>}
+                  {store?.instagram && <a href={'https://instagram.com/'+store.instagram} target="_blank" rel="noreferrer" style={{ color:'#888', fontSize:13, textDecoration:'none', display:'flex', alignItems:'center', gap:6 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#db2777" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    {'@'+store.instagram}
+                  </a>}
+                </div>
+              </div>
+              <div>
+                <p style={{ color:'#555', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12 }}>Shop</p>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {allCategories.filter(c => c !== 'All').slice(0,4).map(cat => (
+                    <button key={cat} onClick={() => { setActiveCategory(cat); window.scrollTo({top:0,behavior:'smooth'}); }}
+                      style={{ color:'#888', fontSize:13, background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0 }}>
+                      {cat}
+                    </button>
+                  ))}
+                  <button onClick={() => setActiveCategory('All')} style={{ color:'#888', fontSize:13, background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0 }}>All Products</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div style={{ display:'flex', gap:16 }}>
-            {store?.whatsapp && <a href={waLink(store.whatsapp)} target="_blank" rel="noreferrer" style={{ color:'#16a34a', fontSize:13, fontWeight:500, textDecoration:'none' }}>💬 WhatsApp</a>}
-            {store?.instagram && <a href={'https://instagram.com/'+store.instagram} target="_blank" rel="noreferrer" style={{ color:'#db2777', fontSize:13, fontWeight:500, textDecoration:'none' }}>📸 Instagram</a>}
+          {/* Bottom row */}
+          <div style={{ borderTop:'1px solid #222', paddingTop:20, display:'flex', flexWrap:'wrap', gap:12, alignItems:'center', justifyContent:'space-between' }}>
+            <p style={{ color:'#555', fontSize:12 }}>© {new Date().getFullYear()} {store?.store_name}. All rights reserved.</p>
+            <div style={{ display:'flex', gap:16 }}>
+              <span style={{ color:'#444', fontSize:12 }}>🚚 Pay on Delivery</span>
+              <span style={{ color:'#444', fontSize:12 }}>🔒 Secure</span>
+              <span style={{ color:'#444', fontSize:12 }}>💬 WhatsApp Support</span>
+            </div>
           </div>
-          <p style={{ color:'#ccc', fontSize:12 }}>© {new Date().getFullYear()} {store?.store_name}</p>
         </div>
       </footer>
 
+      {/* WHATSAPP FLOAT BUTTON — visible when cart is empty */}
+      {store?.whatsapp && cartCount === 0 && !showCart && !showCheckout && (
+        <div style={{ position:'fixed', bottom:24, right:20, zIndex:90 }}>
+          <a href={waLink(store.whatsapp)} target="_blank" rel="noreferrer"
+            style={{ width:54, height:54, borderRadius:'50%', background:'#25d366', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 20px rgba(37,211,102,0.4)', textDecoration:'none', transition:'transform 0.2s' }}
+            onMouseEnter={e => (e.currentTarget.style.transform='scale(1.1)')}
+            onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.099 1.51 5.833L.057 23.7a.75.75 0 00.919.919l5.867-1.453A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.73 9.73 0 01-4.964-1.355l-.357-.212-3.692.915.931-3.594-.232-.371A9.722 9.722 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+            </svg>
+          </a>
+        </div>
+      )}
       {/* FLOATING CART */}
       {cartCount > 0 && !showCart && !showCheckout && (
         <div style={{ position:'fixed', bottom:20, left:'50%', transform:'translateX(-50%)', zIndex:90, width:'calc(100% - 32px)', maxWidth:440 }}>
