@@ -37,6 +37,8 @@ export default function StorefrontPage() {
   const [notFound, setNotFound] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -100,7 +102,12 @@ export default function StorefrontPage() {
   const storeCategories: string[] = (() => { try { return JSON.parse(store?.categories || '[]'); } catch { return []; } })();
   const productCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean) as string[]));
   const allCategories = ['All', ...new Set([...storeCategories, ...productCategories])];
-  const filtered = activeCategory === 'All' ? products : products.filter(p => p.category === activeCategory);
+  const filtered = products.filter(p => {
+    const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch = !q || p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
+    return matchesCategory && matchesSearch;
+  });
   const cartSubtotal  = cart.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
   const discountAmt   = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
   const discountedSub = cartSubtotal - discountAmt;
@@ -199,6 +206,45 @@ export default function StorefrontPage() {
         </div>
       </header>
 
+      {/* SEARCH BAR */}
+      <div style={{ background:'#fff', borderBottom:'1px solid #f0f0f0', padding:'10px 20px' }}>
+        <div style={{ maxWidth:1200, margin:'0 auto', position:'relative' }}>
+          <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={searchFocused ? accent : '#999'} strokeWidth="2" style={{ transition:'all 0.2s' }}>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            placeholder={'Search ' + (store?.store_name || 'products') + '...'}
+            style={{
+              width: '100%',
+              padding: '10px 40px 10px 40px',
+              borderRadius: 10,
+              border: '1.5px solid ' + (searchFocused ? accent : '#e5e5e5'),
+              background: '#f9f9f9',
+              fontSize: 14,
+              color: '#111',
+              outline: 'none',
+              boxSizing: 'border-box' as const,
+              transition: 'border-color 0.2s',
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#999', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center', padding:0 }}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* HERO */}
       {store?.banner_url && (
         <div style={{ width:'100%', height:'clamp(200px, 40vw, 460px)', position:'relative', overflow:'hidden' }}>
@@ -261,14 +307,26 @@ export default function StorefrontPage() {
       <div id="products" style={{ maxWidth:1200, margin:'0 auto', padding:'28px 20px 100px' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
           <h2 style={{ color:'#111', fontSize:17, fontWeight:700 }}>
-            {activeCategory === 'All' ? 'All Products' : activeCategory}
+            {searchQuery ? 'Search results' : activeCategory === 'All' ? 'All Products' : activeCategory}
             <span style={{ color:'#bbb', fontWeight:400, fontSize:14, marginLeft:8 }}>({filtered.length})</span>
           </h2>
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} style={{ fontSize:12, color:'#999', background:'none', border:'none', cursor:'pointer', fontWeight:500 }}>
+              Clear search ×
+            </button>
+          )}
         </div>
         {filtered.length === 0 ? (
           <div style={{ textAlign:'center', padding:'60px 0' }}>
-            <div style={{ fontSize:40, marginBottom:10 }}>🛍️</div>
-            <p style={{ color:'#bbb', fontSize:14 }}>No products available yet</p>
+            <div style={{ fontSize:40, marginBottom:10 }}>{searchQuery ? '🔍' : '🛍️'}</div>
+            <p style={{ color:'#bbb', fontSize:14 }}>
+              {searchQuery ? 'No products match "' + searchQuery + '"' : 'No products available yet'}
+            </p>
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} style={{ marginTop:12, padding:'8px 18px', borderRadius:8, background:accent, border:'none', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                Clear search
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap:16 }}>
