@@ -279,9 +279,9 @@ export default function StorefrontPage() {
                 <div key={product.id} style={{ background:'#fff', border:'1px solid #f0f0f0', borderRadius:12, overflow:'hidden', transition:'box-shadow 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.08)')}
                   onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-                  <div onClick={() => !oos && setSelectedProduct(product)} style={{ aspectRatio:'1', background:'#f9f9f9', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer' }}>
+                  <div onClick={() => !oos && setSelectedProduct(product)} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
                     {product.image_url
-                      ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
+                      ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'contain', transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
                       : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, color:'#ddd' }}>🛍️</div>}
                     {product.stock <= 5 && product.stock > 0 && (
                       <div style={{ position:'absolute', top:8, left:8, background: product.stock<=2 ? '#ef4444' : '#f59e0b', color:'#fff', borderRadius:6, padding:'2px 8px', fontSize:10, fontWeight:700 }}>
@@ -444,7 +444,7 @@ export default function StorefrontPage() {
           <div onClick={() => setSelectedProduct(null)} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)' }} />
           <div style={{ position:'relative', width:'100%', maxWidth:520, background:'#fff', borderRadius:'20px 20px 0 0', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 -8px 40px rgba(0,0,0,0.12)' }}>
             <div style={{ aspectRatio:'1.5', background:'#f9f9f9', position:'relative', overflow:'hidden', borderRadius:'20px 20px 0 0' }}>
-              {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:60 }}>🛍️</div>}
+              {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name} style={{ width:'100%', height:'100%', objectFit:'contain' }} /> : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:60 }}>🛍️</div>}
               <button onClick={() => setSelectedProduct(null)} style={{ position:'absolute', top:12, right:12, width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.9)', border:'none', cursor:'pointer', fontSize:17, display:'flex', alignItems:'center', justifyContent:'center', color:'#111' }}>×</button>
               {selectedProduct.stock<=5 && selectedProduct.stock>0 && <div style={{ position:'absolute', top:12, left:12, background:selectedProduct.stock<=2?'#ef4444':'#f59e0b', color:'#fff', borderRadius:7, padding:'3px 9px', fontSize:11, fontWeight:800 }}>{selectedProduct.stock<=2?`Only ${selectedProduct.stock} left!`:`${selectedProduct.stock} left`}</div>}
             </div>

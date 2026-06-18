@@ -231,8 +231,9 @@ export default function ProductsPage() {
             >
               {/* Image */}
               <div style={{
-                aspectRatio: '1', background: '#1a1a26',
+                aspectRatio: '1', background: '#ffffff',
                 position: 'relative', overflow: 'hidden',
+                border: '1px solid #1e1e30',
               }}>
                 {product.image_url ? (
                   <img
@@ -240,7 +241,7 @@ export default function ProductsPage() {
                     alt={product.name}
                     style={{
                       width: '100%', height: '100%',
-                      objectFit: 'cover',
+                      objectFit: 'contain',
                     }}
                   />
                 ) : (
