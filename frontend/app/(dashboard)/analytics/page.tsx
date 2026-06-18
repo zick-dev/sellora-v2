@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
     return orderDate >= cutoff;
   });
 
-  const completedOrders = filteredOrders.filter(o => o.status !== 'cancelled');
+  const completedOrders = filteredOrders.filter(o => o.status === 'delivered');
   const totalRevenue    = completedOrders.reduce((sum, o) => sum + Number(o.total_price), 0);
   const avgOrderValue   = completedOrders.length > 0 ? totalRevenue / completedOrders.length : 0;
   const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled').length;
@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
       const orderDate = new Date(o.created_at).toISOString().split('T')[0];
       return orderDate === dateStr && o.status !== 'cancelled';
     });
-    const revenue = dayOrders.reduce((sum, o) => sum + Number(o.total_price), 0);
+    const revenue = dayOrders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + Number(o.total_price), 0);
     return {
       day: date.toLocaleDateString('en-NG', { weekday: 'short' }),
       revenue,

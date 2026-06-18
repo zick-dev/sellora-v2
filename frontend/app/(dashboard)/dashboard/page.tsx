@@ -72,7 +72,8 @@ export default function DashboardOverviewPage() {
     load();
   }, [store?.id]);
 
-  const totalRevenue   = orders.filter((o: any) => o.status !== 'cancelled').reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
+  const totalRevenue     = orders.filter((o: any) => o.status === 'delivered').reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
+  const pendingRevenue   = orders.filter((o: any) => ['pending','confirmed','processing'].includes(o.status)).reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
   const pendingCount   = orders.filter((o: any) => o.status === 'pending').length;
   const activeProducts = products.filter((p: any) => p.is_available).length;
   const newLeads       = leads.filter((l: any) => !l.follow_up_sent).length;
