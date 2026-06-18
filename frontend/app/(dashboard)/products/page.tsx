@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import ImageUpload from '@/components/ImageUpload';
 
 const C = {
   bg:          '#0a0a0f',
@@ -480,27 +481,16 @@ export default function ProductsPage() {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image Upload */}
               <div>
-                <label style={labelStyle}>Image URL (optional)</label>
-                <input
-                  type="url"
+                <ImageUpload
                   value={form.image_url}
-                  onChange={e => setForm({ ...form, image_url: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  style={inputStyle}
+                  onChange={url => setForm({ ...form, image_url: url })}
+                  label="Product Image (optional)"
+                  hint="Square image recommended. Drag & drop or click to upload."
+                  aspectRatio="1"
+                  placeholder="🛍️"
                 />
-                {form.image_url && (
-                  <img
-                    src={form.image_url}
-                    alt="Preview"
-                    style={{
-                      width: 60, height: 60, borderRadius: 8,
-                      objectFit: 'cover', marginTop: 8,
-                      border: `1px solid ${C.cardBorder}`,
-                    }}
-                  />
-                )}
               </div>
 
               {/* Available toggle */}

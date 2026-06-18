@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import ImageUpload from '@/components/ImageUpload';
 
 const C = {
   bg:          '#0a0a0f',
@@ -262,35 +263,27 @@ export default function StorefrontPage() {
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
             <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Store Logo</h2>
             <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Square image recommended. Shown in store header.</p>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-              <div style={{ width: 80, height: 80, borderRadius: 16, flexShrink: 0, background: form.logo_url ? 'transparent' : 'linear-gradient(135deg, #7c3aed, #ec4899)', border: '2px solid ' + C.cardBorder, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-                {form.logo_url ? (
-                  <img src={form.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : '🏪'}
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Logo URL</label>
-                <input type="url" value={form.logo_url} onChange={e => setForm({ ...form, logo_url: e.target.value })} placeholder="https://example.com/logo.png" style={inputBase} />
-                <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Paste a direct image URL. Use Cloudinary or Imgur to host.</p>
-              </div>
-            </div>
+            <ImageUpload
+              value={form.logo_url}
+              onChange={url => setForm({ ...form, logo_url: url })}
+              label="Store Logo"
+              hint="Square image recommended."
+              aspectRatio="1"
+              placeholder="🏪"
+            />
           </div>
 
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
             <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Store Banner</h2>
             <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Wide hero image at the top of your storefront. 1200x400px recommended.</p>
-            <div style={{ width: '100%', height: 120, borderRadius: 12, background: form.banner_url ? 'transparent' : 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(236,72,153,0.2))', border: '2px dashed ' + C.cardBorder, overflow: 'hidden', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {form.banner_url ? (
-                <img src={form.banner_url} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 24, marginBottom: 4 }}>🖼️</p>
-                  <p style={{ color: C.muted, fontSize: 12 }}>Banner preview</p>
-                </div>
-              )}
-            </div>
-            <label style={labelStyle}>Banner URL</label>
-            <input type="url" value={form.banner_url} onChange={e => setForm({ ...form, banner_url: e.target.value })} placeholder="https://example.com/banner.jpg" style={inputBase} />
+            <ImageUpload
+              value={form.banner_url}
+              onChange={url => setForm({ ...form, banner_url: url })}
+              label="Store Banner"
+              hint="Wide image recommended (1200x400px)."
+              aspectRatio="3"
+              placeholder="🖼️"
+            />
           </div>
 
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
