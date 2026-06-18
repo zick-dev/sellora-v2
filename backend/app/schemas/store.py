@@ -127,7 +127,6 @@ class StoreUpdateRequest(BaseModel):
 
     show_brand_showcase: bool
     show_trust_bar:     bool | None = None
-    show_trust_bar:     bool | None = None
 
     # ── Homepage Sections ───────────────────────────────────────────
 
