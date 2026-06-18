@@ -611,10 +611,10 @@ export default function DashboardLayout({
 
       try {
         const [userRes, storeRes] = await Promise.all([
-          fetch('https://sellora-v2-production.up.railway.app/api/auth/me', {
+          fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('https://sellora-v2-production.up.railway.app/api/store/me', {
+          fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/store/me', {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);

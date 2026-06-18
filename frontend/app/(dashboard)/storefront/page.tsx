@@ -70,6 +70,9 @@ export default function StorefrontPage() {
     popup_enabled:  false,
     popup_discount: 10,
     popup_message:  'Get a discount on your order!',
+    base_currency:  'USD',
+    delivery_fee:          0,
+    free_delivery_above:   10000,
     delivery_fee:          0,
     free_delivery_above:   10000,
   });
@@ -95,6 +98,9 @@ export default function StorefrontPage() {
           popup_enabled:  res.data.popup_enabled ?? false,
           popup_discount: res.data.popup_discount ?? 10,
           popup_message:  res.data.popup_message || 'Get a discount on your order!',
+          base_currency:  res.data.base_currency || 'USD',
+          delivery_fee:         res.data.delivery_fee ?? 0,
+          free_delivery_above:  res.data.free_delivery_above ?? 10000,
           delivery_fee:          res.data.delivery_fee ?? 0,
           free_delivery_above:   res.data.free_delivery_above ?? 10000,
         });
@@ -122,6 +128,9 @@ export default function StorefrontPage() {
         popup_enabled:  form.popup_enabled,
         popup_discount: form.popup_discount,
         popup_message:  form.popup_message,
+        base_currency:  form.base_currency,
+        delivery_fee:         form.delivery_fee,
+        free_delivery_above:  form.free_delivery_above,
         delivery_fee:          form.delivery_fee ?? 0,
         free_delivery_above:   form.free_delivery_above ?? 10000,
       });
@@ -253,6 +262,27 @@ export default function StorefrontPage() {
               <span style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: C.success, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8 }}>
                 {store?.is_active ? 'Active' : 'Inactive'}
               </span>
+            </div>
+            <div>
+              <label style={labelStyle}>Store Currency</label>
+              <select
+                value={form.base_currency}
+                onChange={e => setForm({ ...form, base_currency: e.target.value })}
+                style={{ width: '100%', background: C.input, border: '1.5px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+              >
+                <option value="USD">USD — US Dollar ($)</option>
+                <option value="NGN">NGN — Nigerian Naira (&#8358;)</option>
+                <option value="GHS">GHS — Ghanaian Cedi (&#8373;)</option>
+                <option value="KES">KES — Kenyan Shilling (KSh)</option>
+                <option value="ZAR">ZAR — South African Rand (R)</option>
+                <option value="UGX">UGX — Ugandan Shilling (USh)</option>
+                <option value="TZS">TZS — Tanzanian Shilling (TSh)</option>
+                <option value="XOF">XOF — West African CFA (CFA)</option>
+                <option value="EGP">EGP — Egyptian Pound (E&#163;)</option>
+                <option value="GBP">GBP — British Pound (&#163;)</option>
+                <option value="EUR">EUR — Euro (&#8364;)</option>
+              </select>
+              <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Prices on your storefront will show in this currency</p>
             </div>
           </div>
         </div>

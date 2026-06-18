@@ -38,6 +38,7 @@ interface Store {
   popup_message?: string;
   delivery_fee?: number;
   free_delivery_above?: number;
+  base_currency?: string;
 }
 
 interface Product {
@@ -143,6 +144,24 @@ export default function StorefrontPage() {
   }
 
   const themeColor = store?.theme_color || C.purple;
+
+  // Currency symbol helper
+  const currencySymbol = (() => {
+    switch (store?.base_currency) {
+      case 'NGN': return 'N';
+      case 'GHS': return 'GH₵';
+      case 'KES': return 'KSh';
+      case 'ZAR': return 'R';
+      case 'UGX': return 'USh';
+      case 'TZS': return 'TSh';
+      case 'XOF': return 'CFA';
+      case 'EGP': return 'E£';
+      case 'GBP': return '£';
+      case 'EUR': return '€';
+      case 'USD': return '$';
+      default: return store?.base_currency || '$';
+    }
+  })();
 
   const storeCategories: string[] = (() => {
     try { return JSON.parse(store?.categories || '[]'); } catch { return []; }
@@ -338,7 +357,7 @@ export default function StorefrontPage() {
                     <div style={{ padding: '10px 10px 12px' }}>
                       <p onClick={() => !outOfStock && setSelectedProduct(product)} style={{ color: C.text, fontSize: 13, fontWeight: 600, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: outOfStock ? 'default' : 'pointer' }}>{product.name}</p>
                       {product.category && <p style={{ color: C.muted, fontSize: 11, marginBottom: 6 }}>{product.category}</p>}
-                      <p style={{ color: themeColor, fontSize: 15, fontWeight: 800, marginBottom: 8 }}>{'N' + Number(product.price).toLocaleString()}</p>
+                      <p style={{ color: themeColor, fontSize: 15, fontWeight: 800, marginBottom: 8 }}>{currencySymbol + Number(product.price).toLocaleString()}</p>
                       {outOfStock ? (
                         <div style={{ width: '100%', padding: '8px 0', background: 'rgba(255,255,255,0.05)', borderRadius: 8, textAlign: 'center', color: C.muted, fontSize: 12, fontWeight: 600 }}>Out of stock</div>
                       ) : qty === 0 ? (
@@ -368,7 +387,7 @@ export default function StorefrontPage() {
           <button onClick={() => setShowCart(true)} style={{ width: '100%', padding: '14px 20px', background: 'linear-gradient(90deg, ' + themeColor + ', #ec4899)', border: 'none', borderRadius: 14, color: C.text, fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(124,58,237,0.4)' }}>
             <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 8, padding: '2px 10px', fontSize: 13, fontWeight: 800 }}>{cartCount + ' item' + (cartCount !== 1 ? 's' : '')}</span>
             <span>View Cart</span>
-            <span style={{ fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
+            <span style={{ fontWeight: 800 }}>{currencySymbol + cartTotal.toLocaleString()}</span>
           </button>
         </div>
       )}
@@ -390,7 +409,7 @@ export default function StorefrontPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ color: C.text, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</p>
-                    <p style={{ color: themeColor, fontSize: 13, fontWeight: 700 }}>{'N' + Number(item.product.price).toLocaleString()}</p>
+                    <p style={{ color: themeColor, fontSize: 13, fontWeight: 700 }}>{currencySymbol + Number(item.product.price).toLocaleString()}</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button onClick={() => updateQty(item.product.id, item.quantity - 1)} style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', color: C.text, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
@@ -404,13 +423,13 @@ export default function StorefrontPage() {
             {discountAmount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', marginBottom: 4 }}>
                 <span style={{ color: C.success, fontSize: 13 }}>{'Discount (' + discountCode + ')'}</span>
-                <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-N' + discountAmount.toLocaleString()}</span>
+                <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-' + currencySymbol + discountAmount.toLocaleString()}</span>
               </div>
             )}
             {deliveryFee > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', marginBottom: 4 }}>
                 <span style={{ color: C.subtext, fontSize: 13 }}>Delivery fee</span>
-                <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{'N' + deliveryFee.toLocaleString()}</span>
+                <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{currencySymbol + deliveryFee.toLocaleString()}</span>
               </div>
             )}
             {deliveryFee === 0 && store && (store.delivery_fee || 0) > 0 && (
@@ -421,7 +440,7 @@ export default function StorefrontPage() {
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', borderTop: '1px solid ' + C.cardBorder, borderBottom: '1px solid ' + C.cardBorder, marginBottom: 16 }}>
               <span style={{ color: C.subtext, fontSize: 15 }}>Total</span>
-              <span style={{ color: C.text, fontSize: 18, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
+              <span style={{ color: C.text, fontSize: 18, fontWeight: 800 }}>{currencySymbol + cartTotal.toLocaleString()}</span>
             </div>
             <button onClick={() => { setShowCart(false); setShowCheckout(true); }} style={{ width: '100%', padding: '15px 0', background: 'linear-gradient(90deg, ' + themeColor + ', #ec4899)', border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>Proceed to Checkout</button>
           </div>
@@ -445,19 +464,19 @@ export default function StorefrontPage() {
               {cart.map(item => (
                 <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ color: C.subtext, fontSize: 13 }}>{item.product.name + ' x' + item.quantity}</span>
-                  <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{'N' + (Number(item.product.price) * item.quantity).toLocaleString()}</span>
+                  <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{currencySymbol + (Number(item.product.price) * item.quantity).toLocaleString()}</span>
                 </div>
               ))}
               {discountAmount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ color: C.success, fontSize: 13 }}>{'Discount (' + discountCode + ')'}</span>
-                  <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-N' + discountAmount.toLocaleString()}</span>
+                  <span style={{ color: C.success, fontSize: 13, fontWeight: 600 }}>{'-' + currencySymbol + discountAmount.toLocaleString()}</span>
                 </div>
               )}
               {deliveryFee > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ color: C.subtext, fontSize: 13 }}>Delivery fee</span>
-                  <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{'N' + deliveryFee.toLocaleString()}</span>
+                  <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{currencySymbol + deliveryFee.toLocaleString()}</span>
                 </div>
               )}
               {deliveryFee === 0 && store && (store.delivery_fee || 0) > 0 && (
@@ -468,7 +487,7 @@ export default function StorefrontPage() {
               )}
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Total</span>
-                <span style={{ color: themeColor, fontSize: 14, fontWeight: 800 }}>{'N' + cartTotal.toLocaleString()}</span>
+                <span style={{ color: themeColor, fontSize: 14, fontWeight: 800 }}>{currencySymbol + cartTotal.toLocaleString()}</span>
               </div>
             </div>
             {formError && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', color: C.red, fontSize: 13, marginBottom: 16 }}>{formError}</div>}
@@ -501,7 +520,7 @@ export default function StorefrontPage() {
                   <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
                   Placing order...
                 </span>
-              ) : <span>{'Place Order — N' + cartTotal.toLocaleString()}</span>}
+              ) : <span>{'Place Order — ' + currencySymbol + cartTotal.toLocaleString()}</span>}
             </button>
           </div>
         </div>
@@ -528,7 +547,7 @@ export default function StorefrontPage() {
             <div style={{ padding: '20px 20px 32px' }}>
               {selectedProduct.category && <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{selectedProduct.category}</p>}
               <h2 style={{ color: C.text, fontSize: 20, fontWeight: 800, marginBottom: 8 }}>{selectedProduct.name}</h2>
-              <p style={{ color: themeColor, fontSize: 22, fontWeight: 900, marginBottom: 16 }}>{'N' + Number(selectedProduct.price).toLocaleString()}</p>
+              <p style={{ color: themeColor, fontSize: 22, fontWeight: 900, marginBottom: 16 }}>{currencySymbol + Number(selectedProduct.price).toLocaleString()}</p>
               {selectedProduct.description && (
                 <div style={{ background: C.input, borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
                   <p style={{ color: C.subtext, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Description</p>
