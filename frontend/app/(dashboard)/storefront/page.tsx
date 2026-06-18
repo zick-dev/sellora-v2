@@ -268,6 +268,19 @@ export default function StorefrontPage() {
               <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Prices on your storefront will show in this currency</p>
             </div>
           </div>
+
+          {/* Trust Bar Toggle */}
+          <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+            <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Trust Bar</h2>
+            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Show the scrolling trust badges on your storefront (Pay on Delivery, Secure Checkout, etc.)</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ color: C.subtext, fontSize: 14 }}>Show trust bar</span>
+              <div onClick={() => setForm({ ...form, show_trust_bar: !form.show_trust_bar })}
+                style={{ width: 44, height: 24, borderRadius: 12, background: form.show_trust_bar ? C.purple : C.inputBorder, cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 3, left: form.show_trust_bar ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -479,19 +492,6 @@ export default function StorefrontPage() {
         </div>
       )}
       
-    {activeTab === 'general' && (
-        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
-          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Trust Bar</h2>
-          <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Show the scrolling trust badges on your storefront (Pay on Delivery, Secure Checkout, etc.)</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ color: C.subtext, fontSize: 14 }}>Show trust bar on storefront</span>
-            <div onClick={() => setForm({ ...form, show_trust_bar: !form.show_trust_bar })}
-              style={{ width: 44, height: 24, borderRadius: 12, background: form.show_trust_bar ? C.purple : C.inputBorder, cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-              <div style={{ position: 'absolute', top: 3, left: form.show_trust_bar ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-            </div>
-          </div>
-        </div>
-      )}
     {activeTab === 'delivery' && (
   <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
     <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Delivery Fee</h2>
