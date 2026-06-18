@@ -124,8 +124,7 @@ class StoreUpdateRequest(BaseModel):
     show_recently_viewed: bool | None = None
 
     show_currency_converter: bool | None = None
-
-    show_brand_showcase: bool
+    show_brand_showcase: bool | None = None
     show_trust_bar:     bool | None = None
 
     # ── Homepage Sections ───────────────────────────────────────────
