@@ -1,24 +1,9 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 
-const C = {
-  bg:         '#0a0a0f',
-  card:       '#12121a',
-  cardBorder: 'rgba(255,255,255,0.08)',
-  input:      '#1a1a2e',
-  purple:     '#7c3aed',
-  pink:       '#ec4899',
-  green:      '#25d366',
-  success:    '#10b981',
-  amber:      '#f59e0b',
-  red:        '#ef4444',
-  blue:       '#3b82f6',
-  muted:      '#6b7280',
-  subtext:    '#9ca3af',
-  text:       '#ffffff',
-};
 
 interface Order {
   id: string;
@@ -34,11 +19,11 @@ interface Order {
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  pending:    { color: C.purple, bg: 'rgba(124,58,237,0.1)',  border: 'rgba(124,58,237,0.2)',  label: 'Pending' },
-  confirmed:  { color: C.blue,   bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.2)',  label: 'Confirmed' },
-  processing: { color: C.amber,  bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)',  label: 'Processing' },
-  delivered:  { color: C.success,bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.2)',  label: 'Delivered' },
-  cancelled:  { color: C.red,    bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.2)',   label: 'Cancelled' },
+  pending:    { color: '#7c3aed', bg: 'rgba(124,58,237,0.1)',  border: 'rgba(124,58,237,0.2)',  label: 'Pending' },
+  confirmed:  { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.2)',  label: 'Confirmed' },
+  processing: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)',  label: 'Processing' },
+  delivered:  { color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.2)',  label: 'Delivered' },
+  cancelled:  { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.2)',   label: 'Cancelled' },
 };
 
 const NEXT_STATUS: Record<string, string[]> = {
@@ -58,6 +43,7 @@ const AVATAR_COLORS = [
 ];
 
 export default function OrdersPage() {
+  const { C } = useTheme();
   const [orders, setOrders]     = useState<Order[]>([]);
   const [loading, setLoading]   = useState(true);
   const [filter, setFilter]     = useState('all');

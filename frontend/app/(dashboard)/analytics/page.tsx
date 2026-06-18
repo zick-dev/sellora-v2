@@ -1,26 +1,11 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import api from '@/lib/api';
 import Link from 'next/link';
 
-const C = {
-  card:        '#12121a',
-  cardBorder:  'rgba(255,255,255,0.08)',
-  input:       '#1a1a2e',
-  inputBorder: 'rgba(255,255,255,0.1)',
-  purple:      '#7c3aed',
-  pink:        '#ec4899',
-  success:     '#10b981',
-  amber:       '#f59e0b',
-  red:         '#ef4444',
-  blue:        '#3b82f6',
-  teal:        '#06b6d4',
-  muted:       '#6b7280',
-  subtext:     '#9ca3af',
-  text:        '#ffffff',
-};
 
 interface Order {
   id: string;
@@ -40,6 +25,7 @@ interface Product {
 }
 
 export default function AnalyticsPage() {
+  const { C } = useTheme();
   const { store } = useDashboard();
   const [orders, setOrders]     = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);

@@ -1,25 +1,10 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 
-const C = {
-  bg:          '#0a0a0f',
-  card:        '#12121a',
-  cardBorder:  'rgba(255,255,255,0.08)',
-  input:       '#1a1a2e',
-  inputBorder: 'rgba(255,255,255,0.1)',
-  inputFocus:  '#7c3aed',
-  purple:      '#7c3aed',
-  pink:        '#ec4899',
-  success:     '#10b981',
-  amber:       '#f59e0b',
-  red:         '#ef4444',
-  muted:       '#6b7280',
-  subtext:     '#9ca3af',
-  text:        '#ffffff',
-};
 
 const THEMES = [
   { value: '#7c3aed', label: 'Violet',  colors: ['#7c3aed', '#ec4899'] },
@@ -49,6 +34,7 @@ interface Store {
 }
 
 export default function StorefrontPage() {
+  const { C } = useTheme();
   const [store, setStore]         = useState<Store | null>(null);
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
@@ -71,8 +57,6 @@ export default function StorefrontPage() {
     popup_discount: 10,
     popup_message:  'Get a discount on your order!',
     base_currency:  'USD',
-    delivery_fee:          0,
-    free_delivery_above:   10000,
     delivery_fee:          0,
     free_delivery_above:   10000,
   });
@@ -101,8 +85,6 @@ export default function StorefrontPage() {
           base_currency:  res.data.base_currency || 'USD',
           delivery_fee:         res.data.delivery_fee ?? 0,
           free_delivery_above:  res.data.free_delivery_above ?? 10000,
-          delivery_fee:          res.data.delivery_fee ?? 0,
-          free_delivery_above:   res.data.free_delivery_above ?? 10000,
         });
       } finally {
         setLoading(false);
@@ -129,10 +111,8 @@ export default function StorefrontPage() {
         popup_discount: form.popup_discount,
         popup_message:  form.popup_message,
         base_currency:  form.base_currency,
-        delivery_fee:         form.delivery_fee,
-        free_delivery_above:  form.free_delivery_above,
-        delivery_fee:          form.delivery_fee ?? 0,
-        free_delivery_above:   form.free_delivery_above ?? 10000,
+        delivery_fee:         form.delivery_fee ?? 0,
+        free_delivery_above:  form.free_delivery_above ?? 10000,
       });
       setStore(res.data);
       setSaved(true);

@@ -1,24 +1,10 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import ProLock from '@/components/ProLock';
 
-const C = {
-  bg:         '#0a0a0f',
-  card:       '#12121a',
-  cardBorder: 'rgba(255,255,255,0.08)',
-  input:      '#1a1a2e',
-  purple:     '#7c3aed',
-  pink:       '#ec4899',
-  green:      '#25d366',
-  success:    '#10b981',
-  amber:      '#f59e0b',
-  red:        '#ef4444',
-  muted:      '#6b7280',
-  subtext:    '#9ca3af',
-  text:       '#ffffff',
-};
 
 interface Lead {
   id: string;
@@ -41,6 +27,7 @@ const AVATAR_COLORS = [
 ];
 
 export default function LeadsPage() {
+  const { C } = useTheme();
   const [leads, setLeads]       = useState<Lead[]>([]);
   const [loading, setLoading]   = useState(true);
   const [filter, setFilter]     = useState<'all' | 'new' | 'followed'>('all');

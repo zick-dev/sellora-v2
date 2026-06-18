@@ -1,23 +1,9 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import api from '@/lib/api';
 import { useState } from 'react';
 
-const C = {
-  bg:         '#0a0a0f',
-  card:       '#12121a',
-  cardBorder: 'rgba(255,255,255,0.08)',
-  input:      '#1a1a2e',
-  inputBorder:'rgba(255,255,255,0.1)',
-  inputFocus: '#7c3aed',
-  purple:     '#7c3aed',
-  pink:       '#ec4899',
-  success:    '#10b981',
-  amber:      '#f59e0b',
-  muted:      '#6b7280',
-  subtext:    '#9ca3af',
-  text:       '#ffffff',
-};
 
 type Tool = 'reply' | 'faq' | 'promo';
 
@@ -27,6 +13,7 @@ interface Message {
 }
 
 export default function AIToolsPage() {
+  const { C } = useTheme();
   const [activeTool, setActiveTool] = useState<Tool>('reply');
 
   // Reply suggester state

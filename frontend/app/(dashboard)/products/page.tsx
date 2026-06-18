@@ -1,24 +1,10 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 
-const C = {
-  bg:          '#0a0a0f',
-  card:        '#12121a',
-  cardBorder:  'rgba(255,255,255,0.08)',
-  input:       '#1a1a2e',
-  inputBorder: 'rgba(255,255,255,0.1)',
-  purple:      '#7c3aed',
-  pink:        '#ec4899',
-  green:       '#10b981',
-  amber:       '#f59e0b',
-  red:         '#ef4444',
-  muted:       '#6b7280',
-  subtext:     '#9ca3af',
-  text:        '#ffffff',
-};
 
 interface Product {
   id: string;
@@ -38,6 +24,7 @@ const emptyForm = {
 };
 
 export default function ProductsPage() {
+  const { C } = useTheme();
   const [products, setProducts]   = useState<Product[]>([]);
   const [storeId, setStoreId]     = useState('');
   const [loading, setLoading]     = useState(true);

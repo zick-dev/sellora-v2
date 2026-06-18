@@ -1,28 +1,11 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import Link from 'next/link';
 import api from '@/lib/api';
 
-const C = {
-  bg:          '#0d0d14',
-  card:        '#13131f',
-  cardBorder:  '#1e1e30',
-  input:       '#1a1a2e',
-  inputBorder: '#2a2a3e',
-  purple:      '#7c3aed',
-  purpleLight: '#8b5cf6',
-  purpleDim:   'rgba(124,58,237,0.12)',
-  muted:       '#6b7280',
-  mutedLight:  '#9ca3af',
-  text:        '#ffffff',
-  subtext:     '#c4c4d4',
-  success:     '#10b981',
-  pink:        '#ec4899',
-  orange:      '#f59e0b',
-  teal:        '#06b6d4',
-};
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -63,6 +46,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function DashboardOverviewPage() {
+  const { C } = useTheme();
   const { user, store } = useDashboard();
 
   const [orders, setOrders]     = useState<any[]>([]);

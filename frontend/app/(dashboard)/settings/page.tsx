@@ -1,26 +1,14 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import api from '@/lib/api';
 import { useAuthStore } from '@/lib/auth';
 
-const C = {
-  card:        '#12121a',
-  cardBorder:  'rgba(255,255,255,0.08)',
-  input:       '#1a1a2e',
-  inputBorder: 'rgba(255,255,255,0.1)',
-  inputFocus:  '#7c3aed',
-  purple:      '#7c3aed',
-  pink:        '#ec4899',
-  success:     '#10b981',
-  red:         '#ef4444',
-  muted:       '#6b7280',
-  subtext:     '#9ca3af',
-  text:        '#ffffff',
-};
 
 export default function SettingsPage() {
+  const { C } = useTheme();
   const { user } = useDashboard();
   const { logout } = useAuthStore();
 

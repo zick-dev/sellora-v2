@@ -1,22 +1,11 @@
 'use client';
+import { useTheme } from '@/lib/theme';
 
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import api from '@/lib/api';
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 
-const C = {
-  card:        '#12121a',
-  cardBorder:  'rgba(255,255,255,0.08)',
-  input:       '#1a1a2e',
-  purple:      '#7c3aed',
-  pink:        '#ec4899',
-  success:     '#10b981',
-  amber:       '#f59e0b',
-  muted:       '#6b7280',
-  subtext:     '#9ca3af',
-  text:        '#ffffff',
-};
 
 interface SubStatus {
   plan: string;
@@ -26,6 +15,7 @@ interface SubStatus {
 }
 
 export default function UpgradePage() {
+  const { C } = useTheme();
   const { user } = useDashboard();
   const [status, setStatus]   = useState<SubStatus | null>(null);
   const [loading, setLoading] = useState(true);
