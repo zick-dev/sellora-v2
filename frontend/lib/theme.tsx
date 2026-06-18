@@ -2,13 +2,7 @@
 
 /**
  * lib/theme.tsx
- * ──────────────
  * Dark/Light theme system for Sellora dashboard.
- *
- * Usage in any page:
- *   import { useTheme } from '@/lib/theme';
- *   const { C, theme, toggleTheme } = useTheme();
- *   // then use C.text, C.card etc just like the old hardcoded palette
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -21,14 +15,11 @@ export const DARK = {
   sidebarBorder:'#1a1a2e',
   input:        '#1a1a2e',
   inputBorder:  '#2a2a3e',
+  inputFocus:   '#7c3aed',
   purple:       '#7c3aed',
   purpleLight:  '#8b5cf6',
   purpleHov:    '#6d28d9',
   purpleDim:    'rgba(124,58,237,0.12)',
-  mutedLight:   '#9ca3af',
-  orange:       '#f59e0b',
-  topbar:       '#0a0a12',
-  inputFocus:   '#7c3aed',
   pink:         '#ec4899',
   success:      '#10b981',
   amber:        '#f59e0b',
@@ -36,13 +27,11 @@ export const DARK = {
   teal:         '#06b6d4',
   blue:         '#3b82f6',
   green:        '#25d366',
+  orange:       '#f59e0b',
   muted:        '#6b7280',
+  mutedLight:   '#9ca3af',
   subtext:      '#c4c4d4',
   text:         '#ffffff',
-  purpleHov:    '#6d28d9',
-  purpleDim:    'rgba(124,58,237,0.12)',
-  mutedLight:   '#9ca3af',
-  orange:       '#f59e0b',
   topbar:       '#0a0a12',
 };
 
@@ -54,14 +43,11 @@ export const LIGHT = {
   sidebarBorder:'#e8e8f0',
   input:        '#f1f1f7',
   inputBorder:  'rgba(0,0,0,0.12)',
+  inputFocus:   '#7c3aed',
   purple:       '#7c3aed',
   purpleLight:  '#6d28d9',
   purpleHov:    '#5b21b6',
   purpleDim:    'rgba(124,58,237,0.08)',
-  mutedLight:   '#6b7280',
-  orange:       '#d97706',
-  topbar:       '#ffffff',
-  inputFocus:   '#7c3aed',
   pink:         '#db2777',
   success:      '#059669',
   amber:        '#d97706',
@@ -69,13 +55,11 @@ export const LIGHT = {
   teal:         '#0891b2',
   blue:         '#2563eb',
   green:        '#16a34a',
+  orange:       '#d97706',
   muted:        '#9ca3af',
+  mutedLight:   '#6b7280',
   subtext:      '#4b5563',
   text:         '#111827',
-  purpleHov:    '#6d28d9',
-  purpleDim:    'rgba(124,58,237,0.08)',
-  mutedLight:   '#9ca3af',
-  orange:       '#d97706',
   topbar:       '#ffffff',
 };
 
