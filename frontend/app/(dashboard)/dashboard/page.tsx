@@ -124,7 +124,7 @@ export default function DashboardOverviewPage() {
           { label: 'Active Products', value: loading ? '—' : String(activeProducts),                 sub: products.length > 0 ? products.length + ' total' : 'No products yet' },
           { label: 'New Leads',       value: loading ? '—' : String(newLeads),                       sub: newLeads > 0 ? 'Need follow-up' : 'All followed up' },
         ].map(card => (
-          <div key={card.label} className="stat-card">
+          <div key={card.label} className="stat-card" style={{ background: C.card, border: '1px solid ' + C.cardBorder }}>
             <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>
               {card.label}
             </p>
@@ -292,8 +292,6 @@ export default function DashboardOverviewPage() {
         @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
         .stat-card {
-          background: #13131f;
-          border: 1px solid #1e1e30;
           border-radius: 14px;
           padding: 20px 20px 16px;
           flex: 1 1 140px;
