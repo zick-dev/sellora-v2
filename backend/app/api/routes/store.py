@@ -203,6 +203,8 @@ async def update_my_store(
         store.delivery_fee = payload.delivery_fee
     if payload.free_delivery_above is not None:
         store.free_delivery_above = payload.free_delivery_above
+    if payload.show_trust_bar is not None:
+        store.show_trust_bar = payload.show_trust_bar
     # Persist all store updates to the database.
     await db.commit()
 

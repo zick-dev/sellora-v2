@@ -57,6 +57,7 @@ export default function StorefrontPage() {
     popup_discount: 10,
     popup_message:  'Get a discount on your order!',
     base_currency:  'USD',
+    show_trust_bar: true,
     delivery_fee:          0,
     free_delivery_above:   10000,
   });
@@ -83,6 +84,7 @@ export default function StorefrontPage() {
           popup_discount: res.data.popup_discount ?? 10,
           popup_message:  res.data.popup_message || 'Get a discount on your order!',
           base_currency:  res.data.base_currency || 'USD',
+          show_trust_bar: res.data.show_trust_bar ?? true,
           delivery_fee:         res.data.delivery_fee ?? 0,
           free_delivery_above:  res.data.free_delivery_above ?? 10000,
         });
@@ -111,6 +113,7 @@ export default function StorefrontPage() {
         popup_discount: form.popup_discount,
         popup_message:  form.popup_message,
         base_currency:  form.base_currency,
+        show_trust_bar: form.show_trust_bar,
         delivery_fee:         form.delivery_fee ?? 0,
         free_delivery_above:  form.free_delivery_above ?? 10000,
       });
@@ -476,6 +479,19 @@ export default function StorefrontPage() {
         </div>
       )}
       
+    {activeTab === 'general' && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Trust Bar</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Show the scrolling trust badges on your storefront (Pay on Delivery, Secure Checkout, etc.)</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ color: C.subtext, fontSize: 14 }}>Show trust bar on storefront</span>
+            <div onClick={() => setForm({ ...form, show_trust_bar: !form.show_trust_bar })}
+              style={{ width: 44, height: 24, borderRadius: 12, background: form.show_trust_bar ? C.purple : C.inputBorder, cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 3, left: form.show_trust_bar ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+            </div>
+          </div>
+        </div>
+      )}
     {activeTab === 'delivery' && (
   <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
     <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Delivery Fee</h2>

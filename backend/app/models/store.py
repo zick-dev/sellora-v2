@@ -124,6 +124,7 @@ class Store(Base):
     show_recently_viewed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     show_currency_converter: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     show_brand_showcase: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    show_trust_bar:     Mapped[bool] = mapped_column(Boolean, default=True,  nullable=False)
 
     # ── Homepage Section Toggles ─────────────────────────────────
     hero_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

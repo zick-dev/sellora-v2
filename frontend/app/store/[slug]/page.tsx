@@ -11,6 +11,7 @@ interface Store {
   is_active: boolean; popup_enabled?: boolean; popup_discount?: number;
   popup_message?: string; delivery_fee?: number; free_delivery_above?: number;
   base_currency?: string;
+  show_trust_bar?: boolean;
 }
 interface Product {
   id: string; name: string; description: string | null; price: number;
@@ -277,17 +278,32 @@ export default function StorefrontPage() {
         </div>
       )}
 
-      {/* TRUST ROW */}
-      <div style={{ borderBottom:'1px solid #f0f0f0' }}>
-        <div style={{ maxWidth:1200, margin:'0 auto', padding:'10px 20px', display:'flex', gap:20, overflowX:'auto', scrollbarWidth:'none' }}>
-          {[{icon:'🚚',text:'Pay on Delivery'},{icon:'💬',text:'WhatsApp Support'},{icon:'🔒',text:'Secure Checkout'},{icon:'↩️',text:'Easy Returns'}].map(t => (
-            <div key={t.text} style={{ display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap', flexShrink:0 }}>
-              <span style={{ fontSize:14 }}>{t.icon}</span>
-              <span style={{ color:'#555', fontSize:12, fontWeight:500 }}>{t.text}</span>
-            </div>
-          ))}
+      {/* TRUST BAR — animated carousel */}
+      {store?.show_trust_bar !== false && (
+        <div style={{ borderBottom:'1px solid #f0f0f0', overflow:'hidden', background:'#fff' }}>
+          <div style={{ display:'flex', animation:'trustScroll 18s linear infinite', width:'max-content' }}>
+            {[...Array(3)].map((_, ri) => (
+              <div key={ri} style={{ display:'flex', alignItems:'center', gap:0, flexShrink:0 }}>
+                {[
+                  { bg:'#fff7ed', border:'#fed7aa', color:'#c2410c', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c2410c" strokeWidth="1.8"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>, text:'Pay on Delivery' },
+                  { bg:'#f0fdf4', border:'#bbf7d0', color:'#15803d', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>, text:'WhatsApp Support' },
+                  { bg:'#eff6ff', border:'#bfdbfe', color:'#1d4ed8', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>, text:'Secure Checkout' },
+                  { bg:'#fdf4ff', border:'#e9d5ff', color:'#7e22ce', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7e22ce" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, text:'Easy Returns' },
+                  { bg:'#fefce8', border:'#fde68a', color:'#b45309', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, text:'Buyer Protection' },
+                  { bg:'#f0fdfa', border:'#99f6e4', color:'#0f766e', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f766e" strokeWidth="1.8"><polyline points="20 6 9 17 4 12"/></svg>, text:'Quality Guaranteed' },
+                ].map(t => (
+                  <div key={t.text} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 24px', borderRight:'1px solid #f0f0f0', whiteSpace:'nowrap', flexShrink:0 }}>
+                    <div style={{ width:30, height:30, borderRadius:8, background:t.bg, border:'1px solid '+t.border, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      {t.svg}
+                    </div>
+                    <span style={{ color:'#444', fontSize:12, fontWeight:600 }}>{t.text}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* CATEGORY PILLS */}
       {allCategories.length > 1 && (
@@ -560,7 +576,7 @@ export default function StorefrontPage() {
         </div>
       )}
 
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} ::-webkit-scrollbar{display:none}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes trustScroll{0%{transform:translateX(0)}100%{transform:translateX(-33.333%)}} ::-webkit-scrollbar{display:none}`}</style>
     </div>
   );
 }
