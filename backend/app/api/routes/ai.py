@@ -50,7 +50,7 @@ async def generate_ai_content(
         )
 
     # ── Check API key is configured ───────────────────────────────
-    if not settings.ANTHROPIC_API_KEY:
+    if not settings.GEMINI_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI Tools are coming soon! We're putting the finishing touches on this feature.",
@@ -63,19 +63,14 @@ async def generate_ai_content(
             detail="Prompt is required and must be under 4000 characters.",
         )
 
-    # ── Call Claude API from the backend ──────────────────────────
+    # ── Call Gemini API from the backend ──────────────────────────
     async with httpx.AsyncClient(timeout=60) as client:
         res = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": settings.ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}",
+            headers={"content-type": "application/json"},
             json={
-                "model": "claude-sonnet-4-20250514",
-                "max_tokens": 1024,
-                "messages": [{"role": "user", "content": prompt}],
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"maxOutputTokens": 1024, "temperature": 0.7},
             },
         )
 
@@ -86,9 +81,9 @@ async def generate_ai_content(
         )
 
     data = res.json()
-    text = "".join(
-        block.get("text", "")
-        for block in data.get("content", [])
-        if block.get("type") == "text"
-    )
+    text = ""
+    try:
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        text = "No response generated."
     return {"text": text}

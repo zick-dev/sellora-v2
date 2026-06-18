@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # ── Anthropic AI ─────────────────────────────────────────────
     # Claude API key for AI reply suggestions, FAQ generation etc.
     # Optional — AI features are disabled if not provided
-    ANTHROPIC_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
 
     # ── App Configuration ────────────────────────────────────────
     # List of frontend URLs allowed to make requests to this API
