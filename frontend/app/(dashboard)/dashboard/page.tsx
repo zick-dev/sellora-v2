@@ -119,7 +119,7 @@ export default function DashboardOverviewPage() {
       {/* Stat cards */}
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
         {[
-          { label: 'Total Revenue',   value: loading ? '—' : ('N' + totalRevenue.toLocaleString()),  sub: orders.length > 0 ? orders.length + ' orders' : 'No orders yet' },
+          { label: 'Confirmed Revenue', value: loading ? '—' : ('N' + totalRevenue.toLocaleString()),  sub: pendingRevenue > 0 ? 'N' + pendingRevenue.toLocaleString() + ' pending' : 'Delivered orders only' },
           { label: 'Pending Orders',  value: loading ? '—' : String(pendingCount),                   sub: pendingCount > 0 ? 'Need attention' : 'All clear' },
           { label: 'Active Products', value: loading ? '—' : String(activeProducts),                 sub: products.length > 0 ? products.length + ' total' : 'No products yet' },
           { label: 'New Leads',       value: loading ? '—' : String(newLeads),                       sub: newLeads > 0 ? 'Need follow-up' : 'All followed up' },

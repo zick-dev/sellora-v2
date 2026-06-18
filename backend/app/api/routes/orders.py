@@ -12,12 +12,13 @@ Seller routes (JWT required):
 """
 
 import random
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.services.order_reminder import check_and_send_order_reminders
 from app.models.order import Order
 from app.models.product import Product
 from app.models.store import Store
@@ -49,6 +50,7 @@ def generate_order_number() -> str:
 )
 async def create_order(
     payload: OrderCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -116,6 +118,10 @@ async def create_order(
     db.add(order)
     await db.flush()
     await db.refresh(order)
+
+    # Fire background reminder check for old pending orders
+    background_tasks.add_task(check_and_send_order_reminders, db)
+
     return OrderOut.model_validate(order)
 
 

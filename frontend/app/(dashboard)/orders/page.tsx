@@ -370,6 +370,28 @@ export default function OrdersPage() {
                         WhatsApp
                       </button>
 
+                      {['pending','confirmed','processing'].includes(order.status) && (
+                        <button
+                          onClick={() => {
+                            const clean = order.customer_phone.replace(/^0/, '234');
+                            const msg = encodeURIComponent(
+                              'Hi ' + order.customer_name + ', reminder about order #' + (order.order_number || order.id.slice(0,8).toUpperCase()) + '. Let us know when you are ready for delivery. Thank you!'
+                            );
+                            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '8px 14px', borderRadius: 8,
+                            background: 'rgba(245,158,11,0.1)',
+                            border: '1px solid rgba(245,158,11,0.2)',
+                            color: C.amber, fontSize: 13, fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Remind
+                        </button>
+                      )}
+
                       {/* Status buttons */}
                       {nextStatuses.map(s => (
                         <button
