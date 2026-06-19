@@ -387,7 +387,7 @@ export default function StorefrontPage() {
                 <div key={product.id} style={{ background:'#fff', border:'1px solid #f0f0f0', borderRadius:12, overflow:'hidden', transition:'box-shadow 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.08)')}
                   onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-                  <div onClick={() => !oos && setSelectedProduct(product)} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
+                  <div onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
                     {product.image_url
                       ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'contain', transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
                       : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, color:'#ddd' }}>🛍️</div>}
@@ -399,13 +399,22 @@ export default function StorefrontPage() {
                     {oos && <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.75)', display:'flex', alignItems:'center', justifyContent:'center' }}><span style={{ background:'#111', color:'#fff', fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:6 }}>Sold Out</span></div>}
                   </div>
                   <div style={{ padding:'12px 14px' }}>
-                    <p onClick={() => !oos && setSelectedProduct(product)} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
+                    <p onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
                     {product.category && <p style={{ color:'#bbb', fontSize:11, marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>{product.category}</p>}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6 }}>
                       <p style={{ color:accent, fontSize:16, fontWeight:800 }}>{sym + Number(product.price).toLocaleString()}</p>
                       {oos ? <span style={{ color:'#bbb', fontSize:12 }}>Unavailable</span>
                         : qty === 0 ? (
-                          <button onClick={() => addToCart(product)} style={{ padding:'6px 13px', borderRadius:7, background:accent, border:'none', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', flexShrink:0 }}>Add</button>
+                          <button onClick={() => {
+                          if (product.variants && product.variants.length > 0) {
+                            setSelectedVariant(null);
+                            setSelectedProduct(product);
+                          } else {
+                            addToCart(product);
+                          }
+                        }} style={{ padding:'6px 13px', borderRadius:7, background:accent, border:'none', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                          {product.variants && product.variants.length > 0 ? 'Select' : 'Add'}
+                        </button>
                         ) : (
                           <div style={{ display:'flex', alignItems:'center', gap:6, background:'#f5f5f5', borderRadius:7, padding:'4px 8px' }}>
                             <button onClick={() => updateQty(product.id, qty-1)} style={{ width:22, height:22, borderRadius:5, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>−</button>
@@ -514,23 +523,29 @@ export default function StorefrontPage() {
               <button onClick={() => setShowCart(false)} style={{ width:30, height:30, borderRadius:'50%', background:'#f5f5f5', border:'none', cursor:'pointer', color:'#666', fontSize:17, display:'flex', alignItems:'center', justifyContent:'center' }}>×</button>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
-              {cart.map(item => (
-                <div key={item.product.id} style={{ display:'flex', gap:10, background:'#fafafa', borderRadius:10, padding:'10px 12px', alignItems:'center' }}>
+              {cart.map(item => {
+                const itemPrice = item.variant?.price != null ? item.variant.price : item.product.price;
+                const itemStock = item.variant ? item.variant.stock : item.product.stock;
+                const variantLabel = item.variant ? [item.variant.variant_value_1, item.variant.variant_value_2].filter(Boolean).join(' / ') : null;
+                return (
+                <div key={item.cartKey} style={{ display:'flex', gap:10, background:'#fafafa', borderRadius:10, padding:'10px 12px', alignItems:'center' }}>
                   <div style={{ width:48, height:48, borderRadius:8, background:'#f0f0f0', overflow:'hidden', flexShrink:0 }}>
                     {item.product.image_url ? <img src={item.product.image_url} alt={item.product.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>🛍️</div>}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <p style={{ color:'#111', fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.product.name}</p>
-                    <p style={{ color:accent, fontSize:13, fontWeight:700 }}>{sym+Number(item.product.price).toLocaleString()}</p>
+                    {variantLabel && <p style={{ color:'#999', fontSize:11, marginBottom:2 }}>{variantLabel}</p>}
+                    <p style={{ color:accent, fontSize:13, fontWeight:700 }}>{sym+Number(itemPrice).toLocaleString()}</p>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <button onClick={() => updateQty(item.product.id, item.quantity-1)} style={{ width:24, height:24, borderRadius:5, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>−</button>
+                    <button onClick={() => updateQty(item.cartKey, item.quantity-1)} style={{ width:24, height:24, borderRadius:5, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>−</button>
                     <span style={{ color:'#111', fontSize:13, fontWeight:700, minWidth:14, textAlign:'center' }}>{item.quantity}</span>
-                    <button onClick={() => updateQty(item.product.id, Math.min(item.quantity+1, item.product.stock))} style={{ width:24, height:24, borderRadius:5, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
+                    <button onClick={() => updateQty(item.cartKey, Math.min(item.quantity+1, itemStock))} style={{ width:24, height:24, borderRadius:5, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
                   </div>
-                  <button onClick={() => removeFromCart(item.product.id)} style={{ background:'none', border:'none', cursor:'pointer', color:'#ef4444', fontSize:15, padding:0 }}>×</button>
+                  <button onClick={() => removeFromCart(item.cartKey)} style={{ background:'none', border:'none', cursor:'pointer', color:'#ef4444', fontSize:15, padding:0 }}>×</button>
                 </div>
-              ))}
+                );
+              })}
             </div>
             <div style={{ background:'#f9f9f9', borderRadius:10, padding:'12px 14px', marginBottom:12 }}>
               {discountAmt > 0 && <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}><span style={{ color:'#22c55e', fontSize:13 }}>Discount ({discountCode})</span><span style={{ color:'#22c55e', fontSize:13, fontWeight:600 }}>-{sym+discountAmt.toLocaleString()}</span></div>}
@@ -558,12 +573,16 @@ export default function StorefrontPage() {
             </div>
             <div style={{ background:'#f9f9f9', borderRadius:10, padding:'12px 14px', marginBottom:14 }}>
               <p style={{ color:'#999', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>Order Summary</p>
-              {cart.map(item => (
-                <div key={item.product.id} style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                  <span style={{ color:'#666', fontSize:13 }}>{item.product.name} x{item.quantity}</span>
-                  <span style={{ color:'#111', fontSize:13, fontWeight:600 }}>{sym+(Number(item.product.price)*item.quantity).toLocaleString()}</span>
+              {cart.map(item => {
+                const itemPrice = item.variant?.price != null ? item.variant.price : item.product.price;
+                const variantLabel = item.variant ? [item.variant.variant_value_1, item.variant.variant_value_2].filter(Boolean).join(' / ') : null;
+                return (
+                <div key={item.cartKey} style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                  <span style={{ color:'#666', fontSize:13 }}>{item.product.name}{variantLabel ? ' ('+variantLabel+')' : ''} x{item.quantity}</span>
+                  <span style={{ color:'#111', fontSize:13, fontWeight:600 }}>{sym+(Number(itemPrice)*item.quantity).toLocaleString()}</span>
                 </div>
-              ))}
+                );
+              })}
               {discountAmt > 0 && <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}><span style={{ color:'#22c55e', fontSize:13 }}>Discount ({discountCode})</span><span style={{ color:'#22c55e', fontSize:13, fontWeight:600 }}>-{sym+discountAmt.toLocaleString()}</span></div>}
               {deliveryFee > 0 && <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}><span style={{ color:'#666', fontSize:13 }}>Delivery</span><span style={{ color:'#111', fontSize:13, fontWeight:600 }}>{sym+deliveryFee.toLocaleString()}</span></div>}
               <div style={{ display:'flex', justifyContent:'space-between', paddingTop:8, borderTop:'1px solid #eee', marginTop:4 }}>
@@ -607,26 +626,107 @@ export default function StorefrontPage() {
             <div style={{ aspectRatio:'1.5', background:'#f9f9f9', position:'relative', overflow:'hidden', borderRadius:'20px 20px 0 0' }}>
               {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name} style={{ width:'100%', height:'100%', objectFit:'contain' }} /> : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:60 }}>🛍️</div>}
               <button onClick={() => setSelectedProduct(null)} style={{ position:'absolute', top:12, right:12, width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.9)', border:'none', cursor:'pointer', fontSize:17, display:'flex', alignItems:'center', justifyContent:'center', color:'#111' }}>×</button>
-              {selectedProduct.stock<=5 && selectedProduct.stock>0 && <div style={{ position:'absolute', top:12, left:12, background:selectedProduct.stock<=2?'#ef4444':'#f59e0b', color:'#fff', borderRadius:7, padding:'3px 9px', fontSize:11, fontWeight:800 }}>{selectedProduct.stock<=2?`Only ${selectedProduct.stock} left!`:`${selectedProduct.stock} left`}</div>}
+              {(() => {
+                const stockShown = selectedVariant ? selectedVariant.stock : selectedProduct.stock;
+                return stockShown<=5 && stockShown>0 && <div style={{ position:'absolute', top:12, left:12, background:stockShown<=2?'#ef4444':'#f59e0b', color:'#fff', borderRadius:7, padding:'3px 9px', fontSize:11, fontWeight:800 }}>{stockShown<=2?`Only ${stockShown} left!`:`${stockShown} left`}</div>;
+              })()}
             </div>
             <div style={{ padding:'18px 20px 32px' }}>
               {selectedProduct.category && <p style={{ color:'#bbb', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>{selectedProduct.category}</p>}
               <h2 style={{ color:'#111', fontSize:19, fontWeight:800, marginBottom:6 }}>{selectedProduct.name}</h2>
-              <p style={{ color:accent, fontSize:22, fontWeight:900, marginBottom:12 }}>{sym+Number(selectedProduct.price).toLocaleString()}</p>
+              <p style={{ color:accent, fontSize:22, fontWeight:900, marginBottom:12 }}>
+                {sym+Number(selectedVariant?.price != null ? selectedVariant.price : selectedProduct.price).toLocaleString()}
+              </p>
               {selectedProduct.description && <p style={{ color:'#555', fontSize:14, lineHeight:1.7, marginBottom:14, background:'#f9f9f9', borderRadius:8, padding:'11px 13px' }}>{selectedProduct.description}</p>}
+
+              {/* Variant picker */}
+              {selectedProduct.variants && selectedProduct.variants.length > 0 && (() => {
+                const variants = selectedProduct.variants!;
+                const type1 = variants[0]?.variant_type_1;
+                const type2 = variants[0]?.variant_type_2;
+                const values1 = Array.from(new Set(variants.map(v => v.variant_value_1).filter(Boolean))) as string[];
+                const values2 = type2 ? Array.from(new Set(variants.map(v => v.variant_value_2).filter(Boolean))) as string[] : [];
+
+                return (
+                  <div style={{ marginBottom: 16 }}>
+                    {type1 && (
+                      <div style={{ marginBottom: type2 ? 12 : 0 }}>
+                        <p style={{ color:'#888', fontSize:12, fontWeight:700, marginBottom:8 }}>{type1}</p>
+                        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                          {values1.map(v1 => {
+                            const matchingVariant = variants.find(v => v.variant_value_1 === v1 && (!selectedVariant?.variant_value_2 || v.variant_value_2 === selectedVariant?.variant_value_2)) || variants.find(v => v.variant_value_1 === v1);
+                            const isSelected = selectedVariant?.variant_value_1 === v1;
+                            const isOOS = matchingVariant ? matchingVariant.stock === 0 || !matchingVariant.is_available : true;
+                            return (
+                              <button key={v1} disabled={isOOS}
+                                onClick={() => {
+                                  const next = variants.find(v => v.variant_value_1 === v1 && (selectedVariant?.variant_value_2 ? v.variant_value_2 === selectedVariant.variant_value_2 : !v.variant_value_2)) || variants.find(v => v.variant_value_1 === v1);
+                                  if (next) setSelectedVariant(next);
+                                }}
+                                style={{ padding:'7px 14px', borderRadius:8, border: isSelected ? '2px solid '+accent : '1px solid #e5e5e5', background: isSelected ? accent+'15' : '#fff', color: isOOS ? '#ccc' : '#111', fontSize:13, fontWeight:600, cursor: isOOS ? 'not-allowed' : 'pointer', textDecoration: isOOS ? 'line-through' : 'none' }}>
+                                {v1}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {type2 && values2.length > 0 && (
+                      <div>
+                        <p style={{ color:'#888', fontSize:12, fontWeight:700, marginBottom:8 }}>{type2}</p>
+                        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                          {values2.map(v2 => {
+                            const matchingVariant = variants.find(v => v.variant_value_2 === v2 && (!selectedVariant?.variant_value_1 || v.variant_value_1 === selectedVariant?.variant_value_1)) || variants.find(v => v.variant_value_2 === v2);
+                            const isSelected = selectedVariant?.variant_value_2 === v2;
+                            const isOOS = matchingVariant ? matchingVariant.stock === 0 || !matchingVariant.is_available : true;
+                            return (
+                              <button key={v2} disabled={isOOS}
+                                onClick={() => {
+                                  const next = variants.find(v => v.variant_value_2 === v2 && (selectedVariant?.variant_value_1 ? v.variant_value_1 === selectedVariant.variant_value_1 : true)) || variants.find(v => v.variant_value_2 === v2);
+                                  if (next) setSelectedVariant(next);
+                                }}
+                                style={{ padding:'7px 14px', borderRadius:8, border: isSelected ? '2px solid '+accent : '1px solid #e5e5e5', background: isSelected ? accent+'15' : '#fff', color: isOOS ? '#ccc' : '#111', fontSize:13, fontWeight:600, cursor: isOOS ? 'not-allowed' : 'pointer', textDecoration: isOOS ? 'line-through' : 'none' }}>
+                                {v2}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:16 }}>
-                <span style={{ width:7, height:7, borderRadius:'50%', background:selectedProduct.stock>5?'#22c55e':selectedProduct.stock>0?'#f59e0b':'#ef4444', display:'inline-block' }} />
-                <span style={{ color:'#666', fontSize:13 }}>{selectedProduct.stock>5?'In stock':selectedProduct.stock>0?selectedProduct.stock+' left':'Out of stock'}</span>
+                {(() => {
+                  const stockShown = selectedVariant ? selectedVariant.stock : selectedProduct.stock;
+                  return (
+                    <>
+                      <span style={{ width:7, height:7, borderRadius:'50%', background:stockShown>5?'#22c55e':stockShown>0?'#f59e0b':'#ef4444', display:'inline-block' }} />
+                      <span style={{ color:'#666', fontSize:13 }}>{stockShown>5?'In stock':stockShown>0?stockShown+' left':'Out of stock'}</span>
+                    </>
+                  );
+                })()}
               </div>
               {(() => {
-                const qty = getQty(selectedProduct.id);
-                if (qty===0) return <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }} style={{ width:'100%', padding:'14px 0', background:accent, border:'none', borderRadius:10, color:'#fff', fontSize:15, fontWeight:800, cursor:'pointer' }}>Add to Cart</button>;
+                const hasVariants = selectedProduct.variants && selectedProduct.variants.length > 0;
+                const variantNotChosen = hasVariants && !selectedVariant;
+                const stockAvailable = selectedVariant ? selectedVariant.stock : selectedProduct.stock;
+                const qty = getQty(selectedProduct.id, selectedVariant?.id);
+
+                if (variantNotChosen) {
+                  return <button disabled style={{ width:'100%', padding:'14px 0', background:'#ddd', border:'none', borderRadius:10, color:'#888', fontSize:15, fontWeight:800, cursor:'not-allowed' }}>Select an option above</button>;
+                }
+                if (stockAvailable === 0) {
+                  return <button disabled style={{ width:'100%', padding:'14px 0', background:'#ddd', border:'none', borderRadius:10, color:'#888', fontSize:15, fontWeight:800, cursor:'not-allowed' }}>Out of Stock</button>;
+                }
+                if (qty===0) return <button onClick={() => { addToCart(selectedProduct, selectedVariant); setSelectedProduct(null); }} style={{ width:'100%', padding:'14px 0', background:accent, border:'none', borderRadius:10, color:'#fff', fontSize:15, fontWeight:800, cursor:'pointer' }}>Add to Cart</button>;
                 return (
                   <div style={{ display:'flex', gap:10 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:10, background:'#f5f5f5', borderRadius:10, padding:'9px 14px', flex:1, justifyContent:'space-between' }}>
-                      <button onClick={() => updateQty(selectedProduct.id, qty-1)} style={{ width:28, height:28, borderRadius:7, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:15, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>−</button>
+                      <button onClick={() => updateQty(makeCartKey(selectedProduct.id, selectedVariant?.id), qty-1)} style={{ width:28, height:28, borderRadius:7, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:15, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>−</button>
                       <span style={{ color:'#111', fontSize:14, fontWeight:800 }}>{qty} in cart</span>
-                      <button onClick={() => updateQty(selectedProduct.id, Math.min(qty+1, selectedProduct.stock))} style={{ width:28, height:28, borderRadius:7, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:15, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
+                      <button onClick={() => updateQty(makeCartKey(selectedProduct.id, selectedVariant?.id), Math.min(qty+1, stockAvailable))} style={{ width:28, height:28, borderRadius:7, background:'#fff', border:'1px solid #e5e5e5', cursor:'pointer', fontSize:15, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
                     </div>
                     <button onClick={() => { setSelectedProduct(null); setShowCart(true); }} style={{ padding:'12px 16px', background:accent, border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>View Cart</button>
                   </div>
