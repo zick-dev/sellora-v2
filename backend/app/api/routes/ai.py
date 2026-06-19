@@ -56,6 +56,13 @@ async def generate_ai_content(
             detail="AI Tools are coming soon! We're putting the finishing touches on this feature.",
         )
 
+    # Temporarily disabled while Gemini billing/quota is being set up.
+    # Remove this block once GEMINI_API_KEY has active quota.
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="AI Tools are coming soon! We're putting the finishing touches on this feature.",
+    )
+
     prompt = payload.get("prompt", "")
     if not prompt or len(prompt) > 4000:
         raise HTTPException(
