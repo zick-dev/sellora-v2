@@ -68,5 +68,13 @@ class Product(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    # ── Relationship ─────────────────────────────────────────────
+    variants: Mapped[list["ProductVariant"]] = relationship(
+        "ProductVariant",
+        backref="product",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
     def __repr__(self) -> str:
         return f"<Product id={self.id} name={self.name}>"

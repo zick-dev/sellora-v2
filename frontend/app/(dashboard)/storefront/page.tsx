@@ -60,6 +60,7 @@ export default function StorefrontPage() {
     popup_discount: 10,
     popup_message:  'Get a discount on your order!',
     base_currency:  'USD',
+    category_type:  'general',
     show_trust_bar: true,
     delivery_fee:          0,
     free_delivery_above:   10000,
@@ -94,6 +95,7 @@ export default function StorefrontPage() {
           popup_discount: res.data.popup_discount ?? 10,
           popup_message:  res.data.popup_message || 'Get a discount on your order!',
           base_currency:  res.data.base_currency || 'USD',
+          category_type:  res.data.category_type || 'general',
           show_trust_bar: res.data.show_trust_bar ?? true,
           delivery_fee:         res.data.delivery_fee ?? 0,
           free_delivery_above:  res.data.free_delivery_above ?? 10000,
@@ -124,6 +126,7 @@ export default function StorefrontPage() {
         popup_discount: form.popup_discount,
         popup_message:  form.popup_message,
         base_currency:  form.base_currency,
+        category_type:  form.category_type,
         show_trust_bar: form.show_trust_bar,
         delivery_fee:         form.delivery_fee ?? 0,
         free_delivery_above:  form.free_delivery_above ?? 10000,
@@ -277,6 +280,23 @@ export default function StorefrontPage() {
                 <option value="EUR">EUR — Euro (&#8364;)</option>
               </select>
               <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Prices on your storefront will show in this currency</p>
+            </div>
+            <div>
+              <label style={labelStyle}>Store Type</label>
+              <select
+                value={form.category_type}
+                onChange={e => setForm({ ...form, category_type: e.target.value })}
+                style={{ width: '100%', background: C.input, border: '1.5px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+              >
+                <option value="general">General Store</option>
+                <option value="clothing">Clothing & Fashion</option>
+                <option value="shoes">Shoes & Footwear</option>
+                <option value="beauty">Beauty & Cosmetics</option>
+                <option value="electronics">Electronics & Gadgets</option>
+                <option value="food">Food & Groceries</option>
+                <option value="jewelry">Jewelry & Accessories</option>
+              </select>
+              <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Helps suggest the right product variants (e.g. size, color) when adding products</p>
             </div>
           </div>
 

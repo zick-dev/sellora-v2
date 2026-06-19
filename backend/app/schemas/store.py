@@ -72,8 +72,11 @@ class StoreUpdateRequest(BaseModel):
     description: str | None = Field(None, max_length=1000)
     logo_url:    str | None = Field(None, max_length=500)
     banner_url:  str | None
-    banner_type: str = Field(None, max_length=500)
-    banner_type: str | None = Field(None, max_length=10)
+    banner_type: str
+    category_type: str = Field(None, max_length=500)
+    banner_type: str
+    category_type: str | None = Field(None, max_length=10)
+    category_type: str | None = Field(None, max_length=30)
     theme_color: str | None = Field(None, max_length=20)
     whatsapp:    str | None = Field(None, max_length=30)
     instagram:   str | None = Field(None, max_length=100)
@@ -172,6 +175,7 @@ class StoreOut(BaseModel):
     updated_at:  datetime
     banner_url:  str | None
     banner_type: str
+    category_type: str
     theme_color: str
     whatsapp:    str | None
     instagram:   str | None

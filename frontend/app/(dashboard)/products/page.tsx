@@ -2,6 +2,7 @@
 import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
+import VariantBuilder from '@/components/VariantBuilder';
 import api from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 
@@ -28,6 +29,8 @@ export default function ProductsPage() {
   const [products, setProducts]   = useState<Product[]>([]);
   const [storeId, setStoreId]     = useState('');
   const [storeCategories, setStoreCategories] = useState<string[]>([]);
+  const [storeType, setStoreType] = useState('general');
+  const [variants, setVariants] = useState<any[]>([]);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing]     = useState<Product | null>(null);
@@ -45,6 +48,7 @@ export default function ProductsPage() {
           const cats = JSON.parse(storeRes.data.categories || '[]');
           setStoreCategories(Array.isArray(cats) ? cats : []);
         } catch { setStoreCategories([]); }
+        setStoreType(storeRes.data.category_type || 'general');
         const productsRes = await api.get(
           `/api/products/store/${storeRes.data.id}`
         );
@@ -59,6 +63,7 @@ export default function ProductsPage() {
   function openAdd() {
     setEditing(null);
     setForm(emptyForm);
+    setVariants([]);
     setError('');
     setShowModal(true);
   }
@@ -74,6 +79,7 @@ export default function ProductsPage() {
       image_url:   p.image_url || '',
       is_available: p.is_available,
     });
+    setVariants((p as any).variants || []);
     setError('');
     setShowModal(true);
   }
@@ -94,6 +100,7 @@ export default function ProductsPage() {
         description: form.description || null,
         image_url:   form.image_url || null,
         is_available: form.is_available,
+        variants:    variants.length > 0 ? variants : [],
       };
       if (editing) {
         const res = await api.put(`/api/products/${editing.id}`, payload);
@@ -475,6 +482,17 @@ export default function ProductsPage() {
                     </a>
                   </div>
                 )}
+              </div>
+
+              {/* Variants */}
+              <div>
+                <VariantBuilder
+                  storeType={storeType}
+                  basePrice={form.price}
+                  variants={variants}
+                  onChange={setVariants}
+                  C={C}
+                />
               </div>
 
               {/* Description */}

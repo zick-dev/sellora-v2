@@ -73,6 +73,7 @@ class Store(Base):
     logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     banner_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     banner_type: Mapped[str] = mapped_column(String(10), default="image", nullable=False)
+    category_type: Mapped[str] = mapped_column(String(30), default="general", nullable=False)
 
     # ── Branding ─────────────────────────────────────────────────
     # CANONICAL ACCENT: theme_color is the single merchant-set accent the

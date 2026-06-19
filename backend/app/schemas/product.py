@@ -6,6 +6,7 @@ Pydantic schemas for product request/response validation.
 
 from datetime import datetime
 from pydantic import BaseModel
+from app.schemas.product_variant import VariantCreate, VariantOut
 
 
 class ProductCreate(BaseModel):

@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.product import Product
+from app.models.product_variant import ProductVariant
 from app.models.store import Store
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductOut, ProductPublic, ProductUpdate
@@ -148,6 +149,23 @@ async def create_product(
     )
     db.add(product)
     await db.flush()
+
+    # ── Create variants if provided ────────────────────────────────
+    if payload.variants:
+        for v in payload.variants:
+            variant = ProductVariant(
+                product_id=product.id,
+                variant_type_1=v.variant_type_1,
+                variant_value_1=v.variant_value_1,
+                variant_type_2=v.variant_type_2,
+                variant_value_2=v.variant_value_2,
+                price=v.price,
+                stock=v.stock,
+                is_available=v.is_available,
+            )
+            db.add(variant)
+        await db.flush()
+
     await db.refresh(product)
     return ProductOut.model_validate(product)
 
@@ -194,10 +212,34 @@ async def update_product(
     await get_store_or_403(product.store_id, current_user.id, db)
 
     update_data = payload.model_dump(exclude_unset=True)
+    variants_payload = update_data.pop("variants", None)
+
     for field, value in update_data.items():
         setattr(product, field, value)
 
-    await db.flush()
+    # ── Replace variants if provided (delete old, create new) ──────
+    if variants_payload is not None:
+        existing_variants = await db.execute(
+            select(ProductVariant).where(ProductVariant.product_id == product.id)
+        )
+        for old_variant in existing_variants.scalars().all():
+            await db.delete(old_variant)
+        await db.flush()
+
+        for v in variants_payload:
+            variant = ProductVariant(
+                product_id=product.id,
+                variant_type_1=v.get("variant_type_1"),
+                variant_value_1=v.get("variant_value_1"),
+                variant_type_2=v.get("variant_type_2"),
+                variant_value_2=v.get("variant_value_2"),
+                price=v.get("price"),
+                stock=v.get("stock", 0),
+                is_available=v.get("is_available", True),
+            )
+            db.add(variant)
+        await db.flush()
+
     await db.refresh(product)
     return ProductOut.model_validate(product)
 
