@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     # Optional — AI features are disabled if not provided
     GEMINI_API_KEY: str = ""
 
+    # Cloudinary — used server-side to delete images on account deletion
+    CLOUDINARY_CLOUD_NAME: str = "dkun9hvkf"
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+
     # ── App Configuration ────────────────────────────────────────
     # List of frontend URLs allowed to make requests to this API
     # Add production URL here when deploying

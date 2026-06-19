@@ -34,6 +34,8 @@ from app.core.security import (
     get_current_user,
 )
 from app.models.user import User
+from app.models.store import Store
+from app.services.account_cleanup import cleanup_merchant_images, archive_subscription_record
 from app.schemas.auth import (
     ForgotPasswordRequest,
     GoogleAuthRequest,
@@ -397,15 +399,24 @@ async def delete_account(
     """
     Permanently delete the logged-in user's account.
 
-    Cascades automatically via ON DELETE CASCADE foreign keys to remove:
-    - Their store
-    - All products in that store
-    - All orders for that store
-    - All abandoned interests/leads for that store
+    Full cleanup sequence:
+    1. Delete all Cloudinary images (logo, banner, product images)
+    2. Archive minimal subscription data for legal/financial compliance
+    3. Delete the User row — cascades via ON DELETE CASCADE to remove
+       their store, products, orders, and abandoned interests/leads
 
     This action is irreversible. The frontend requires the merchant
     to type "DELETE" and confirm a second time before calling this.
     """
+    store_result = await db.execute(select(Store).where(Store.user_id == current_user.id))
+    store = store_result.scalar_one_or_none()
+
+    if store:
+        await cleanup_merchant_images(db, store.id)
+
+    await archive_subscription_record(db, current_user)
+
     await db.delete(current_user)
     await db.commit()
+
     return {"message": "Account and all associated data permanently deleted"}
