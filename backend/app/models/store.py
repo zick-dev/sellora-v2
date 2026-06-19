@@ -72,6 +72,7 @@ class Store(Base):
     # URL-only for now; Cloudinary upload replaces these inputs in update #3.
     logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     banner_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    banner_type: Mapped[str] = mapped_column(String(10), default="image", nullable=False)
 
     # ── Branding ─────────────────────────────────────────────────
     # CANONICAL ACCENT: theme_color is the single merchant-set accent the

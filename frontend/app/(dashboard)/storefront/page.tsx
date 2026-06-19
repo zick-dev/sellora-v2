@@ -4,6 +4,7 @@ import { useTheme } from '@/lib/theme';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
+import VideoUpload from '@/components/VideoUpload';
 
 
 const THEMES = [
@@ -50,6 +51,7 @@ export default function StorefrontPage() {
     description:    '',
     logo_url:       '',
     banner_url:     '',
+    banner_type:    'image',
     theme_color:    '#7c3aed',
     whatsapp:       '',
     instagram:      '',
@@ -83,6 +85,7 @@ export default function StorefrontPage() {
           description:    res.data.description || '',
           logo_url:       res.data.logo_url || '',
           banner_url:     res.data.banner_url || '',
+          banner_type:    res.data.banner_type || 'image',
           theme_color:    res.data.theme_color || '#7c3aed',
           whatsapp:       res.data.whatsapp || '',
           instagram:      res.data.instagram || '',
@@ -112,6 +115,7 @@ export default function StorefrontPage() {
         description:    form.description || null,
         logo_url:       form.logo_url || null,
         banner_url:     form.banner_url || null,
+        banner_type:    form.banner_type,
         theme_color:    form.theme_color,
         whatsapp:       form.whatsapp || null,
         instagram:      form.instagram || null,
@@ -344,15 +348,40 @@ export default function StorefrontPage() {
 
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
             <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Store Banner</h2>
-            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Wide hero image at the top of your storefront. 1200x400px recommended.</p>
-            <ImageUpload
-              value={form.banner_url}
-              onChange={url => setForm({ ...form, banner_url: url })}
-              label="Store Banner"
-              hint="Wide image recommended (1200x400px)."
-              aspectRatio="3"
-              placeholder="🖼️"
-            />
+            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Hero media at the top of your storefront. Choose an image or a short video (max 10 seconds) to showcase your products.</p>
+
+            {/* Image / Video toggle */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button
+                onClick={() => setForm({ ...form, banner_type: 'image', banner_url: form.banner_type === 'video' ? '' : form.banner_url })}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: form.banner_type === 'image' ? 'none' : '1px solid ' + C.cardBorder, background: form.banner_type === 'image' ? C.purple : 'transparent', color: form.banner_type === 'image' ? '#fff' : C.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                🖼️ Image
+              </button>
+              <button
+                onClick={() => setForm({ ...form, banner_type: 'video', banner_url: form.banner_type === 'image' ? '' : form.banner_url })}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: form.banner_type === 'video' ? 'none' : '1px solid ' + C.cardBorder, background: form.banner_type === 'video' ? C.purple : 'transparent', color: form.banner_type === 'video' ? '#fff' : C.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                🎬 Video
+              </button>
+            </div>
+
+            {form.banner_type === 'video' ? (
+              <VideoUpload
+                value={form.banner_url}
+                onChange={url => setForm({ ...form, banner_url: url })}
+                label="Store Banner Video"
+                hint="Max 10 seconds. Will autoplay on loop, muted, on your storefront."
+                maxDurationSec={10}
+              />
+            ) : (
+              <ImageUpload
+                value={form.banner_url}
+                onChange={url => setForm({ ...form, banner_url: url })}
+                label="Store Banner"
+                hint="Wide image recommended (1200x400px)."
+                aspectRatio="3"
+                placeholder="🖼️"
+              />
+            )}
           </div>
 
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>

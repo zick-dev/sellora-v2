@@ -175,6 +175,8 @@ async def update_my_store(
         store.logo_url = payload.logo_url
     if payload.banner_url is not None:
         store.banner_url = payload.banner_url
+    if payload.banner_type is not None:
+        store.banner_type = payload.banner_type
     if payload.theme_color is not None:
         store.theme_color = payload.theme_color
     if payload.primary_color is not None:

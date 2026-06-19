@@ -6,7 +6,7 @@ import api from '@/lib/api';
 
 interface Store {
   id: string; store_name: string; slug: string; description: string | null;
-  logo_url: string | null; banner_url: string | null; theme_color: string;
+  logo_url: string | null; banner_url: string | null; banner_type?: string; theme_color: string;
   whatsapp: string | null; instagram: string | null; categories: string;
   is_active: boolean; popup_enabled?: boolean; popup_discount?: number;
   popup_message?: string; delivery_fee?: number; free_delivery_above?: number;
@@ -244,7 +244,11 @@ export default function StorefrontPage() {
       {/* HERO */}
       {store?.banner_url && (
         <div style={{ width:'100%', height:'clamp(200px, 40vw, 460px)', position:'relative', overflow:'hidden' }}>
-          <img src={store.banner_url} alt={store.store_name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          {store.banner_type === 'video' ? (
+            <video src={store.banner_url} autoPlay muted loop playsInline style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          ) : (
+            <img src={store.banner_url} alt={store.store_name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          )}
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)' }} />
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', padding:'0 clamp(20px,5vw,80px)' }}>
             <div style={{ maxWidth:440 }}>
