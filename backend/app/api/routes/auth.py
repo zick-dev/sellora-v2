@@ -12,6 +12,7 @@ Endpoints:
     POST /api/auth/forgot-password → Send password reset email
     POST /api/auth/reset-password  → Set new password using reset token
     PUT  /api/auth/change-password → Change password for logged-in user
+    POST /api/auth/refresh         → Get new access token using refresh token
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -29,6 +30,7 @@ from app.core.security import (
     hash_password,
     verify_password,
     verify_reset_token,
+    verify_refresh_token,
     get_current_user,
 )
 from app.models.user import User
@@ -344,3 +346,42 @@ async def change_password(
     current_user.password_hash = hash_password(payload.get("new_password", ""))
     await db.flush()
     return {"message": "Password changed successfully"}
+
+@router.post(
+    "/refresh",
+    summary="Get a new access token using a refresh token",
+)
+async def refresh_access_token(
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Exchange a valid refresh token for a new access token.
+    Called automatically by the frontend when an access token expires,
+    so merchants stay logged in during active sessions without
+    needing to re-enter their password.
+    """
+    refresh_token = payload.get("refresh_token", "")
+    user_id = verify_refresh_token(refresh_token)
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+        )
+
+    new_access_token = create_access_token(user.id)
+
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer",
+    }

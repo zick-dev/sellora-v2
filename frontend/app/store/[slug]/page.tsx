@@ -193,11 +193,6 @@ export default function StorefrontPage() {
             ))}
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-            {store?.whatsapp && (
-              <a href={waLink(store.whatsapp)} target="_blank" rel="noreferrer" style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 12px', borderRadius:20, background:'#f0fdf4', color:'#16a34a', fontSize:12, fontWeight:600, textDecoration:'none' }}>
-                💬 <span>WhatsApp</span>
-              </a>
-            )}
             <button onClick={() => setShowCart(true)} style={{ position:'relative', padding:'8px 14px', borderRadius:8, background:accent, border:'none', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
               Cart

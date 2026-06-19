@@ -105,6 +105,26 @@ def create_reset_token(email: str) -> str:
     )
 
 
+def verify_refresh_token(token: str) -> Optional[str]:
+    """
+    Verify a refresh token and return the user_id it was created for.
+    Returns:
+        str: the user_id if token is valid, not expired, and type=refresh
+        None: if token is invalid, expired, or wrong type
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        if payload.get("type") != "refresh":
+            return None
+        return payload.get("sub")
+    except JWTError:
+        return None
+
+
 def verify_reset_token(token: str) -> Optional[str]:
     """
     Verify a password reset token and return the email it was created for.

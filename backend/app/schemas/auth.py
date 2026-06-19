@@ -87,6 +87,10 @@ class UserOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
 class TokenResponse(BaseModel):
     """
     Returned after successful login, signup, or Google auth.

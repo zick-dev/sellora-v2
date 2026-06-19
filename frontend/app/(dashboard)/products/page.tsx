@@ -27,6 +27,7 @@ export default function ProductsPage() {
   const { C } = useTheme();
   const [products, setProducts]   = useState<Product[]>([]);
   const [storeId, setStoreId]     = useState('');
+  const [storeCategories, setStoreCategories] = useState<string[]>([]);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing]     = useState<Product | null>(null);
@@ -40,6 +41,10 @@ export default function ProductsPage() {
       try {
         const storeRes = await api.get('/api/store/me');
         setStoreId(storeRes.data.id);
+        try {
+          const cats = JSON.parse(storeRes.data.categories || '[]');
+          setStoreCategories(Array.isArray(cats) ? cats : []);
+        } catch { setStoreCategories([]); }
         const productsRes = await api.get(
           `/api/products/store/${storeRes.data.id}`
         );
@@ -448,13 +453,28 @@ export default function ProductsPage() {
               {/* Category */}
               <div>
                 <label style={labelStyle}>Category</label>
-                <input
-                  type="text"
-                  value={form.category}
-                  onChange={e => setForm({ ...form, category: e.target.value })}
-                  placeholder="e.g. Fashion, Electronics, Food"
-                  style={inputStyle}
-                />
+                {storeCategories.length > 0 ? (
+                  <select
+                    value={form.category}
+                    onChange={e => setForm({ ...form, category: e.target.value })}
+                    style={inputStyle}
+                  >
+                    <option value="">Select a category</option>
+                    {storeCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 10, padding: '12px 14px' }}>
+                    <p style={{ color: C.amber, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>No categories yet</p>
+                    <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.5, marginBottom: 8 }}>
+                      Create categories in Storefront Settings first so customers can browse by category.
+                    </p>
+                    <a href="/storefront" style={{ color: C.purple, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+                      Go to Storefront Settings →
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
