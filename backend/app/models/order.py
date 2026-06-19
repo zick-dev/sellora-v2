@@ -48,6 +48,12 @@ class Order(Base):
     
     # Delivery details
     delivery_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    variant_id: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False),
+        ForeignKey("product_variants.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    variant_description: Mapped[str | None] = mapped_column(String(200), nullable=True)
     delivery_fee_applied: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
 
     # ── Customer Details (entered by customer on storefront) ─────

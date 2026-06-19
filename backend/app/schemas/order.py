@@ -10,6 +10,8 @@ from pydantic import BaseModel
 class OrderCreate(BaseModel):
     """Data submitted by customer when placing an order."""
     product_id:        str
+    variant_id:        str | None = None
+    variant_description: str | None = None
     customer_name:     str
     customer_phone:    str
     customer_note:     str | None = None
@@ -29,6 +31,8 @@ class OrderOut(BaseModel):
     id:                   str
     store_id:             str
     product_id:           str
+    variant_id:           str | None
+    variant_description:  str | None
     customer_name:        str
     customer_phone:       str
     customer_note:        str | None

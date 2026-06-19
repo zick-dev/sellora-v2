@@ -21,6 +21,7 @@ from app.core.security import get_current_user
 from app.services.order_reminder import check_and_send_order_reminders
 from app.models.order import Order
 from app.models.product import Product
+from app.models.product_variant import ProductVariant
 from app.models.store import Store
 from app.models.user import User
 from app.schemas.order import OrderCreate, OrderOut, OrderStatusUpdate
@@ -66,14 +67,35 @@ async def create_order(
         raise HTTPException(status_code=404, detail="Product not found")
     if not product.is_available:
         raise HTTPException(status_code=400, detail="Product is not available")
-    if product.stock < payload.quantity:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only {product.stock} units available"
+
+    # ── Variant handling ────────────────────────────────────────────
+    variant = None
+    if payload.variant_id:
+        variant_result = await db.execute(
+            select(ProductVariant).where(
+                ProductVariant.id == payload.variant_id,
+                ProductVariant.product_id == product.id,
+            )
         )
+        variant = variant_result.scalar_one_or_none()
+        if not variant:
+            raise HTTPException(status_code=404, detail="Selected variant not found")
+        if not variant.is_available:
+            raise HTTPException(status_code=400, detail="Selected variant is not available")
+        if variant.stock < payload.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Only {variant.stock} units available for this variant"
+            )
+    else:
+        if product.stock < payload.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Only {product.stock} units available"
+            )
 
    # Calculate totals
-    unit_price = float(product.price)
+    unit_price = float(variant.price) if (variant and variant.price is not None) else float(product.price)
     subtotal = unit_price * payload.quantity
 
     # Apply discount if present (validate range 0-90%)
@@ -96,12 +118,17 @@ async def create_order(
     # Generate unique order number
     order_number = generate_order_number()
 
-    # Deduct stock
-    product.stock -= payload.quantity
+    # Deduct stock from variant if present, otherwise the base product
+    if variant:
+        variant.stock -= payload.quantity
+    else:
+        product.stock -= payload.quantity
 
     order = Order(
         store_id=product.store_id,
         product_id=payload.product_id,
+        variant_id=variant.id if variant else None,
+        variant_description=payload.variant_description,
         customer_name=payload.customer_name,
         customer_phone=payload.customer_phone,
         customer_note=payload.customer_note,

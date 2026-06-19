@@ -13,11 +13,22 @@ interface Store {
   base_currency?: string;
   show_trust_bar?: boolean;
 }
+interface Variant {
+  id: string;
+  variant_type_1: string | null;
+  variant_value_1: string | null;
+  variant_type_2: string | null;
+  variant_value_2: string | null;
+  price: number | null;
+  stock: number;
+  is_available: boolean;
+}
 interface Product {
   id: string; name: string; description: string | null; price: number;
   stock: number; image_url: string | null; category: string | null; is_available: boolean;
+  variants?: Variant[];
 }
-interface CartItem { product: Product; quantity: number; }
+interface CartItem { product: Product; quantity: number; variant?: Variant | null; cartKey: string; }
 
 function cleanPhone(p: string): string {
   p = p.replace(/\s/g, '');
@@ -49,6 +60,7 @@ export default function StorefrontPage() {
   const [success, setSuccess] = useState(false);
   const [orderNums, setOrderNums] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [provideAddress, setProvideAddress] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [showPopup, setShowPopup] = useState(false);
@@ -109,19 +121,39 @@ export default function StorefrontPage() {
     const matchesSearch = !q || p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
-  const cartSubtotal  = cart.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
+  const cartSubtotal  = cart.reduce((s, i) => s + Number(i.variant?.price != null ? i.variant.price : i.product.price) * i.quantity, 0);
   const discountAmt   = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
   const discountedSub = cartSubtotal - discountAmt;
   const deliveryFee   = store && (store.delivery_fee||0) > 0 && discountedSub < (store.free_delivery_above||0) ? (store.delivery_fee||0) : 0;
   const cartTotal     = discountedSub + deliveryFee;
   const cartCount     = cart.reduce((s, i) => s + i.quantity, 0);
 
-  function addToCart(p: Product) {
-    setCart(prev => { const ex = prev.find(i => i.product.id === p.id); if (ex) return prev.map(i => i.product.id === p.id ? { ...i, quantity: Math.min(i.quantity+1, p.stock) } : i); return [...prev, { product: p, quantity: 1 }]; });
+  function effectivePrice(p: Product, v?: Variant | null) { return v?.price != null ? v.price : p.price; }
+  function effectiveStock(p: Product, v?: Variant | null) { return v ? v.stock : p.stock; }
+  function makeCartKey(productId: string, variantId?: string | null) { return variantId ? productId + ':' + variantId : productId; }
+
+  function addToCart(p: Product, v?: Variant | null) {
+    const key = makeCartKey(p.id, v?.id);
+    const maxStock = effectiveStock(p, v);
+    setCart(prev => {
+      const ex = prev.find(i => i.cartKey === key);
+      if (ex) return prev.map(i => i.cartKey === key ? { ...i, quantity: Math.min(i.quantity + 1, maxStock) } : i);
+      return [...prev, { product: p, quantity: 1, variant: v || null, cartKey: key }];
+    });
   }
-  function removeFromCart(id: string) { setCart(p => p.filter(i => i.product.id !== id)); }
-  function updateQty(id: string, qty: number) { if (qty <= 0) { removeFromCart(id); return; } setCart(p => p.map(i => i.product.id === id ? { ...i, quantity: qty } : i)); }
-  function getQty(id: string) { return cart.find(i => i.product.id === id)?.quantity || 0; }
+  function removeFromCart(key: string) { setCart(p => p.filter(i => i.cartKey !== key)); }
+  function updateQty(key: string, qty: number) {
+    if (qty <= 0) { removeFromCart(key); return; }
+    setCart(p => p.map(i => {
+      if (i.cartKey !== key) return i;
+      const maxStock = effectiveStock(i.product, i.variant);
+      return { ...i, quantity: Math.min(qty, maxStock) };
+    }));
+  }
+  function getQty(productId: string, variantId?: string | null) {
+    const key = makeCartKey(productId, variantId);
+    return cart.find(i => i.cartKey === key)?.quantity || 0;
+  }
 
   async function handleCheckout() {
     if (!checkoutForm.name || !checkoutForm.phone) { setFormError('Please fill in your name and WhatsApp number.'); return; }
@@ -130,7 +162,10 @@ export default function StorefrontPage() {
     try {
       const nums: string[] = [];
       for (const item of cart) {
-        const res = await api.post('/api/orders/', { product_id: item.product.id, customer_name: checkoutForm.name, customer_phone: checkoutForm.phone, customer_note: checkoutForm.note || undefined, quantity: item.quantity, discount_percent: discountUnlocked && store ? (store.popup_discount||0) : 0, discount_code: discountUnlocked ? discountCode : undefined, delivery_address: provideAddress ? deliveryAddress : null });
+        const variantDesc = item.variant
+          ? [item.variant.variant_value_1, item.variant.variant_value_2].filter(Boolean).join(' / ')
+          : null;
+        const res = await api.post('/api/orders/', { product_id: item.product.id, variant_id: item.variant?.id || null, variant_description: variantDesc, customer_name: checkoutForm.name, customer_phone: checkoutForm.phone, customer_note: checkoutForm.note || undefined, quantity: item.quantity, discount_percent: discountUnlocked && store ? (store.popup_discount||0) : 0, discount_code: discountUnlocked ? discountCode : undefined, delivery_address: provideAddress ? deliveryAddress : null });
         nums.push(res.data.order_number || res.data.id.slice(0,8).toUpperCase());
       }
       setOrderNums(nums); setCart([]); setSuccess(true); setShowCheckout(false); setShowCart(false);
