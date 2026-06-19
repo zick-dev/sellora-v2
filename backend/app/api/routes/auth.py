@@ -385,3 +385,27 @@ async def refresh_access_token(
         "access_token": new_access_token,
         "token_type": "bearer",
     }
+
+@router.delete(
+    "/me",
+    summary="Permanently delete the current user's account and all data",
+)
+async def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Permanently delete the logged-in user's account.
+
+    Cascades automatically via ON DELETE CASCADE foreign keys to remove:
+    - Their store
+    - All products in that store
+    - All orders for that store
+    - All abandoned interests/leads for that store
+
+    This action is irreversible. The frontend requires the merchant
+    to type "DELETE" and confirm a second time before calling this.
+    """
+    await db.delete(current_user)
+    await db.commit()
+    return {"message": "Account and all associated data permanently deleted"}

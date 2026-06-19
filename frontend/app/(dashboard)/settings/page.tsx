@@ -29,6 +29,9 @@ export default function SettingsPage() {
 
   // Danger zone
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [showFinalConfirm, setShowFinalConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -48,6 +51,18 @@ export default function SettingsPage() {
       setProfileError(err.response?.data?.detail || 'Failed to update profile.');
     } finally {
       setProfileSaving(false);
+    }
+  }
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete('/api/auth/me');
+      logout();
+      window.location.href = '/signup';
+    } catch (err: any) {
+      setDeleteError(err.response?.data?.detail || 'Failed to delete account. Please try again.');
+      setDeleting(false);
     }
   }
 
@@ -255,6 +270,7 @@ export default function SettingsPage() {
             </div>
             <button
               disabled={deleteConfirm !== 'DELETE'}
+              onClick={() => setShowFinalConfirm(true)}
               style={{
                 padding: '11px 20px', borderRadius: 10,
                 background: deleteConfirm === 'DELETE' ? C.red : 'rgba(239,68,68,0.1)',
@@ -267,6 +283,52 @@ export default function SettingsPage() {
               Delete My Account
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Final confirmation popup */}
+      {showFinalConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={() => !deleting && setShowFinalConfirm(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'relative', background: C.card, border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20, padding: '32px 28px', maxWidth: 400, width: '100%', zIndex: 1 }}>
+            <div style={{ fontSize: 44, marginBottom: 12, textAlign: 'center' }}>⚠️</div>
+            <h2 style={{ color: C.text, fontSize: 19, fontWeight: 800, marginBottom: 10, textAlign: 'center' }}>
+              Are you absolutely sure?
+            </h2>
+            <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 8, textAlign: 'center' }}>
+              This will <strong style={{ color: C.red }}>permanently delete</strong> your account, your store, all products, all orders, and all customer leads.
+            </p>
+            <p style={{ color: C.red, fontSize: 13, fontWeight: 700, marginBottom: 24, textAlign: 'center' }}>
+              This action cannot be undone.
+            </p>
+            {deleteError && (
+              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '10px 14px', color: C.red, fontSize: 13, marginBottom: 16 }}>
+                {deleteError}
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                style={{ padding: '13px 0', background: deleting ? 'rgba(239,68,68,0.5)' : C.red, border: 'none', borderRadius: 10, color: 'white', fontSize: 14, fontWeight: 700, cursor: deleting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                {deleting ? (
+                  <>
+                    <span style={{ width: 15, height: 15, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+                    Deleting everything...
+                  </>
+                ) : 'Yes, permanently delete my account'}
+              </button>
+              <button
+                onClick={() => setShowFinalConfirm(false)}
+                disabled={deleting}
+                style={{ padding: '11px 0', background: 'transparent', border: '1px solid ' + C.cardBorder, borderRadius: 10, color: C.muted, fontSize: 14, fontWeight: 600, cursor: deleting ? 'not-allowed' : 'pointer' }}
+              >
+                Cancel, keep my account
+              </button>
+            </div>
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
     </div>
