@@ -75,6 +75,7 @@ async def generate_ai_content(
         )
 
     if res.status_code != 200:
+        print(f"❌ Gemini API error {res.status_code}: {res.text}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI generation failed. Please try again.",
