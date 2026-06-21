@@ -17,6 +17,7 @@ class ProductCreate(BaseModel):
     stock: int = 0
     image_url: str | None = None
     category: str | None = None
+    variants: list[VariantCreate] | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -28,6 +29,7 @@ class ProductUpdate(BaseModel):
     image_url: str | None = None
     category: str | None = None
     is_available: bool | None = None
+    variants: list[VariantCreate] | None = None
 
 
 class ProductOut(BaseModel):
@@ -44,6 +46,7 @@ class ProductOut(BaseModel):
     is_available: bool
     created_at: datetime
     updated_at: datetime
+    variants: list[VariantOut] = []
 
     model_config = {"from_attributes": True}
 
@@ -59,5 +62,6 @@ class ProductPublic(BaseModel):
     image_url: str | None
     category: str | None
     is_available: bool
+    variants: list[VariantOut] = []
 
     model_config = {"from_attributes": True}
