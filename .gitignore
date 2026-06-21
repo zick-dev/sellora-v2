@@ -18,3 +18,8 @@ backend/venv/
 frontend/.next/
 frontend/node_modules/
 frontend/.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

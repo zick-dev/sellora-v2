@@ -50,7 +50,7 @@ def main():
     if r.status_code == 201:
         print("  + Account created")
         token = r.json()["access_token"]
-    elif r.status_code == 400 and "already" in r.text.lower():
+    elif r.status_code in (400, 409) and "already" in r.text.lower():
         print("  - Account already exists, logging in instead...")
         r2 = s.post(f"{BASE_URL}/api/auth/login", json={
             "email": DEMO_EMAIL,
