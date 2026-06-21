@@ -71,11 +71,8 @@ class StoreUpdateRequest(BaseModel):
     store_name:  str | None = Field(None, min_length=1, max_length=150)
     description: str | None = Field(None, max_length=1000)
     logo_url:    str | None = Field(None, max_length=500)
-    banner_url:  str | None
-    banner_type: str
-    category_type: str = Field(None, max_length=500)
-    banner_type: str
-    category_type: str | None = Field(None, max_length=10)
+    banner_url:  str | None = Field(None, max_length=500)
+    banner_type: str | None = Field(None, max_length=10)
     category_type: str | None = Field(None, max_length=30)
     theme_color: str | None = Field(None, max_length=20)
     whatsapp:    str | None = Field(None, max_length=30)
