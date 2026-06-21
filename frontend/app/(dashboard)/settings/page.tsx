@@ -130,7 +130,7 @@ export default function SettingsPage() {
       <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{
           width: 64, height: 64, borderRadius: '50%',
-          background: user?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #7c3aed, #ec4899)',
+          background: user?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #4F46E5, #ec4899)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 24, fontWeight: 700, color: 'white', flexShrink: 0,
           overflow: 'hidden',
@@ -145,8 +145,8 @@ export default function SettingsPage() {
           <p style={{ color: C.text, fontSize: 16, fontWeight: 700, marginBottom: 2 }}>{user?.name}</p>
           <p style={{ color: C.muted, fontSize: 13, marginBottom: 4 }}>{user?.email}</p>
           <span style={{
-            background: user?.auth_provider === 'google' ? 'rgba(66,133,244,0.1)' : 'rgba(124,58,237,0.1)',
-            border: user?.auth_provider === 'google' ? '1px solid rgba(66,133,244,0.2)' : '1px solid rgba(124,58,237,0.2)',
+            background: user?.auth_provider === 'google' ? 'rgba(66,133,244,0.1)' : 'rgba(79,70,229,0.1)',
+            border: user?.auth_provider === 'google' ? '1px solid rgba(66,133,244,0.2)' : '1px solid rgba(79,70,229,0.2)',
             color: user?.auth_provider === 'google' ? '#4285f4' : C.purple,
             fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6,
           }}>
@@ -184,7 +184,7 @@ export default function SettingsPage() {
               <input type="email" value={profileForm.email} disabled style={{ ...inputBase, opacity: 0.5, cursor: 'not-allowed' }} />
               <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Email cannot be changed</p>
             </div>
-            <button onClick={handleProfileSave} disabled={profileSaving} style={{ width: '100%', padding: '13px 0', background: profileSaving ? 'rgba(124,58,237,0.4)' : C.purple, border: 'none', borderRadius: 10, color: C.text, fontSize: 14, fontWeight: 700, cursor: profileSaving ? 'not-allowed' : 'pointer' }}>
+            <button onClick={handleProfileSave} disabled={profileSaving} style={{ width: '100%', padding: '13px 0', background: profileSaving ? 'rgba(79,70,229,0.4)' : C.purple, border: 'none', borderRadius: 10, color: C.text, fontSize: 14, fontWeight: 700, cursor: profileSaving ? 'not-allowed' : 'pointer' }}>
               {profileSaving ? 'Saving...' : profileSaved ? '✓ Saved!' : 'Save Changes'}
             </button>
           </div>
@@ -228,7 +228,7 @@ export default function SettingsPage() {
                   <input type="checkbox" checked={showPasswords} onChange={e => setShowPasswords(e.target.checked)} />
                   <span style={{ color: C.muted, fontSize: 13 }}>Show passwords</span>
                 </label>
-                <button onClick={handlePasswordSave} disabled={passwordSaving} style={{ width: '100%', padding: '13px 0', background: passwordSaving ? 'rgba(124,58,237,0.4)' : C.purple, border: 'none', borderRadius: 10, color: C.text, fontSize: 14, fontWeight: 700, cursor: passwordSaving ? 'not-allowed' : 'pointer' }}>
+                <button onClick={handlePasswordSave} disabled={passwordSaving} style={{ width: '100%', padding: '13px 0', background: passwordSaving ? 'rgba(79,70,229,0.4)' : C.purple, border: 'none', borderRadius: 10, color: C.text, fontSize: 14, fontWeight: 700, cursor: passwordSaving ? 'not-allowed' : 'pointer' }}>
                   {passwordSaving ? 'Updating...' : passwordSaved ? '✓ Password Updated!' : 'Update Password'}
                 </button>
               </div>
@@ -244,7 +244,7 @@ export default function SettingsPage() {
           {/* Sign out all devices */}
           <div style={{ background: C.card, border: '1px solid rgba(245,158,11,0.2)', borderRadius: 16, padding: 24 }}>
             <h2 style={{ color: '#f59e0b', fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Sign Out</h2>
-            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Sign out of your Sellora account on this device.</p>
+            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Sign out of your Kormerce account on this device.</p>
             <button
               onClick={() => logout()}
               style={{ padding: '11px 20px', borderRadius: 10, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>

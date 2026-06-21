@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sellora — Social Commerce for African Sellers",
+  title: "Kormerce — Social Commerce for African Sellers",
   description:
     "AI-powered platform for WhatsApp and Instagram sellers in Africa",
 };

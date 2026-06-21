@@ -27,7 +27,7 @@ from app.core.database import Base
 
 class User(Base):
     """
-    Represents a seller account on Sellora.
+    Represents a seller account on Kormerce.
 
     Each user can:
     - Sign up with email/password or Google OAuth
@@ -75,10 +75,10 @@ class User(Base):
     )
 
     # Google's unique user identifier — used to match returning
-    # Google users to their existing Sellora account
+    # Google users to their existing Kormerce account
     google_id: Mapped[str | None] = mapped_column(
         String(255),
-        unique=True,    # Each Google account links to one Sellora account
+        unique=True,    # Each Google account links to one Kormerce account
         nullable=True,  # NULL for email/password users
         index=True,     # Index for fast Google login lookups
     )

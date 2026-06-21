@@ -1,7 +1,7 @@
 """
 app/main.py
 ────────────
-Entry point for the Sellora FastAPI backend.
+Entry point for the Kormerce FastAPI backend.
 
 To run:
     python -m uvicorn app.main:app --reload --port 8000
@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
 
 # ── Create FastAPI app ────────────────────────────────────────────
 app = FastAPI(
-    title="Sellora API",
+    title="Kormerce API",
     description="AI-powered social commerce for African sellers",
     version="2.0.0",
     lifespan=lifespan,
@@ -112,7 +112,7 @@ async def add_security_headers(request, call_next):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://sellora-v2.*\.vercel\.app",
+    allow_origin_regex=r"https://kormerce-v2.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -137,7 +137,7 @@ app.include_router(ai.router, prefix=API_PREFIX)
 async def root():
     """Health check — confirms server is running."""
     return {
-        "app": "Sellora API v2",
+        "app": "Kormerce API v2",
         "status": "running",
         "environment": settings.APP_ENV,
         "docs": "/docs" if settings.DEBUG else "disabled",

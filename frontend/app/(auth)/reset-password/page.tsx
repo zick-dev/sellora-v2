@@ -11,8 +11,8 @@ const C = {
   cardBorder:  '#1e1e30',
   input:       '#1a1a2e',
   inputBorder: '#2a2a3e',
-  inputFocus:  '#7c3aed',
-  purple:      '#7c3aed',
+  inputFocus:  '#4F46E5',
+  purple:      '#4F46E5',
   purpleHov:   '#6d28d9',
   purpleLight: '#8b5cf6',
   muted:       '#6b7280',
@@ -60,7 +60,7 @@ function Navbar() {
           </svg>
         </div>
         <span style={{ color: C.purple, fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>
-          Sellora
+          Kormerce
         </span>
       </div>
       <Link href="/login" style={{
@@ -203,7 +203,7 @@ function ResetForm({ token }: { token: string }) {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('https://sellora-v2-production.up.railway.app/api/auth/reset-password', {
+      const res = await fetch('https://kormerce-v2-production.up.railway.app/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, new_password: password }),
@@ -483,7 +483,7 @@ function ResetForm({ token }: { token: string }) {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          Secured by Sellora Cloud Auth
+          Secured by Kormerce Cloud Auth
         </p>
       </div>
     </div>
@@ -521,7 +521,7 @@ function ResetPasswordContent() {
         )}
 
         <footer style={{ textAlign: 'center', paddingBottom: 32, marginTop: 24 }}>
-          <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Sellora • Premium Seller Tools</p>
+          <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Kormerce • Premium Seller Tools</p>
         </footer>
       </main>
     </>

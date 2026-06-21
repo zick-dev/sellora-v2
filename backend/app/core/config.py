@@ -1,7 +1,7 @@
 """
 app/core/config.py
 ──────────────────
-Central configuration for the entire Sellora backend.
+Central configuration for the entire Kormerce backend.
 All environment variables are loaded from the .env file
 and validated automatically by Pydantic on startup.
 If any required variable is missing, the app will refuse to start.
@@ -48,14 +48,14 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str
 
     # The sender email shown in password reset emails
-    FROM_EMAIL: str = "security@sellora.io"
+    FROM_EMAIL: str = "security@kormerce.io"
 
     # ── Flutterwave Payment Gateway ───────────────────────────────
     # Used for handling subscription payments
     FLUTTERWAVE_PUBLIC_KEY: str = "b78a7a80-e29e-48ab-b493-df3fdabe4f33"
     FLUTTERWAVE_SECRET_KEY: str = "dV4cg3ilUxaDXl2ZvyJG4FzYp3lPsGV0"
     FLUTTERWAVE_ENCRYPTION_KEY: str    = "tK9La1qAUBVppfgzmC6YtYygyVrHlPQaW06un3jyeVE="  # For encrypting sensitive data in requests
-    FLUTTERWAVE_WEBHOOK_SECRET: str = "sellora_webhook_secret"  # Secret used to verify incoming webhook signatures from Flutterwave
+    FLUTTERWAVE_WEBHOOK_SECRET: str = "kormerce_webhook_secret"  # Secret used to verify incoming webhook signatures from Flutterwave
 
 
     # ── Anthropic AI ─────────────────────────────────────────────

@@ -19,7 +19,7 @@ interface Lead {
 }
 
 const AVATAR_COLORS = [
-  'linear-gradient(135deg, #7c3aed, #9d5cf5)',
+  'linear-gradient(135deg, #4F46E5, #9d5cf5)',
   'linear-gradient(135deg, #ec4899, #f43f5e)',
   'linear-gradient(135deg, #0ea5e9, #06b6d4)',
   'linear-gradient(135deg, #f59e0b, #f97316)',
@@ -99,7 +99,7 @@ export default function LeadsPage() {
     }}>
       <span style={{
         width: 32, height: 32, borderRadius: '50%',
-        border: '3px solid rgba(124,58,237,0.2)',
+        border: '3px solid rgba(79,70,229,0.2)',
         borderTopColor: C.purple,
         animation: 'spin 0.8s linear infinite',
         display: 'inline-block',
@@ -148,8 +148,8 @@ export default function LeadsPage() {
             label: 'Total Leads',
             value: leads.length,
             color: C.purple,
-            bg: 'rgba(124,58,237,0.1)',
-            border: 'rgba(124,58,237,0.2)',
+            bg: 'rgba(79,70,229,0.1)',
+            border: 'rgba(79,70,229,0.2)',
           },
           {
             label: 'Need Follow-up',
@@ -297,8 +297,8 @@ export default function LeadsPage() {
                   {lead.product_name && (
                     <div style={{
                       display: 'inline-flex', alignItems: 'center', gap: 4,
-                      background: 'rgba(124,58,237,0.08)',
-                      border: '1px solid rgba(124,58,237,0.15)',
+                      background: 'rgba(79,70,229,0.08)',
+                      border: '1px solid rgba(79,70,229,0.15)',
                       borderRadius: 6, padding: '3px 8px',
                       marginBottom: 10,
                     }}>
@@ -386,8 +386,8 @@ export default function LeadsPage() {
                         disabled={updating === lead.id}
                         style={{
                           padding: '5px 12px', borderRadius: 6,
-                          background: 'rgba(124,58,237,0.1)',
-                          border: '1px solid rgba(124,58,237,0.2)',
+                          background: 'rgba(79,70,229,0.1)',
+                          border: '1px solid rgba(79,70,229,0.2)',
                           color: C.purple, fontSize: 12, fontWeight: 600,
                           cursor: updating === lead.id
                             ? 'not-allowed' : 'pointer',

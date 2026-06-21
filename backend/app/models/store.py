@@ -3,7 +3,7 @@ app/models/store.py
 ────────────────────
 SQLAlchemy model for the stores table.
 
-Each Sellora user creates exactly one store during onboarding.
+Each Kormerce user creates exactly one store during onboarding.
 The store holds the public-facing details customers see on the
 storefront, and the slug is the unique URL customers visit.
 
@@ -25,7 +25,7 @@ from app.core.database import Base
 
 class Store(Base):
     """
-    Represents a seller's storefront on Sellora.
+    Represents a seller's storefront on Kormerce.
 
     Created once during onboarding. The slug becomes the
     public URL: <domain>/store/<slug>
@@ -84,7 +84,7 @@ class Store(Base):
     # stored per-store, which is how most premium DTC stores are built.
     theme_color: Mapped[str] = mapped_column(
         String(20),
-        default="#7c3aed",
+        default="#4F46E5",
         nullable=False,
         comment="Canonical merchant accent color used by the storefront UI",
     )

@@ -7,7 +7,7 @@ const C = {
   cardBorder: 'rgba(255,255,255,0.08)',
   input:      '#1a1a2e',
   inputBorder:'rgba(255,255,255,0.1)',
-  purple:     '#7c3aed',
+  purple:     '#4F46E5',
   muted:      '#6b7280',
   subtext:    '#9ca3af',
   text:       '#ffffff',
@@ -82,7 +82,7 @@ export default function VideoUpload({
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', UPLOAD_PRESET);
-      formData.append('folder', 'sellora/banners');
+      formData.append('folder', 'kormerce/banners');
       const res = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
         { method: 'POST', body: formData }
@@ -128,14 +128,14 @@ export default function VideoUpload({
         style={{
           width: '100%', height: 140, borderRadius: 12,
           border: dragging ? '2px solid ' + C.purple : value ? '1px solid ' + C.cardBorder : '2px dashed ' + C.inputBorder,
-          background: dragging ? 'rgba(124,58,237,0.08)' : C.input,
+          background: dragging ? 'rgba(79,70,229,0.08)' : C.input,
           overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: value ? 'default' : 'pointer', position: 'relative', marginBottom: 10,
         }}
       >
         {uploading ? (
           <div style={{ textAlign: 'center' }}>
-            <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block', marginBottom: 8 }} />
+            <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(79,70,229,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block', marginBottom: 8 }} />
             <p style={{ color: C.muted, fontSize: 12 }}>Uploading video...</p>
           </div>
         ) : value ? (
@@ -158,7 +158,7 @@ export default function VideoUpload({
       </div>
 
       {!uploading && (
-        <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '9px 0', borderRadius: 8, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', color: C.purple, fontSize: 12, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
+        <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '9px 0', borderRadius: 8, background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.2)', color: C.purple, fontSize: 12, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
           {value ? '🎬 Replace Video' : '🎬 Choose Video File'}
         </button>
       )}

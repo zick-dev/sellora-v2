@@ -1,7 +1,7 @@
 """
 app/api/routes/auth.py
 ───────────────────────
-Authentication API routes for Sellora.
+Authentication API routes for Kormerce.
 
 Endpoints:
     POST /api/auth/signup          → Create new account with email/password

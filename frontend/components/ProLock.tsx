@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 const C = {
   card:       '#12121a',
   cardBorder: 'rgba(255,255,255,0.08)',
-  purple:     '#7c3aed',
+  purple:     '#4F46E5',
   pink:       '#ec4899',
   text:       '#ffffff',
   subtext:    '#9ca3af',
@@ -20,15 +20,15 @@ interface ProLockProps {
 
 export default function ProLock({
   title = 'This is a Pro feature',
-  description = 'Upgrade to Sellora Pro to unlock this and more powerful tools to grow your business.',
+  description = 'Upgrade to Kormerce Pro to unlock this and more powerful tools to grow your business.',
   features = [],
 }: ProLockProps) {
   const router = useRouter();
 
   return (
     <div style={{ maxWidth: 520, margin: '40px auto 0', textAlign: 'center' }}>
-      <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(236,72,153,0.06))', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 24, padding: '40px 28px' }}>
-        <div style={{ width: 72, height: 72, borderRadius: 20, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 20px' }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(79,70,229,0.12), rgba(236,72,153,0.06))', border: '1px solid rgba(79,70,229,0.3)', borderRadius: 24, padding: '40px 28px' }}>
+        <div style={{ width: 72, height: 72, borderRadius: 20, background: 'linear-gradient(135deg, #4F46E5, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 20px' }}>
           🔒
         </div>
         <h1 style={{ color: C.text, fontSize: 24, fontWeight: 800, marginBottom: 10 }}>{title}</h1>
@@ -47,7 +47,7 @@ export default function ProLock({
           </div>
         )}
 
-        <button onClick={() => router.push('/upgrade')} style={{ padding: '14px 32px', background: 'linear-gradient(90deg, #7c3aed, #ec4899)', border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 800, cursor: 'pointer', marginTop: 4 }}>
+        <button onClick={() => router.push('/upgrade')} style={{ padding: '14px 32px', background: 'linear-gradient(90deg, #4F46E5, #ec4899)', border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 800, cursor: 'pointer', marginTop: 4 }}>
           ⭐ Upgrade to Pro
         </button>
       </div>

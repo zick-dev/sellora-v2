@@ -53,7 +53,7 @@ export default function LoginPage() {
   setError('');
   try {
     const result = await googleAuth(response.access_token);
-    toast.success('Welcome to Sellora!');
+    toast.success('Welcome to Kormerce!');
      // Small delay to ensure token is saved to localStorage
     window.location.href = '/dashboard';
     
@@ -86,13 +86,13 @@ export default function LoginPage() {
           style={{
             width: 64,
             height: 64,
-            background: "#7c3aed",
+            background: "#4F46E5",
             borderRadius: 16,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 20,
-            boxShadow: "0 8px 32px rgba(124,58,237,0.4)",
+            boxShadow: "0 8px 32px rgba(79,70,229,0.4)",
           }}
         >
           <Zap size={30} color="white" fill="white" />
@@ -182,7 +182,7 @@ export default function LoginPage() {
                   width: 18,
                   height: 18,
                   border: "2px solid #d1d5db",
-                  borderTopColor: "#7c3aed",
+                  borderTopColor: "#4F46E5",
                   borderRadius: "50%",
                   animation: "spin 0.8s linear infinite",
                 }}
@@ -268,8 +268,8 @@ export default function LoginPage() {
                   boxSizing: "border-box",
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "rgba(124,58,237,0.6)";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.1)";
+                  e.target.style.borderColor = "rgba(79,70,229,0.6)";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(79,70,229,0.1)";
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "rgba(255,255,255,0.1)";
@@ -295,7 +295,7 @@ export default function LoginPage() {
               </label>
               <Link
                 href="/forgot-password"
-                style={{ fontSize: 12, color: "#7c3aed", fontWeight: 500 }}
+                style={{ fontSize: 12, color: "#4F46E5", fontWeight: 500 }}
               >
                 Forgot password?
               </Link>
@@ -334,8 +334,8 @@ export default function LoginPage() {
                   boxSizing: "border-box",
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "rgba(124,58,237,0.6)";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.1)";
+                  e.target.style.borderColor = "rgba(79,70,229,0.6)";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(79,70,229,0.1)";
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "rgba(255,255,255,0.1)";
@@ -373,8 +373,8 @@ export default function LoginPage() {
             style={{
               width: "100%",
               background: loading || googleLoading || !email || !password
-                ? "rgba(124,58,237,0.4)"
-                : "#7c3aed",
+                ? "rgba(79,70,229,0.4)"
+                : "#4F46E5",
               border: "none",
               borderRadius: 12,
               padding: "14px 20px",
@@ -415,16 +415,16 @@ export default function LoginPage() {
         Don't have an account?{" "}
         <Link
           href="/signup"
-          style={{ color: "#7c3aed", fontWeight: 600 }}
+          style={{ color: "#4F46E5", fontWeight: 600 }}
         >
           Sign up free
         </Link>
       </p>
       <p style={{ color: "#374151", fontSize: 11, marginTop: 12 }}>
-        🔒 SECURED BY SELLORA CLOUD AUTH
+        🔒 SECURED BY KORMERCE CLOUD AUTH
       </p>
       <p style={{ color: "#1f2937", fontSize: 11, marginTop: 4 }}>
-        © 2024 Sellora • Premium Seller Tools
+        © 2024 Kormerce • Premium Seller Tools
       </p>
 
       {/* Spin animation */}

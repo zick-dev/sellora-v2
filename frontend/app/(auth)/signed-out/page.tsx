@@ -10,7 +10,7 @@ const C = {
   cardBorder: '#1e1e30',
   input:      '#1a1a2e',
   inputBorder:'#2a2a3e',
-  purple:     '#7c3aed',
+  purple:     '#4F46E5',
   purpleLight:'#8b5cf6',
   muted:      '#6b7280',
   mutedLight: '#9ca3af',
@@ -120,8 +120,8 @@ export default function SignedOutPage() {
           {/* Security badge */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'rgba(124,58,237,0.08)',
-            border: `1px solid rgba(124,58,237,0.2)`,
+            background: 'rgba(79,70,229,0.08)',
+            border: `1px solid rgba(79,70,229,0.2)`,
             borderRadius: 20, padding: '6px 14px',
           }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.purpleLight} strokeWidth="2">
@@ -162,7 +162,7 @@ export default function SignedOutPage() {
               </svg>
             </div>
             <span style={{ color: C.mutedLight, fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: 'uppercase' }}>
-              Sellora
+              Kormerce
             </span>
           </div>
           <div style={{ display: 'flex', gap: 24 }}>

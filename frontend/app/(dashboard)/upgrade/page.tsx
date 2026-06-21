@@ -36,7 +36,7 @@ export default function UpgradePage() {
 
   const config = {
     public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY!,
-    tx_ref:     'sellora-pro-' + Date.now(),
+    tx_ref:     'kormerce-pro-' + Date.now(),
     amount:     5000,
     currency:   'NGN',
     payment_options: 'card,ussd,banktransfer',
@@ -46,9 +46,9 @@ export default function UpgradePage() {
       phone_number: '',
     },
     customizations: {
-      title:       'Sellora Pro',
+      title:       'Kormerce Pro',
       description: 'Monthly subscription — unlimited products, AI tools & more',
-      logo:        'https://sellora.io/logo.png',
+      logo:        'https://kormerce.io/logo.png',
     },
   };
 
@@ -103,7 +103,7 @@ export default function UpgradePage() {
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-      <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+      <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(79,70,229,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -113,9 +113,9 @@ export default function UpgradePage() {
 
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 20, padding: '6px 16px', marginBottom: 16 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.2)', borderRadius: 20, padding: '6px 16px', marginBottom: 16 }}>
           <span style={{ fontSize: 14 }}>⭐</span>
-          <span style={{ color: C.purple, fontSize: 13, fontWeight: 600 }}>Sellora Pro</span>
+          <span style={{ color: C.purple, fontSize: 13, fontWeight: 600 }}>Kormerce Pro</span>
         </div>
         <h1 style={{ color: C.text, fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
           Supercharge Your Store
@@ -127,11 +127,11 @@ export default function UpgradePage() {
 
       {/* Current plan banner */}
       {status?.is_pro && (
-        <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(236,72,153,0.08))', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 16, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ background: 'linear-gradient(135deg, rgba(79,70,229,0.15), rgba(236,72,153,0.08))', border: '1px solid rgba(79,70,229,0.3)', borderRadius: 16, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>⭐</div>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #4F46E5, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>⭐</div>
             <div>
-              <p style={{ color: C.text, fontSize: 15, fontWeight: 700 }}>Sellora Pro — Active</p>
+              <p style={{ color: C.text, fontSize: 15, fontWeight: 700 }}>Kormerce Pro — Active</p>
               <p style={{ color: C.muted, fontSize: 13 }}>{status.days_left} days remaining</p>
             </div>
           </div>
@@ -145,7 +145,7 @@ export default function UpgradePage() {
       {success && (
         <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 16, padding: '20px', marginBottom: 24, textAlign: 'center' }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🎉</div>
-          <p style={{ color: C.success, fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Welcome to Sellora Pro!</p>
+          <p style={{ color: C.success, fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Welcome to Kormerce Pro!</p>
           <p style={{ color: C.muted, fontSize: 14 }}>All Pro features are now unlocked. Enjoy!</p>
         </div>
       )}
@@ -184,9 +184,9 @@ export default function UpgradePage() {
         </div>
 
         {/* Pro plan */}
-        <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(236,72,153,0.06))', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 20, padding: 28, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(135deg, rgba(79,70,229,0.12), rgba(236,72,153,0.06))', border: '1px solid rgba(79,70,229,0.3)', borderRadius: 20, padding: 28, position: 'relative', overflow: 'hidden' }}>
           {/* Popular badge */}
-          <div style={{ position: 'absolute', top: 16, right: 16, background: 'linear-gradient(90deg, #7c3aed, #ec4899)', borderRadius: 20, padding: '3px 12px', fontSize: 11, fontWeight: 700, color: C.text }}>
+          <div style={{ position: 'absolute', top: 16, right: 16, background: 'linear-gradient(90deg, #4F46E5, #ec4899)', borderRadius: 20, padding: '3px 12px', fontSize: 11, fontWeight: 700, color: C.text }}>
             POPULAR
           </div>
           <div style={{ marginBottom: 20 }}>
@@ -208,7 +208,7 @@ export default function UpgradePage() {
           <button
             onClick={handlePayment}
             disabled={verifying}
-            style={{ width: '100%', padding: '14px 0', background: verifying ? 'rgba(124,58,237,0.4)' : 'linear-gradient(90deg, #7c3aed, #ec4899)', border: 'none', borderRadius: 10, color: C.text, fontSize: 15, fontWeight: 800, cursor: verifying ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            style={{ width: '100%', padding: '14px 0', background: verifying ? 'rgba(79,70,229,0.4)' : 'linear-gradient(90deg, #4F46E5, #ec4899)', border: 'none', borderRadius: 10, color: C.text, fontSize: 15, fontWeight: 800, cursor: verifying ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {verifying ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />

@@ -227,6 +227,6 @@ class StoreOut(BaseModel):
     # Computed field — full public URL for sharing
     @property
     def store_url(self) -> str:
-        return f"https://sellora.io/{self.slug}"
+        return f"https://kormerce.io/{self.slug}"
 
     model_config = {"from_attributes": True}

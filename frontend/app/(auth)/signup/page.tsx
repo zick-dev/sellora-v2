@@ -60,7 +60,7 @@ export default function SignupPage() {
   setError('');
   try {
     const result = await googleAuth(response.access_token);
-    toast.success('Welcome to Sellora!');
+    toast.success('Welcome to Kormerce!');
      // Small delay to ensure token is saved to localStorage
     window.location.href = '/dashboard';
     
@@ -113,8 +113,8 @@ export default function SignupPage() {
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = "rgba(124,58,237,0.6)";
-    e.target.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.1)";
+    e.target.style.borderColor = "rgba(79,70,229,0.6)";
+    e.target.style.boxShadow = "0 0 0 3px rgba(79,70,229,0.1)";
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -148,7 +148,7 @@ export default function SignupPage() {
             style={{
               width: 36,
               height: 36,
-              background: "#7c3aed",
+              background: "#4F46E5",
               borderRadius: 10,
               display: "flex",
               alignItems: "center",
@@ -242,7 +242,7 @@ export default function SignupPage() {
                   width: 18,
                   height: 18,
                   border: "2px solid #d1d5db",
-                  borderTopColor: "#7c3aed",
+                  borderTopColor: "#4F46E5",
                   borderRadius: "50%",
                   animation: "spin 0.8s linear infinite",
                 }}
@@ -375,9 +375,9 @@ export default function SignupPage() {
           {/* Terms */}
           <p style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, marginBottom: 20 }}>
             By creating an account, you agree to our{" "}
-            <Link href="/terms" style={{ color: "#7c3aed" }}>Terms of Service</Link>
+            <Link href="/terms" style={{ color: "#4F46E5" }}>Terms of Service</Link>
             {" "}and{" "}
-            <Link href="/privacy" style={{ color: "#7c3aed" }}>Privacy Policy</Link>.
+            <Link href="/privacy" style={{ color: "#4F46E5" }}>Privacy Policy</Link>.
           </p>
 
           {/* Submit */}
@@ -387,8 +387,8 @@ export default function SignupPage() {
             style={{
               width: "100%",
               background: loading || googleLoading || !name || !email || !password
-                ? "rgba(124,58,237,0.4)"
-                : "#7c3aed",
+                ? "rgba(79,70,229,0.4)"
+                : "#4F46E5",
               border: "none",
               borderRadius: 12,
               padding: "14px 20px",
@@ -426,12 +426,12 @@ export default function SignupPage() {
       {/* Footer */}
       <p style={{ color: "#6b7280", fontSize: 14, marginTop: 24 }}>
         Already have an account?{" "}
-        <Link href="/login" style={{ color: "#7c3aed", fontWeight: 600 }}>
+        <Link href="/login" style={{ color: "#4F46E5", fontWeight: 600 }}>
           Sign In
         </Link>
       </p>
       <p style={{ color: "#1f2937", fontSize: 11, marginTop: 12 }}>
-        © 2024 Sellora • Premium Seller Tools
+        © 2024 Kormerce • Premium Seller Tools
       </p>
 
       <style>{`

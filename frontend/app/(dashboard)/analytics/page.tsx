@@ -105,7 +105,7 @@ export default function AnalyticsPage() {
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-      <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+      <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(79,70,229,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -183,7 +183,7 @@ export default function AnalyticsPage() {
                       width: '100%', borderRadius: '4px 4px 0 0',
                       height: height,
                       background: day.revenue > 0
-                        ? 'linear-gradient(180deg, #7c3aed, #9d5cf5)'
+                        ? 'linear-gradient(180deg, #4F46E5, #9d5cf5)'
                         : 'rgba(255,255,255,0.05)',
                       transition: 'height 0.3s ease',
                     }} />

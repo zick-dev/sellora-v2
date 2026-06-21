@@ -11,8 +11,8 @@ const C = {
   cardBorder:'#1e1e30',
   input:     '#1a1a2e',
   inputBorder:'#2a2a3e',
-  inputFocus:'#7c3aed',
-  purple:    '#7c3aed',
+  inputFocus:'#4F46E5',
+  purple:    '#4F46E5',
   purpleHov: '#6d28d9',
   purpleLight:'#8b5cf6',
   muted:     '#6b7280',
@@ -50,7 +50,7 @@ function Navbar() {
           </svg>
         </div>
         <span style={{ color: C.purple, fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>
-          Sellora
+          Kormerce
         </span>
       </div>
       <Link href="/login" style={{
@@ -71,7 +71,7 @@ function PageFooter() {
   return (
     <footer style={{ textAlign: 'center', paddingBottom: 32, marginTop: 8 }}>
       <p style={{ color: C.muted, fontSize: 12 }}>
-        © 2024 Sellora • Premium Seller Tools
+        © 2024 Kormerce • Premium Seller Tools
       </p>
     </footer>
   );
@@ -94,7 +94,7 @@ function ForgotPasswordView({
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('https://sellora-v2-production.up.railway.app/api/auth/forgot-password', {
+      const res = await fetch('https://kormerce-v2-production.up.railway.app/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -245,7 +245,7 @@ function ForgotPasswordView({
         <div style={{ width: '100%', height: 1, background: C.cardBorder }} />
         <p style={{ color: C.muted, fontSize: 13 }}>
           Having trouble?{' '}
-          <a href="mailto:support@sellora.io" style={{ color: C.purpleLight, textDecoration: 'none' }}>
+          <a href="mailto:support@kormerce.io" style={{ color: C.purpleLight, textDecoration: 'none' }}>
             Contact support
           </a>
         </p>
@@ -255,7 +255,7 @@ function ForgotPasswordView({
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 8v4l3 3" strokeLinecap="round"/>
           </svg>
-          Secured by Sellora Cloud Auth
+          Secured by Kormerce Cloud Auth
         </p>
       </div>
     </div>
@@ -282,7 +282,7 @@ function CheckEmailView({ email }: { email: string }) {
     if (!canResend) return;
     setResending(true);
     try {
-      await fetch('https://sellora-v2-production.up.railway.app/api/auth/forgot-password', {
+      await fetch('https://kormerce-v2-production.up.railway.app/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -325,7 +325,7 @@ function CheckEmailView({ email }: { email: string }) {
           border: `2px solid ${C.purple}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 24px',
-          background: 'rgba(124,58,237,0.1)',
+          background: 'rgba(79,70,229,0.1)',
         }}>
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={C.purple} strokeWidth="2.5">
             <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round"/>
@@ -376,7 +376,7 @@ function CheckEmailView({ email }: { email: string }) {
           {canResend ? 'Resend link' : `Resend link in ${mins}:${secs}`}
         </button>
 
-        <a href="mailto:support@sellora.io" style={{
+        <a href="mailto:support@kormerce.io" style={{
           color: C.subtext, fontSize: 13, display: 'block',
           marginBottom: 28, textDecoration: 'none',
         }}>
@@ -402,7 +402,7 @@ function CheckEmailView({ email }: { email: string }) {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          Secured by Sellora Cloud Auth
+          Secured by Kormerce Cloud Auth
         </p>
       </div>
     </div>

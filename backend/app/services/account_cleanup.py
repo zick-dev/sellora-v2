@@ -36,8 +36,8 @@ def _extract_public_id(url: str) -> str | None:
     """
     Extract the Cloudinary public_id from a secure_url so we can delete it.
     Example URL:
-      https://res.cloudinary.com/dkun9hvkf/image/upload/v1234567890/sellora/abc123.jpg
-    Public ID needed for deletion: sellora/abc123
+      https://res.cloudinary.com/dkun9hvkf/image/upload/v1234567890/kormerce/abc123.jpg
+    Public ID needed for deletion: kormerce/abc123
     """
     if not url or "cloudinary.com" not in url:
         return None

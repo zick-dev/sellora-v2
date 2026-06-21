@@ -50,7 +50,7 @@ async def send_password_reset_email(email: str, reset_token: str) -> bool:
         resend.Emails.send({
             "from": settings.FROM_EMAIL,
             "to": email,
-            "subject": "Reset your Sellora password",
+            "subject": "Reset your Kormerce password",
             "html": f"""
 <!DOCTYPE html>
 <html>
@@ -59,16 +59,16 @@ async def send_password_reset_email(email: str, reset_token: str) -> bool:
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center" style="padding:40px 0;">
-        <!-- Email container with dark Sellora branding -->
+        <!-- Email container with dark Kormerce branding -->
         <table width="600" cellpadding="0" cellspacing="0"
                style="background:#0a0a0f;border-radius:16px;overflow:hidden;">
 
-          <!-- Header with Sellora logo -->
+          <!-- Header with Kormerce logo -->
           <tr>
             <td style="background:#0a0a0f;padding:32px;text-align:center;
                        border-bottom:1px solid rgba(255,255,255,0.1);">
-              <span style="color:#7c3aed;font-size:28px;font-weight:900;">
-                ⚡ Sellora
+              <span style="color:#4F46E5;font-size:28px;font-weight:900;">
+                ⚡ Kormerce
               </span>
             </td>
           </tr>
@@ -83,13 +83,13 @@ async def send_password_reset_email(email: str, reset_token: str) -> bool:
               <p style="color:#9ca3af;font-size:15px;
                         line-height:1.6;margin:0 0 32px;">
                 We received a request to reset the password for your
-                Sellora account. If you didn't make this request,
+                Kormerce account. If you didn't make this request,
                 you can safely ignore this email.
               </p>
 
               <!-- Reset button — links to frontend reset page with token -->
               <a href="{reset_url}"
-                 style="display:inline-block;background:#7c3aed;
+                 style="display:inline-block;background:#4F46E5;
                         color:#ffffff;text-decoration:none;
                         padding:14px 32px;border-radius:12px;
                         font-weight:700;font-size:15px;">
@@ -98,10 +98,10 @@ async def send_password_reset_email(email: str, reset_token: str) -> bool:
 
               <!-- Security notice -->
               <div style="margin:32px 0;padding:20px;
-                          background:rgba(124,58,237,0.1);
+                          background:rgba(79,70,229,0.1);
                           border-radius:12px;
-                          border:1px solid rgba(124,58,237,0.2);">
-                <p style="color:#7c3aed;font-size:12px;font-weight:600;
+                          border:1px solid rgba(79,70,229,0.2);">
+                <p style="color:#4F46E5;font-size:12px;font-weight:600;
                           margin:0 0 4px;text-transform:uppercase;
                           letter-spacing:1px;">
                   SECURE LINK
@@ -114,7 +114,7 @@ async def send_password_reset_email(email: str, reset_token: str) -> bool:
 
               <p style="color:#6b7280;font-size:13px;margin:0;">
                 Best regards,<br>
-                <strong style="color:#9ca3af;">The Sellora Team</strong>
+                <strong style="color:#9ca3af;">The Kormerce Team</strong>
               </p>
             </td>
           </tr>
@@ -125,7 +125,7 @@ async def send_password_reset_email(email: str, reset_token: str) -> bool:
                        border-top:1px solid rgba(255,255,255,0.06);
                        text-align:center;">
               <p style="color:#4b5563;font-size:12px;margin:0;">
-                © 2024 Sellora Inc. Lagos, Nigeria.
+                © 2024 Kormerce Inc. Lagos, Nigeria.
               </p>
             </td>
           </tr>
@@ -173,7 +173,7 @@ async def send_order_status_reminder(
           <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);color:#ffffff;font-size:13px;">
             {order.get('customer_name','')}
           </td>
-          <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);color:#7c3aed;font-size:13px;font-weight:700;">
+          <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);color:#4F46E5;font-size:13px;font-weight:700;">
             N{float(order.get('total_price',0)):,.0f}
           </td>
           <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);">
@@ -184,7 +184,7 @@ async def send_order_status_reminder(
         </tr>"""
 
     count = len(pending_orders)
-    dashboard_url = "https://sellora-v2-blue.vercel.app/orders"
+    dashboard_url = "https://kormerce-v2-blue.vercel.app/orders"
 
     try:
         resend.Emails.send({
@@ -206,7 +206,7 @@ async def send_order_status_reminder(
           <tr>
             <td style="background:#0a0a0f;padding:28px 32px;
                        border-bottom:1px solid rgba(255,255,255,0.08);">
-              <span style="color:#7c3aed;font-size:24px;font-weight:900;">⚡ Sellora</span>
+              <span style="color:#4F46E5;font-size:24px;font-weight:900;">⚡ Kormerce</span>
               <span style="color:#6b7280;font-size:13px;margin-left:10px;">Order Reminder</span>
             </td>
           </tr>
@@ -227,11 +227,11 @@ async def send_order_status_reminder(
               <!-- Orders table -->
               <table width="100%" cellpadding="0" cellspacing="0"
                      style="background:rgba(255,255,255,0.04);border-radius:12px;overflow:hidden;margin-bottom:28px;">
-                <tr style="background:rgba(124,58,237,0.15);">
-                  <th style="padding:10px 14px;text-align:left;color:#7c3aed;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Order</th>
-                  <th style="padding:10px 14px;text-align:left;color:#7c3aed;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Customer</th>
-                  <th style="padding:10px 14px;text-align:left;color:#7c3aed;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Amount</th>
-                  <th style="padding:10px 14px;text-align:left;color:#7c3aed;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Status</th>
+                <tr style="background:rgba(79,70,229,0.15);">
+                  <th style="padding:10px 14px;text-align:left;color:#4F46E5;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Order</th>
+                  <th style="padding:10px 14px;text-align:left;color:#4F46E5;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Customer</th>
+                  <th style="padding:10px 14px;text-align:left;color:#4F46E5;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Amount</th>
+                  <th style="padding:10px 14px;text-align:left;color:#4F46E5;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Status</th>
                 </tr>
                 {order_rows}
               </table>
@@ -239,7 +239,7 @@ async def send_order_status_reminder(
               <!-- CTA -->
               <div style="text-align:center;margin-bottom:24px;">
                 <a href="{dashboard_url}"
-                   style="display:inline-block;background:#7c3aed;color:#ffffff;
+                   style="display:inline-block;background:#4F46E5;color:#ffffff;
                           text-decoration:none;padding:14px 36px;border-radius:12px;
                           font-weight:700;font-size:15px;">
                   Update Order Status →
@@ -265,7 +265,7 @@ async def send_order_status_reminder(
           <tr>
             <td style="padding:20px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
               <p style="color:#4b5563;font-size:12px;margin:0;">
-                © 2025 Sellora · You're receiving this because you have a Sellora store.
+                © 2025 Kormerce · You're receiving this because you have a Kormerce store.
               </p>
             </td>
           </tr>

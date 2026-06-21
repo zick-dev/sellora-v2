@@ -8,10 +8,10 @@ import VideoUpload from '@/components/VideoUpload';
 
 
 const THEMES = [
-  { value: '#7c3aed', label: 'Violet',  colors: ['#7c3aed', '#ec4899'] },
+  { value: '#4F46E5', label: 'Indigo',  colors: ['#4F46E5', '#6366F1'] },
+  { value: '#10b981', label: 'Emerald', colors: ['#10b981', '#059669'] },
   { value: '#0ea5e9', label: 'Ocean',   colors: ['#0ea5e9', '#06b6d4'] },
   { value: '#f97316', label: 'Sunset',  colors: ['#f97316', '#ec4899'] },
-  { value: '#10b981', label: 'Forest',  colors: ['#10b981', '#059669'] },
   { value: '#f59e0b', label: 'Gold',    colors: ['#f59e0b', '#f97316'] },
   { value: '#ec4899', label: 'Rose',    colors: ['#ec4899', '#f43f5e'] },
 ];
@@ -52,7 +52,7 @@ export default function StorefrontPage() {
     logo_url:       '',
     banner_url:     '',
     banner_type:    'image',
-    theme_color:    '#7c3aed',
+    theme_color:    '#4F46E5',
     whatsapp:       '',
     instagram:      '',
     categories:     '[]',
@@ -87,7 +87,7 @@ export default function StorefrontPage() {
           logo_url:       res.data.logo_url || '',
           banner_url:     res.data.banner_url || '',
           banner_type:    res.data.banner_type || 'image',
-          theme_color:    res.data.theme_color || '#7c3aed',
+          theme_color:    res.data.theme_color || '#4F46E5',
           whatsapp:       res.data.whatsapp || '',
           instagram:      res.data.instagram || '',
           categories:     res.data.categories || '[]',
@@ -188,7 +188,7 @@ export default function StorefrontPage() {
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-      <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+      <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid rgba(79,70,229,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -202,8 +202,8 @@ export default function StorefrontPage() {
       </div>
 
       <div style={{
-        background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(236,72,153,0.08))',
-        border: '1px solid rgba(124,58,237,0.2)',
+        background: 'linear-gradient(135deg, rgba(79,70,229,0.15), rgba(236,72,153,0.08))',
+        border: '1px solid rgba(79,70,229,0.2)',
         borderRadius: 16, padding: '16px 20px', marginBottom: 24,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
       }}>
@@ -315,10 +315,10 @@ export default function StorefrontPage() {
 
           {/* Custom Domain — Pro Feature */}
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 12, right: 12, background: 'linear-gradient(90deg, #7c3aed, #ec4899)', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: '#fff' }}>PRO</div>
+            <div style={{ position: 'absolute', top: 12, right: 12, background: 'linear-gradient(90deg, #4F46E5, #ec4899)', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: '#fff' }}>PRO</div>
             <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Custom Domain</h2>
             <p style={{ color: C.muted, fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>
-              Use your own domain (e.g. <span style={{ color: C.purple, fontWeight: 600 }}>shop.yourbrand.com</span>) instead of the default Sellora URL. Available on Pro plan.
+              Use your own domain (e.g. <span style={{ color: C.purple, fontWeight: 600 }}>shop.yourbrand.com</span>) instead of the default Kormerce URL. Available on Pro plan.
             </p>
             {isPro ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -327,10 +327,10 @@ export default function StorefrontPage() {
                   placeholder="shop.yourbrand.com"
                   style={{ width: '100%', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px', color: C.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
                 />
-                <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ background: 'rgba(79,70,229,0.06)', border: '1px solid rgba(79,70,229,0.15)', borderRadius: 10, padding: '12px 14px' }}>
                   <p style={{ color: C.subtext, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Setup Instructions:</p>
                   <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.6 }}>
-                    1. Add a CNAME record in your DNS pointing to <span style={{ color: C.purple, fontFamily: 'monospace' }}>cname.sellora.com</span><br/>
+                    1. Add a CNAME record in your DNS pointing to <span style={{ color: C.purple, fontFamily: 'monospace' }}>cname.kormerce.com</span><br/>
                     2. Enter your domain above and contact support to complete setup.<br/>
                     3. SSL certificate will be issued automatically.
                   </p>
@@ -342,7 +342,7 @@ export default function StorefrontPage() {
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 <p style={{ color: C.muted, fontSize: 13 }}>Upgrade to Pro to use a custom domain.</p>
-                <a href="/upgrade" style={{ padding: '9px 18px', borderRadius: 9, background: 'linear-gradient(90deg, #7c3aed, #ec4899)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>
+                <a href="/upgrade" style={{ padding: '9px 18px', borderRadius: 9, background: 'linear-gradient(90deg, #4F46E5, #ec4899)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>
                   Upgrade to Pro →
                 </a>
               </div>
@@ -411,7 +411,7 @@ export default function StorefrontPage() {
               {THEMES.map(t => {
                 const active = form.theme_color === t.value;
                 return (
-                  <button key={t.value} onClick={() => setForm({ ...form, theme_color: t.value })} style={{ padding: 12, borderRadius: 12, cursor: 'pointer', border: active ? '2px solid rgba(124,58,237,0.6)' : '1px solid ' + C.cardBorder, background: active ? 'rgba(124,58,237,0.08)' : C.input, position: 'relative', transition: 'all 0.15s' }}>
+                  <button key={t.value} onClick={() => setForm({ ...form, theme_color: t.value })} style={{ padding: 12, borderRadius: 12, cursor: 'pointer', border: active ? '2px solid rgba(79,70,229,0.6)' : '1px solid ' + C.cardBorder, background: active ? 'rgba(79,70,229,0.08)' : C.input, position: 'relative', transition: 'all 0.15s' }}>
                     <div style={{ height: 36, borderRadius: 8, marginBottom: 8, background: 'linear-gradient(135deg, ' + t.colors[0] + ', ' + t.colors[1] + ')' }} />
                     <p style={{ color: C.text, fontSize: 12, fontWeight: 600, textAlign: 'center', margin: 0 }}>{t.label}</p>
                     {active && (
@@ -425,7 +425,7 @@ export default function StorefrontPage() {
               <label style={labelStyle}>Custom Color</label>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <input type="color" value={form.theme_color} onChange={e => setForm({ ...form, theme_color: e.target.value })} style={{ width: 48, height: 48, borderRadius: 10, border: '1px solid ' + C.inputBorder, background: 'none', cursor: 'pointer', padding: 2 }} />
-                <input type="text" value={form.theme_color} onChange={e => setForm({ ...form, theme_color: e.target.value })} placeholder="#7c3aed" style={{ ...inputBase, flex: 1 }} />
+                <input type="text" value={form.theme_color} onChange={e => setForm({ ...form, theme_color: e.target.value })} placeholder="#4F46E5" style={{ ...inputBase, flex: 1 }} />
               </div>
             </div>
           </div>
@@ -454,7 +454,7 @@ export default function StorefrontPage() {
               <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Without the @ symbol</p>
             </div>
             {(form.whatsapp || form.instagram) && (
-              <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 12, padding: 16 }}>
+              <div style={{ background: 'rgba(79,70,229,0.05)', border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12, padding: 16 }}>
                 <p style={{ color: C.subtext, fontSize: 12, fontWeight: 600, marginBottom: 10 }}>Preview on storefront:</p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {form.whatsapp && (
@@ -480,7 +480,7 @@ export default function StorefrontPage() {
           <p style={{ color: C.muted, fontSize: 13, marginBottom: 20 }}>Categories appear as filter pills on your storefront.</p>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
             <input type="text" value={catInput} onChange={e => setCatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCategory()} placeholder="e.g. Fashion, Electronics, Food..." style={{ ...inputBase, flex: 1 }} />
-            <button onClick={addCategory} disabled={!catInput.trim()} style={{ padding: '12px 18px', borderRadius: 10, background: catInput.trim() ? C.purple : 'rgba(124,58,237,0.3)', border: 'none', color: C.text, fontSize: 14, fontWeight: 700, cursor: catInput.trim() ? 'pointer' : 'not-allowed', flexShrink: 0 }}>
+            <button onClick={addCategory} disabled={!catInput.trim()} style={{ padding: '12px 18px', borderRadius: 10, background: catInput.trim() ? C.purple : 'rgba(79,70,229,0.3)', border: 'none', color: C.text, fontSize: 14, fontWeight: 700, cursor: catInput.trim() ? 'pointer' : 'not-allowed', flexShrink: 0 }}>
               + Add
             </button>
           </div>
@@ -493,7 +493,7 @@ export default function StorefrontPage() {
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {categories.map((cat: string) => (
-                <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 20, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 20, background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.2)' }}>
                   <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>{cat}</span>
                   <button onClick={() => removeCategory(cat)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>x</button>
                 </div>
@@ -548,7 +548,7 @@ export default function StorefrontPage() {
                       style={{
                         flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
                         border: form.popup_discount === pct ? '2px solid ' + C.purple : '1px solid ' + C.inputBorder,
-                        background: form.popup_discount === pct ? 'rgba(124,58,237,0.1)' : C.input,
+                        background: form.popup_discount === pct ? 'rgba(79,70,229,0.1)' : C.input,
                         color: form.popup_discount === pct ? C.purple : C.subtext,
                         fontSize: 14, fontWeight: 700,
                       }}
@@ -571,7 +571,7 @@ export default function StorefrontPage() {
                 />
               </div>
 
-              <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
+              <div style={{ background: 'rgba(79,70,229,0.05)', border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
                 <p style={{ color: C.subtext, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Preview</p>
                 <div style={{ fontSize: 32, marginBottom: 6 }}>🎁</div>
                 <p style={{ color: C.text, fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
@@ -625,7 +625,7 @@ export default function StorefrontPage() {
       </div>
 
           {form.delivery_fee > 0 && (
-            <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 12, padding: 16 }}>
+            <div style={{ background: 'rgba(79,70,229,0.05)', border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12, padding: 16 }}>
               <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Preview</p>
               <p style={{ color: C.muted, fontSize: 13 }}>
                 Orders below <span style={{ color: C.text, fontWeight: 700 }}>{'₦' + Number(form.free_delivery_above).toLocaleString()}</span> → delivery fee of <span style={{ color: C.purple, fontWeight: 700 }}>{'₦' + Number(form.delivery_fee).toLocaleString()}</span>
@@ -639,7 +639,7 @@ export default function StorefrontPage() {
       </div>
     )}
 
-      <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '15px 0', marginTop: 20, background: saving ? 'rgba(124,58,237,0.4)' : C.purple, border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '15px 0', marginTop: 20, background: saving ? 'rgba(79,70,229,0.4)' : C.purple, border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         {saving ? (
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />

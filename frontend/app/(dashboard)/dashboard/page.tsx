@@ -108,7 +108,7 @@ export default function DashboardOverviewPage() {
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
             padding: '10px 18px',
-            background: 'linear-gradient(90deg, #7c3aed, #ec4899)',
+            background: 'linear-gradient(90deg, #4F46E5, #ec4899)',
             borderRadius: 10, color: C.text,
             fontWeight: 700, fontSize: 13, textDecoration: 'none',
           }}>
@@ -153,7 +153,7 @@ export default function DashboardOverviewPage() {
 
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center' }}>
-              <span style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+              <span style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(79,70,229,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
             </div>
           ) : recentOrders.length === 0 ? (
             <div style={{ padding: '48px 20px', textAlign: 'center' }}>
@@ -211,7 +211,7 @@ export default function DashboardOverviewPage() {
 
             {loading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
-                <span style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(124,58,237,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+                <span style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(79,70,229,0.2)', borderTopColor: C.purple, animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
               </div>
             ) : recentLeads.length === 0 ? (
               <div style={{ padding: '20px 0', textAlign: 'center' }}>

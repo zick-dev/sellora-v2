@@ -1,7 +1,7 @@
 /**
  * lib/api.ts
  * ──────────
- * Central Axios instance for all API calls to the Sellora backend.
+ * Central Axios instance for all API calls to the Kormerce backend.
  *
  * Features:
  * - Base URL from environment variable
@@ -14,7 +14,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://sellora-v2-production.up.railway.app",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://kormerce-v2-production.up.railway.app",
   headers: {
     "Content-Type": "application/json",
   },
@@ -105,7 +105,7 @@ api.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          (process.env.NEXT_PUBLIC_API_URL || "https://sellora-v2-production.up.railway.app") +
+          (process.env.NEXT_PUBLIC_API_URL || "https://kormerce-v2-production.up.railway.app") +
             "/api/auth/refresh",
           { refresh_token: refreshToken }
         );

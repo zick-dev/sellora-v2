@@ -1,7 +1,7 @@
 """
 app/core/security.py
 ─────────────────────
-All authentication and security utilities for Sellora.
+All authentication and security utilities for Kormerce.
 
 Covers:
 - Password hashing and verification using bcrypt
@@ -95,7 +95,7 @@ def create_reset_token(email: str) -> str:
     look up the user by email when they click the reset link.
 
     This token is sent in the password reset email as a URL parameter:
-    https://sellora.com/reset-password?token=<this_token>
+    https://kormerce.com/reset-password?token=<this_token>
     """
     expire = datetime.now(timezone.utc) + timedelta(hours=1)
     return jwt.encode(

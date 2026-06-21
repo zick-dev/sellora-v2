@@ -2,7 +2,7 @@
 
 /**
  * lib/theme.tsx
- * Dark/Light theme system for Sellora dashboard.
+ * Dark/Light theme system for Kormerce dashboard.
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -16,10 +16,10 @@ export const DARK = {
   input:        '#1a1a2e',
   inputBorder:  '#2a2a3e',
   inputFocus:   '#7c3aed',
-  purple:       '#7c3aed',
-  purpleLight:  '#8b5cf6',
-  purpleHov:    '#6d28d9',
-  purpleDim:    'rgba(124,58,237,0.12)',
+  purple:       '#4F46E5',
+  purpleLight:  '#6366F1',
+  purpleHov:    '#4338CA',
+  purpleDim:    'rgba(79,70,229,0.12)',
   pink:         '#ec4899',
   success:      '#10b981',
   amber:        '#f59e0b',
@@ -44,10 +44,10 @@ export const LIGHT = {
   input:        '#f1f1f7',
   inputBorder:  'rgba(0,0,0,0.12)',
   inputFocus:   '#7c3aed',
-  purple:       '#7c3aed',
-  purpleLight:  '#6d28d9',
-  purpleHov:    '#5b21b6',
-  purpleDim:    'rgba(124,58,237,0.08)',
+  purple:       '#4F46E5',
+  purpleLight:  '#4338CA',
+  purpleHov:    '#3730A3',
+  purpleDim:    'rgba(79,70,229,0.08)',
   pink:         '#db2777',
   success:      '#059669',
   amber:        '#d97706',
@@ -84,7 +84,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('sellora_theme') as Theme | null;
+    const saved = localStorage.getItem('kormerce_theme') as Theme | null;
     if (saved === 'light' || saved === 'dark') {
       setThemeState(saved);
     }
@@ -98,7 +98,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   function setTheme(t: Theme) {
     setThemeState(t);
-    localStorage.setItem('sellora_theme', t);
+    localStorage.setItem('kormerce_theme', t);
   }
 
   function toggleTheme() {

@@ -10,10 +10,10 @@ const C = {
   cardBorder:  '#1e1e30',
   input:       '#1a1a2e',
   inputBorder: '#2a2a3e',
-  inputFocus:  '#7c3aed',
-  purple:      '#7c3aed',
+  inputFocus:  '#4F46E5',
+  purple:      '#4F46E5',
   purpleLight: '#8b5cf6',
-  purpleDim:   'rgba(124,58,237,0.15)',
+  purpleDim:   'rgba(79,70,229,0.15)',
   muted:       '#6b7280',
   mutedLight:  '#9ca3af',
   text:        '#ffffff',
@@ -45,7 +45,7 @@ function Navbar() {
           </svg>
         </div>
         <span style={{ color: C.purple, fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>
-          Sellora
+          Kormerce
         </span>
       </div>
     </nav>
@@ -137,7 +137,7 @@ function Step1({ onContinue }: { onContinue: () => void }) {
 
       <p style={{ color: C.muted, fontSize: 13, marginTop: 20 }}>
         Having trouble?{' '}
-        <a href="mailto:support@sellora.io" style={{ color: C.purpleLight, textDecoration: 'none' }}>
+        <a href="mailto:support@kormerce.io" style={{ color: C.purpleLight, textDecoration: 'none' }}>
           Contact our concierge support
         </a>
       </p>
@@ -322,7 +322,7 @@ function Step2({ onBack }: { onBack: () => void }) {
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" strokeLinecap="round"/>
                 </svg>
-                <span style={{ color: C.muted, fontSize: 13 }}>sellora.io/</span>
+                <span style={{ color: C.muted, fontSize: 13 }}>kormerce.io/</span>
                 <input
                   autoFocus
                   type="text"
@@ -343,7 +343,7 @@ function Step2({ onBack }: { onBack: () => void }) {
                     <circle cx="12" cy="12" r="10"/>
                     <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" strokeLinecap="round"/>
                   </svg>
-                  <span style={{ color: C.muted, fontSize: 13 }}>sellora.io/</span>
+                  <span style={{ color: C.muted, fontSize: 13 }}>kormerce.io/</span>
                   <span style={{ color: C.purple, fontSize: 13, fontWeight: 600 }}>
                     {slug || <span style={{ color: C.muted, fontWeight: 400 }}>your-store</span>}
                   </span>
@@ -489,7 +489,7 @@ export default function OnboardingPage() {
         )}
 
         <footer style={{ textAlign: 'center', marginTop: 32, paddingBottom: 16 }}>
-          <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Sellora • Premium Seller Tools</p>
+          <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Kormerce • Premium Seller Tools</p>
         </footer>
       </main>
     </>

@@ -19,7 +19,7 @@ interface Order {
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  pending:    { color: '#7c3aed', bg: 'rgba(124,58,237,0.1)',  border: 'rgba(124,58,237,0.2)',  label: 'Pending' },
+  pending:    { color: '#4F46E5', bg: 'rgba(79,70,229,0.1)',  border: 'rgba(79,70,229,0.2)',  label: 'Pending' },
   confirmed:  { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.2)',  label: 'Confirmed' },
   processing: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)',  label: 'Processing' },
   delivered:  { color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.2)',  label: 'Delivered' },
@@ -35,7 +35,7 @@ const NEXT_STATUS: Record<string, string[]> = {
 };
 
 const AVATAR_COLORS = [
-  'linear-gradient(135deg, #7c3aed, #9d5cf5)',
+  'linear-gradient(135deg, #4F46E5, #9d5cf5)',
   'linear-gradient(135deg, #ec4899, #f43f5e)',
   'linear-gradient(135deg, #0ea5e9, #06b6d4)',
   'linear-gradient(135deg, #f59e0b, #f97316)',
@@ -106,7 +106,7 @@ export default function OrdersPage() {
     }}>
       <div style={{
         width: 32, height: 32, borderRadius: '50%',
-        border: '3px solid rgba(124,58,237,0.2)',
+        border: '3px solid rgba(79,70,229,0.2)',
         borderTopColor: C.purple,
         animation: 'spin 0.8s linear infinite',
       }} />
@@ -406,10 +406,10 @@ export default function OrdersPage() {
                             opacity: updating === order.id ? 0.5 : 1,
                             background: s === 'cancelled'
                               ? 'rgba(239,68,68,0.1)'
-                              : 'rgba(124,58,237,0.1)',
+                              : 'rgba(79,70,229,0.1)',
                             border: s === 'cancelled'
                               ? '1px solid rgba(239,68,68,0.2)'
-                              : '1px solid rgba(124,58,237,0.2)',
+                              : '1px solid rgba(79,70,229,0.2)',
                             color: s === 'cancelled' ? C.red : C.purple,
                             textTransform: 'capitalize',
                           }}

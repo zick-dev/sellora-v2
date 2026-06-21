@@ -182,7 +182,7 @@ function Sidebar({
             </svg>
           </div>
           <span style={{ color: C.purple, fontWeight: 800, fontSize: 17, letterSpacing: '-0.3px' }}>
-            Sellora
+            Kormerce
           </span>
         </div>
       </div>
@@ -357,7 +357,7 @@ function MobileDrawer({
                   strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span style={{ color: C.purple, fontWeight: 800, fontSize: 16 }}>Sellora</span>
+            <span style={{ color: C.purple, fontWeight: 800, fontSize: 16 }}>Kormerce</span>
           </div>
           <button onClick={onClose} style={{
             background: 'none', border: 'none', cursor: 'pointer', color: C.mutedLight,
@@ -464,7 +464,7 @@ function MobileDrawer({
             Logout
           </button>
           <p style={{ color: C.muted, fontSize: 11, textAlign: 'center', marginTop: 12, letterSpacing: 0.5 }}>
-            SELLORA CLOUD • v2.4.0
+            KORMERCE CLOUD • v2.4.0
           </p>
         </div>
       </div>
@@ -514,7 +514,7 @@ function Topbar({
               strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
-        <span style={{ color: C.purple, fontWeight: 800, fontSize: 15 }}>Sellora</span>
+        <span style={{ color: C.purple, fontWeight: 800, fontSize: 15 }}>Kormerce</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -733,7 +733,7 @@ export default function DashboardLayout({
                 padding: '12px 32px',
                 textAlign: 'center',
               }}>
-                <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Sellora • Premium Seller Tools</p>
+                <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Kormerce • Premium Seller Tools</p>
               </footer>
             </div>
           </div>

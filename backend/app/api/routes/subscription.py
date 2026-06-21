@@ -1,7 +1,7 @@
 """
 app/api/routes/subscription.py
 ────────────────────────────────
-Subscription management routes for Sellora Pro.
+Subscription management routes for Kormerce Pro.
 
 Endpoints:
     GET  /api/subscription/status     → Get current plan status
@@ -126,7 +126,7 @@ async def verify_payment(
     await db.refresh(current_user)
 
     return {
-        "message":    "Successfully upgraded to Sellora Pro!",
+        "message":    "Successfully upgraded to Kormerce Pro!",
         "plan":       "pro",
         "expires_at": current_user.plan_expires_at.isoformat(),
         "days_left":  PRO_DURATION_DAYS,
