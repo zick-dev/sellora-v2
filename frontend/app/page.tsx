@@ -68,11 +68,11 @@ export default function LandingPage() {
         }} />
         <div style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.9) 55%, rgba(255,255,255,0.96) 100%)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0.65) 100%)',
         }} />
         <div style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(135deg, rgba(79,70,229,0.10), rgba(16,185,129,0.06))',
+          background: 'linear-gradient(135deg, rgba(79,70,229,0.18), rgba(16,185,129,0.1))',
           mixBlendMode: 'multiply',
         }} />
 
