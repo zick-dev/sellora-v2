@@ -56,10 +56,26 @@ export default function LandingPage() {
 
       {/* CAROUSEL — fills remaining space */}
       <main
-        style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px', minHeight: 0, overflowY: 'auto' }}
+        style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px', minHeight: 0, overflowY: 'auto', overflow: 'hidden' }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
+        {/* Animated background photo */}
+        <div className="carousel-bg" style={{
+          position: 'absolute', inset: 0, zIndex: 0,
+          backgroundImage: 'url(https://images.unsplash.com/photo-1662858557337-48c9ecf07ee0?w=1600&auto=format&fit=crop&q=80)',
+          backgroundSize: 'cover', backgroundPosition: 'center',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.9) 55%, rgba(255,255,255,0.96) 100%)',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: 'linear-gradient(135deg, rgba(79,70,229,0.10), rgba(16,185,129,0.06))',
+          mixBlendMode: 'multiply',
+        }} />
+
         <button onClick={prev} className="carousel-arrow" aria-label="Previous"
           style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e5e5e5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.07)' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.4"><polyline points="15 18 9 12 15 6"/></svg>
@@ -69,7 +85,7 @@ export default function LandingPage() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.4"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
 
-        <div style={{ width: '100%', maxWidth: 920, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 920, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 5 }}>
 
           {/* SLIDE 0 — Hero */}
           {activeSlide === 0 && (
@@ -232,6 +248,13 @@ export default function LandingPage() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        .carousel-bg {
+          animation: kenBurns 24s ease-in-out infinite alternate;
+        }
+        @keyframes kenBurns {
+          0% { transform: scale(1) translate(0, 0); }
+          100% { transform: scale(1.08) translate(-1%, -1%); }
         }
       `}</style>
     </div>
