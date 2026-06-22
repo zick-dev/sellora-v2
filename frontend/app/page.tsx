@@ -50,7 +50,7 @@ export default function LandingPage() {
             <div style={{ width: 28, height: 28, borderRadius: 8, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13 }}>K</div>
             <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px' }}>Kormerce</span>
           </div>
-          <Link href="/login" style={{ color: '#666', fontSize: 13.5, fontWeight: 500, textDecoration: 'none' }}>Log in</Link>
+          <Link href="/login" style={{ color: '#4f46e5', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
         </div>
       </header>
 
@@ -85,22 +85,29 @@ export default function LandingPage() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.4"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
 
-        <div style={{ width: '100%', maxWidth: 920, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 5 }}>
+        <div style={{ width: '100%', maxWidth: 920, maxHeight: '88%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 5 }}>
+          <div style={{
+            width: '100%', padding: 'clamp(24px, 4vh, 48px) clamp(20px, 4vw, 48px)',
+            background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            borderRadius: 28,
+            boxShadow: '0 20px 60px -16px rgba(79,70,229,0.18), 0 2px 8px rgba(0,0,0,0.04)',
+          }}>
 
           {/* SLIDE 0 — Hero */}
           {activeSlide === 0 && (
             <div key="hero" className="slide-fade" style={{ textAlign: 'center', maxWidth: 620 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 100, background: '#f4f4f6', marginBottom: 'clamp(14px, 3vh, 26px)' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 100, background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.15)', marginBottom: 'clamp(14px, 3vh, 26px)' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: EMERALD }} />
-                <span style={{ fontSize: 12.5, color: '#555', fontWeight: 500 }}>Built for WhatsApp &amp; Instagram sellers</span>
+                <span style={{ fontSize: 12.5, color: INDIGO, fontWeight: 600 }}>Built for WhatsApp &amp; Instagram sellers</span>
               </div>
-              <h1 style={{ fontSize: 'clamp(28px, 5.5vw, 52px)', fontWeight: 800, lineHeight: 1.06, letterSpacing: '-1.5px', marginBottom: 'clamp(12px, 2.5vh, 22px)', color: '#0a0a0a' }}>
-                Your chats, now a<br />real online store.
+              <h1 style={{ fontSize: 'clamp(28px, 5.5vw, 52px)', fontWeight: 800, lineHeight: 1.06, letterSpacing: '-1.5px', marginBottom: 'clamp(12px, 2.5vh, 22px)', color: '#111' }}>
+                Your chats, now a<br />real <span style={{ color: INDIGO }}>online store</span>.
               </h1>
-              <p style={{ fontSize: 'clamp(14px, 1.8vw, 17px)', color: '#666', lineHeight: 1.55, marginBottom: 'clamp(18px, 3.5vh, 30px)', maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>
+              <p style={{ fontSize: 'clamp(14px, 1.8vw, 17px)', color: '#3f3f46', lineHeight: 1.55, marginBottom: 'clamp(18px, 3.5vh, 30px)', maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>
                 No card to start. No bank setup. Just a store link you can share today, and orders you get paid for on delivery.
               </p>
-              <Link href="/signup" style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 100, background: INDIGO, color: '#fff', fontSize: 14.5, fontWeight: 600, textDecoration: 'none' }}>
+              <Link href="/signup" style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg, ' + INDIGO + ', #6366F1)', color: '#fff', fontSize: 14.5, fontWeight: 600, textDecoration: 'none', boxShadow: '0 10px 24px -6px rgba(79,70,229,0.45)' }}>
                 Start selling free
               </Link>
             </div>
@@ -157,14 +164,15 @@ export default function LandingPage() {
           {/* SLIDE 2 — Features */}
           {activeSlide === 2 && (
             <div key="features" className="slide-fade" style={{ width: '100%' }}>
-              <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px' }}>
-                Everything you need. Nothing you don't.
+              <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px', color: '#111' }}>
+                Everything you need. <span style={{ color: INDIGO }}>Nothing you don't.</span>
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 1, background: '#e8e8e8', borderRadius: 16, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
                 {features.map(f => (
-                  <div key={f.title} style={{ background: '#fff', padding: '22px 22px' }}>
-                    <h3 style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 7 }}>{f.title}</h3>
-                    <p style={{ color: '#777', fontSize: 12.5, lineHeight: 1.55 }}>{f.desc}</p>
+                  <div key={f.title} style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(79,70,229,0.12)', borderRadius: 14, padding: '20px 20px' }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: EMERALD, marginBottom: 12 }} />
+                    <h3 style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 7, color: '#111' }}>{f.title}</h3>
+                    <p style={{ color: '#52525b', fontSize: 12.5, lineHeight: 1.55 }}>{f.desc}</p>
                   </div>
                 ))}
               </div>
@@ -174,46 +182,48 @@ export default function LandingPage() {
           {/* SLIDE 3 — Pricing */}
           {activeSlide === 3 && (
             <div key="pricing" className="slide-fade" style={{ width: '100%' }}>
-              <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px' }}>
-                Start free. Pay only if you grow.
+              <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px', color: '#111' }}>
+                Start free. <span style={{ color: INDIGO }}>Pay only if you grow.</span>
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, maxWidth: 600, margin: '0 auto' }}>
-                <div style={{ border: '1px solid #eee', borderRadius: 16, padding: '20px 20px' }}>
-                  <p style={{ fontSize: 12.5, fontWeight: 700, color: '#999', marginBottom: 5 }}>Free</p>
-                  <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 14 }}>₦0</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 16 }}>
+                <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 18, padding: '22px 20px' }}>
+                  <p style={{ fontSize: 12.5, fontWeight: 700, color: '#71717a', marginBottom: 5 }}>Free</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 14, color: '#111' }}>₦0</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
                     {['15 products', 'Basic storefront', 'Manual tracking'].map(f => (
                       <div key={f} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-                        <span style={{ color: '#ccc', fontWeight: 700, fontSize: 11 }}>—</span>
-                        <span style={{ color: '#555', fontSize: 12.5 }}>{f}</span>
+                        <span style={{ color: '#a1a1aa', fontWeight: 700, fontSize: 11 }}>—</span>
+                        <span style={{ color: '#3f3f46', fontSize: 12.5 }}>{f}</span>
                       </div>
                     ))}
                   </div>
-                  <Link href="/signup" style={{ display: 'block', textAlign: 'center', padding: '9px 0', borderRadius: 8, border: '1px solid #ddd', color: '#222', fontWeight: 600, fontSize: 12.5, textDecoration: 'none' }}>
+                  <Link href="/signup" style={{ display: 'block', textAlign: 'center', padding: '10px 0', borderRadius: 9, border: '1.5px solid ' + INDIGO, color: INDIGO, fontWeight: 700, fontSize: 12.5, textDecoration: 'none' }}>
                     Start free
                   </Link>
                 </div>
-                <div style={{ border: '1px solid #0a0a0a', borderRadius: 16, padding: '20px 20px', background: '#0a0a0a' }}>
-                  <p style={{ fontSize: 12.5, fontWeight: 700, color: '#999', marginBottom: 5 }}>Pro</p>
+                <div style={{ border: '1px solid ' + INDIGO, borderRadius: 18, padding: '22px 20px', background: 'linear-gradient(160deg, #1e1b4b, #0d0d14)', position: 'relative', boxShadow: '0 16px 40px -10px rgba(79,70,229,0.4)' }}>
+                  <div style={{ position: 'absolute', top: -10, right: 16, background: EMERALD, color: '#fff', fontSize: 9.5, fontWeight: 800, padding: '3px 10px', borderRadius: 20, letterSpacing: '0.04em' }}>POPULAR</div>
+                  <p style={{ fontSize: 12.5, fontWeight: 700, color: '#a5b4fc', marginBottom: 5 }}>Pro</p>
                   <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 1, color: '#fff' }}>
-                    ₦5,000<span style={{ fontSize: 12, fontWeight: 500, color: '#888' }}>/mo</span>
+                    ₦5,000<span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>/mo</span>
                   </p>
-                  <p style={{ fontSize: 11, color: '#777', marginBottom: 14 }}>Billed monthly</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 16 }}>
+                  <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>Billed monthly</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
                     {['Unlimited products', 'AI tools included', 'Custom domain'].map(f => (
                       <div key={f} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                         <span style={{ color: EMERALD, fontWeight: 700, fontSize: 11 }}>+</span>
-                        <span style={{ color: '#ddd', fontSize: 12.5 }}>{f}</span>
+                        <span style={{ color: '#e4e4e7', fontSize: 12.5 }}>{f}</span>
                       </div>
                     ))}
                   </div>
-                  <Link href="/signup" style={{ display: 'block', textAlign: 'center', padding: '9px 0', borderRadius: 8, background: '#fff', color: '#0a0a0a', fontWeight: 600, fontSize: 12.5, textDecoration: 'none' }}>
+                  <Link href="/signup" style={{ display: 'block', textAlign: 'center', padding: '10px 0', borderRadius: 9, background: 'linear-gradient(135deg, ' + INDIGO + ', #6366F1)', color: '#fff', fontWeight: 700, fontSize: 12.5, textDecoration: 'none' }}>
                     Go Pro
                   </Link>
                 </div>
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
 
