@@ -56,7 +56,7 @@ export default function LandingPage() {
 
       {/* CAROUSEL — fills remaining space */}
       <main
-        style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px', minHeight: 0 }}
+        style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px', minHeight: 0, overflowY: 'auto' }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -202,7 +202,7 @@ export default function LandingPage() {
       </main>
 
       {/* DOTS */}
-      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '0 0 20px' }}>
+      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '10px 0 16px', minHeight: 28 }}>
         {slides.map((s, i) => (
           <button
             key={s}
@@ -222,6 +222,11 @@ export default function LandingPage() {
         @media (max-width: 640px) {
           .hero-product-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .carousel-arrow { display: none !important; }
+        }
+        @media (max-height: 700px) {
+          .slide-fade h1 { font-size: clamp(22px, 6vw, 34px) !important; }
+          .slide-fade h2 { font-size: clamp(18px, 4vw, 24px) !important; margin-bottom: 16px !important; }
+          .slide-fade p { font-size: 13px !important; }
         }
         .slide-fade { animation: fadeIn 0.4s ease; }
         @keyframes fadeIn {
