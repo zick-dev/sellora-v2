@@ -107,7 +107,7 @@ async def create_product(
     Create a new product. Auto-generates slug from name.
     Free plan limited to 15 products. Pro plan is unlimited.
     """
-    await get_store_or_403(store_id, current_user.id, db)
+    store = await get_store_or_403(store_id, current_user.id, db)
 
     # ── Plan enforcement ──────────────────────────────────────────
     if not user_is_pro(current_user):
@@ -146,6 +146,7 @@ async def create_product(
         stock=payload.stock,
         image_url=payload.image_url,
         category=payload.category,
+        price_currency=store.base_currency or 'USD',
     )
     db.add(product)
     await db.flush()

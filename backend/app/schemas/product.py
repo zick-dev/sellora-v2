@@ -43,6 +43,7 @@ class ProductOut(BaseModel):
     stock: int
     image_url: str | None
     category: str | None
+    price_currency: str | None
     is_available: bool
     created_at: datetime
     updated_at: datetime
@@ -61,6 +62,7 @@ class ProductPublic(BaseModel):
     stock: int
     image_url: str | None
     category: str | None
+    price_currency: str | None
     is_available: bool
     variants: list[VariantOut] = []
 

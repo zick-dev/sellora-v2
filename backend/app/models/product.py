@@ -54,6 +54,9 @@ class Product(Base):
     # e.g. "Fashion", "Electronics", "Food"
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
+    # Currency the price was originally entered in (locked at creation time)
+    price_currency: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
     # False hides product from storefront without deleting it
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
 

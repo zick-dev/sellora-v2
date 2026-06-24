@@ -26,6 +26,7 @@ interface Variant {
 interface Product {
   id: string; name: string; description: string | null; price: number;
   stock: number; image_url: string | null; category: string | null; is_available: boolean;
+  price_currency?: string | null;
   variants?: Variant[];
 }
 interface CartItem { product: Product; quantity: number; variant?: Variant | null; cartKey: string; }
@@ -41,6 +42,25 @@ function getCurrencySymbol(code?: string): string {
   return map[code||''] || code || '$';
 }
 
+function convertPrice(price: number, fromCurrency: string | null | undefined, toCurrency: string | undefined, rates: Record<string, number>): number {
+  const from = (fromCurrency || 'USD').toUpperCase();
+  const to = (toCurrency || 'USD').toUpperCase();
+  if (from === to) return price;
+  // rates are keyed FROM the store's base_currency TO other currencies
+  // But we need FROM product's price_currency TO store's base_currency
+  // So we need the inverse: if rates are based on store currency,
+  // we need rate from price_currency. Use: price / rates[from] if from !== base
+  // Actually rates come based on store's base_currency, so rates[NGN] = X means 1 base = X NGN
+  // To convert FROM NGN TO base: price / rates[NGN]
+  // To convert FROM base TO NGN: price * rates[NGN]
+  // Our rates are fetched with base = store.base_currency
+  // Product priced in NGN, store displays USD: need NGN -> USD
+  // rates base is USD, rates[NGN] = 1600 means 1 USD = 1600 NGN
+  // So NGN -> USD = price / rates[NGN]
+  if (rates[from]) return Math.round(price / rates[from]);
+  return price;
+}
+
 export default function StorefrontPage() {
   const { slug } = useParams();
   const [store, setStore] = useState<Store | null>(null);
@@ -50,6 +70,7 @@ export default function StorefrontPage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [fxRates, setFxRates] = useState<Record<string, number>>({});
   const [searchFocused, setSearchFocused] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
@@ -76,6 +97,11 @@ export default function StorefrontPage() {
         setStore(sr.data);
         const pr = await api.get('/api/products/public/' + sr.data.id);
         setProducts(pr.data);
+        // Fetch FX rates for price conversion
+        try {
+          const fxRes = await api.get('/api/fx/rates/' + (sr.data.base_currency || 'USD'));
+          if (fxRes.data?.rates) setFxRates(fxRes.data.rates);
+        } catch { /* FX rates unavailable — prices show unconverted */ }
       } catch { setNotFound(true); }
       finally { setLoading(false); }
     };

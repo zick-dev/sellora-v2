@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
 
+    # Exchange rate API — used for currency conversion on storefront and at checkout
+    EXCHANGE_RATE_API_KEY: str = ""
+
     # ── App Configuration ────────────────────────────────────────
     # List of frontend URLs allowed to make requests to this API
     # Add production URL here when deploying
