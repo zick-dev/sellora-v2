@@ -48,7 +48,16 @@ export default function LandingPage() {
       <header style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative', zIndex: 10, background: 'transparent' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13, boxShadow: '0 0 12px rgba(79,70,229,0.5)' }}>K</div>
+            <svg width="32" height="40" viewBox="0 0 130 170" fill="none">
+              <path d="M12,0 L12,160" stroke="#818cf8" strokeWidth="28" strokeLinecap="round"/>
+              <path d="M14,80 L100,12" stroke="#818cf8" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round"/>
+              <polygon points="40,72 48,67 76,26 68,32" fill="transparent"/>
+              <polygon points="92,-2 118,20 92,28" fill="#00C77A" stroke="#00C77A" strokeWidth="2" strokeLinejoin="round"/>
+              <path d="M14,80 L100,152" stroke="#818cf8" strokeWidth="28" strokeLinecap="round"/>
+              <circle cx="86" cy="156" r="4.5" fill="#818cf8" opacity="0.55"/>
+              <circle cx="100" cy="156" r="4.5" fill="#818cf8" opacity="0.55"/>
+              <circle cx="114" cy="156" r="4.5" fill="#818cf8" opacity="0.55"/>
+            </svg>
             <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#818cf8' }}>Kormerce</span>
           </div>
           <Link href="/login" style={{ color: '#818cf8', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
