@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuthStore } from "@/lib/auth";
 import { Eye, EyeOff, Zap } from "lucide-react";
+import IconBackground from "@/components/IconBackground";
 import toast from "react-hot-toast";
 
 export default function SignupPage() {
@@ -124,9 +125,11 @@ export default function SignupPage() {
 
   return (
     <div
-      style={{ minHeight: "100vh", background: "#0a0a0f" }}
+      style={{ minHeight: "100vh", background: "#0a0a0f", position: "relative", overflow: "hidden" }}
+
       className="flex flex-col items-center justify-center px-5 py-10"
     >
+      <IconBackground opacity={0.05} color="#6366F1" />
       {/* Header */}
       <div style={{ width: "100%", maxWidth: 400, marginBottom: 24 }}>
         <Link

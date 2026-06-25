@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import IconBackground from '@/components/IconBackground';
 
 const INDIGO = '#4F46E5';
 const EMERALD = '#10B981';
@@ -60,21 +61,7 @@ export default function LandingPage() {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {/* Animated background photo */}
-        <div className="carousel-bg" style={{
-          position: 'absolute', inset: 0, zIndex: 0,
-          backgroundImage: 'url(https://images.unsplash.com/photo-1662858557337-48c9ecf07ee0?w=1600&auto=format&fit=crop&q=80)',
-          backgroundSize: 'cover', backgroundPosition: 'center',
-        }} />
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0.65) 100%)',
-        }} />
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(135deg, rgba(79,70,229,0.18), rgba(16,185,129,0.1))',
-          mixBlendMode: 'multiply',
-        }} />
+        <IconBackground opacity={0.07} color="#4F46E5" />
 
         <button onClick={prev} className="carousel-arrow" aria-label="Previous"
           style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e5e5e5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.07)' }}>
@@ -259,13 +246,7 @@ export default function LandingPage() {
           from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .carousel-bg {
-          animation: kenBurns 24s ease-in-out infinite alternate;
-        }
-        @keyframes kenBurns {
-          0% { transform: scale(1) translate(0, 0); }
-          100% { transform: scale(1.08) translate(-1%, -1%); }
-        }
+
       `}</style>
     </div>
   );

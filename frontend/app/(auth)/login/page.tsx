@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuthStore } from "@/lib/auth";
 import { Eye, EyeOff, Zap } from "lucide-react";
+import IconBackground from "@/components/IconBackground";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
@@ -77,9 +78,11 @@ export default function LoginPage() {
 
   return (
     <div
-      style={{ minHeight: "100vh", background: "#0a0a0f" }}
+      style={{ minHeight: "100vh", background: "#0a0a0f", position: "relative", overflow: "hidden" }}
+
       className="flex flex-col items-center justify-center px-5 py-10"
     >
+      <IconBackground opacity={0.05} color="#6366F1" />
       {/* Logo + Heading */}
       <div className="flex flex-col items-center mb-8">
         <div
