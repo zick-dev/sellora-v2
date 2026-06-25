@@ -48,7 +48,7 @@ export default function LandingPage() {
       <header style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative', zIndex: 10, background: 'transparent' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <img src="https://res.cloudinary.com/dkun9hvkf/image/upload/v1782429673/visily-image_3_evsmr4.png" alt="Kormerce" style={{ height: 30, width: 30, borderRadius: 8, objectFit: 'contain' }} />
+            <img src="https://res.cloudinary.com/dkun9hvkf/image/upload/v1782429673/visily-image_3_evsmr4.png" alt="Kormerce" style={{ height: 42, objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(79,70,229,0.4))' }} />
             <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#818cf8' }}>Kormerce</span>
           </div>
           <Link href="/login" style={{ color: '#818cf8', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
