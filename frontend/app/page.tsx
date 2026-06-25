@@ -58,7 +58,7 @@ export default function LandingPage() {
               <circle cx="100" cy="156" r="4.5" fill="#818cf8" opacity="0.55"/>
               <circle cx="114" cy="156" r="4.5" fill="#818cf8" opacity="0.55"/>
             </svg>
-            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#818cf8' }}>Kormerce</span>
+            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#818cf8' }}>ormerce</span>
           </div>
           <Link href="/login" style={{ color: '#818cf8', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
         </div>
