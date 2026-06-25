@@ -151,7 +151,7 @@ export default function StorefrontPage() {
     const matchesSearch = !q || p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
-  const cartSubtotal  = cart.reduce((s, i) => s + Number(i.variant?.price != null ? i.variant.price : i.product.price) * i.quantity, 0);
+  const cartSubtotal  = cart.reduce((s, i) => s + dp(Number(i.variant?.price != null ? i.variant.price : i.product.price), i.product.price_currency) * i.quantity, 0);
   const discountAmt   = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
   const discountedSub = cartSubtotal - discountAmt;
   const deliveryFee   = store && (store.delivery_fee||0) > 0 && discountedSub < (store.free_delivery_above||0) ? (store.delivery_fee||0) : 0;
