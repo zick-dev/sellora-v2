@@ -38,20 +38,20 @@ export default function LandingPage() {
   return (
     <div style={{
       fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
-      color: '#0a0a0a', background: '#fff',
+      color: '#0a0a0a', background: 'transparent',
       height: '100vh', width: '100%',
       display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
     }}>
 
       {/* HEADER */}
-      <header style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative', zIndex: 10 }}>
+      <header style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative', zIndex: 10, background: 'transparent' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13 }}>K</div>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13, boxShadow: '0 0 12px rgba(79,70,229,0.5)' }}>K</div>
             <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#fff' }}>Kormerce</span>
           </div>
-          <Link href="/login" style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
+          <Link href="/login" style={{ color: '#fff', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
         </div>
       </header>
 
@@ -246,7 +246,7 @@ export default function LandingPage() {
       </main>
 
       {/* DOTS */}
-      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '10px 0 16px', minHeight: 28 }}>
+      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '10px 0 16px', minHeight: 28, background: 'transparent', position: 'relative', zIndex: 10 }}>
         {slides.map((s, i) => (
           <button
             key={s}
