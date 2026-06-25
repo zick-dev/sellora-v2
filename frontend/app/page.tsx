@@ -49,9 +49,9 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13, boxShadow: '0 0 12px rgba(79,70,229,0.5)' }}>K</div>
-            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#fff' }}>Kormerce</span>
+            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#818cf8' }}>Kormerce</span>
           </div>
-          <Link href="/login" style={{ color: '#fff', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
+          <Link href="/login" style={{ color: '#818cf8', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
         </div>
       </header>
 
