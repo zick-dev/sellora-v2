@@ -71,6 +71,10 @@ export default function StorefrontPage() {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
+
+  // Convert a product price from its original currency to the store's display currency
+  const dp = (price: number, priceCurrency?: string | null) =>
+    convertPrice(price, priceCurrency, store?.base_currency, fxRates);
   const [searchFocused, setSearchFocused] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
@@ -428,7 +432,7 @@ export default function StorefrontPage() {
                     <p onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
                     {product.category && <p style={{ color:'#bbb', fontSize:11, marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>{product.category}</p>}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6 }}>
-                      <p style={{ color:accent, fontSize:16, fontWeight:800 }}>{sym + Number(product.price).toLocaleString()}</p>
+                      <p style={{ color:accent, fontSize:16, fontWeight:800 }}>{sym + dp(product.price, product.price_currency).toLocaleString()}</p>
                       {oos ? <span style={{ color:'#bbb', fontSize:12 }}>Unavailable</span>
                         : qty === 0 ? (
                           <button onClick={() => {
@@ -550,7 +554,7 @@ export default function StorefrontPage() {
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
               {cart.map(item => {
-                const itemPrice = item.variant?.price != null ? item.variant.price : item.product.price;
+                const itemPrice = dp(item.variant?.price != null ? item.variant.price : item.product.price, item.product.price_currency);
                 const itemStock = item.variant ? item.variant.stock : item.product.stock;
                 const variantLabel = item.variant ? [item.variant.variant_value_1, item.variant.variant_value_2].filter(Boolean).join(' / ') : null;
                 return (
@@ -600,7 +604,7 @@ export default function StorefrontPage() {
             <div style={{ background:'#f9f9f9', borderRadius:10, padding:'12px 14px', marginBottom:14 }}>
               <p style={{ color:'#999', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>Order Summary</p>
               {cart.map(item => {
-                const itemPrice = item.variant?.price != null ? item.variant.price : item.product.price;
+                const itemPrice = dp(item.variant?.price != null ? item.variant.price : item.product.price, item.product.price_currency);
                 const variantLabel = item.variant ? [item.variant.variant_value_1, item.variant.variant_value_2].filter(Boolean).join(' / ') : null;
                 return (
                 <div key={item.cartKey} style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
@@ -661,7 +665,7 @@ export default function StorefrontPage() {
               {selectedProduct.category && <p style={{ color:'#bbb', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>{selectedProduct.category}</p>}
               <h2 style={{ color:'#111', fontSize:19, fontWeight:800, marginBottom:6 }}>{selectedProduct.name}</h2>
               <p style={{ color:accent, fontSize:22, fontWeight:900, marginBottom:12 }}>
-                {sym+Number(selectedVariant?.price != null ? selectedVariant.price : selectedProduct.price).toLocaleString()}
+                {sym+dp(selectedVariant?.price != null ? selectedVariant.price : selectedProduct.price, selectedProduct.price_currency).toLocaleString()}
               </p>
               {selectedProduct.description && <p style={{ color:'#555', fontSize:14, lineHeight:1.7, marginBottom:14, background:'#f9f9f9', borderRadius:8, padding:'11px 13px' }}>{selectedProduct.description}</p>}
 
