@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import IconBackground from '@/components/IconBackground';
+
 
 const INDIGO = '#4F46E5';
 const EMERALD = '#10B981';
@@ -45,13 +45,13 @@ export default function LandingPage() {
     }}>
 
       {/* HEADER */}
-      <header style={{ flexShrink: 0, borderBottom: '1px solid #f0f0f0' }}>
+      <header style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', position: 'relative', zIndex: 10 }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13 }}>K</div>
-            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px' }}>Kormerce</span>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13 }}>K</div>
+            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px', color: '#fff' }}>Kormerce</span>
           </div>
-          <Link href="/login" style={{ color: '#4f46e5', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
+          <Link href="/login" style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13.5, fontWeight: 600, textDecoration: 'none' }}>Log in</Link>
         </div>
       </header>
 
@@ -61,21 +61,52 @@ export default function LandingPage() {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <IconBackground opacity={0.2} color="#4F46E5" />
+        {/* Duotone photo background */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 0,
+          backgroundImage: 'url(https://images.unsplash.com/photo-1662858557337-48c9ecf07ee0?w=1600&auto=format&fit=crop&q=80)',
+          backgroundSize: 'cover', backgroundPosition: 'center 30%',
+          filter: 'grayscale(100%) contrast(1.2)',
+          animation: 'kenBurns 28s ease-in-out infinite alternate',
+        }} />
+        {/* Indigo shadow/midtone layer */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: '#4F46E5',
+          mixBlendMode: 'multiply',
+          opacity: 0.85,
+        }} />
+        {/* Emerald highlight layer */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2,
+          background: 'linear-gradient(160deg, transparent 30%, #10B981 100%)',
+          mixBlendMode: 'screen',
+          opacity: 0.25,
+        }} />
+        {/* Semi-opaque indigo veil for readability */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 3,
+          background: 'linear-gradient(180deg, rgba(79,70,229,0.35) 0%, rgba(13,13,20,0.45) 100%)',
+        }} />
+        {/* Vignette */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 4,
+          background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 100%)',
+        }} />
 
         <button onClick={prev} className="carousel-arrow" aria-label="Previous"
-          style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e5e5e5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.07)' }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.4"><polyline points="15 18 9 12 15 6"/></svg>
+          style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.4"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <button onClick={next} className="carousel-arrow" aria-label="Next"
-          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e5e5e5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.07)' }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2.4"><polyline points="9 18 15 12 9 6"/></svg>
+          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.4"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
 
         <div style={{ width: '100%', maxWidth: 920, maxHeight: '88%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 5 }}>
           <div style={{
             width: '100%', padding: 'clamp(24px, 4vh, 48px) clamp(20px, 4vw, 48px)',
-            background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(20px)',
+            background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
             border: '1px solid rgba(255,255,255,0.5)',
             borderRadius: 28,
             boxShadow: '0 20px 60px -16px rgba(79,70,229,0.18), 0 2px 8px rgba(0,0,0,0.04)',
@@ -223,7 +254,7 @@ export default function LandingPage() {
             aria-label={'Go to slide ' + (i + 1)}
             style={{
               width: activeSlide === i ? 22 : 8, height: 8, borderRadius: 100,
-              background: activeSlide === i ? INDIGO : '#ddd',
+              background: activeSlide === i ? '#fff' : 'rgba(255,255,255,0.3)',
               border: 'none', cursor: 'pointer', transition: 'all 0.25s', padding: 0,
             }}
           />
@@ -240,6 +271,10 @@ export default function LandingPage() {
           .slide-fade h1 { font-size: clamp(22px, 6vw, 34px) !important; }
           .slide-fade h2 { font-size: clamp(18px, 4vw, 24px) !important; margin-bottom: 16px !important; }
           .slide-fade p { font-size: 13px !important; }
+        }
+        @keyframes kenBurns {
+          0% { transform: scale(1) translate(0, 0); }
+          100% { transform: scale(1.1) translate(-2%, -1%); }
         }
         .slide-fade { animation: fadeIn 0.4s ease; }
         @keyframes fadeIn {
