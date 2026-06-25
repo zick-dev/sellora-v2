@@ -61,7 +61,7 @@ export default function LandingPage() {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <IconBackground opacity={0.07} color="#4F46E5" />
+        <IconBackground opacity={0.2} color="#4F46E5" />
 
         <button onClick={prev} className="carousel-arrow" aria-label="Previous"
           style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1px solid #e5e5e5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.07)' }}>

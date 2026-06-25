@@ -66,7 +66,7 @@ interface Props {
   color?: string;
 }
 
-export default function IconBackground({ opacity = 0.06, color = '#4F46E5' }: Props) {
+export default function IconBackground({ opacity = 0.18, color = '#4F46E5' }: Props) {
   return (
     <>
       <div style={{
@@ -84,7 +84,7 @@ export default function IconBackground({ opacity = 0.06, color = '#4F46E5' }: Pr
               viewBox="0 0 24 24"
               fill="none"
               stroke={color}
-              strokeWidth="1.5"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{
@@ -94,6 +94,7 @@ export default function IconBackground({ opacity = 0.06, color = '#4F46E5' }: Pr
                 opacity,
                 animationDelay: `${pos.delay}s`,
                 animationDuration: `${pos.dur}s`,
+                filter: `drop-shadow(0 0 6px ${color})`,
               }}
             >
               <path d={icon} />

@@ -82,7 +82,7 @@ export default function LoginPage() {
 
       className="flex flex-col items-center justify-center px-5 py-10"
     >
-      <IconBackground opacity={0.05} color="#6366F1" />
+      <IconBackground opacity={0.2} color="#6366F1" />
       {/* Logo + Heading */}
       <div className="flex flex-col items-center mb-8">
         <div

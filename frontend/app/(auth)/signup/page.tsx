@@ -129,7 +129,7 @@ export default function SignupPage() {
 
       className="flex flex-col items-center justify-center px-5 py-10"
     >
-      <IconBackground opacity={0.05} color="#6366F1" />
+      <IconBackground opacity={0.2} color="#6366F1" />
       {/* Header */}
       <div style={{ width: "100%", maxWidth: 400, marginBottom: 24 }}>
         <Link
