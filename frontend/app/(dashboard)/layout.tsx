@@ -175,14 +175,18 @@ function Sidebar({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M13 2L4.5 13.5H12L11 22L19.5 10.5H12L13 2Z"
-                fill="white" stroke="white" strokeWidth="1.5"
-                strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="20" height="26" viewBox="0 0 130 170" fill="none">
+              <path d="M12,0 L12,160" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+              <path d="M14,80 L100,12" stroke="white" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round"/>
+              <polygon points="92,-2 118,20 92,28" fill="#00C77A" stroke="#00C77A" strokeWidth="2" strokeLinejoin="round"/>
+              <path d="M14,80 L100,152" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+              <circle cx="86" cy="156" r="4.5" fill="white" opacity="0.55"/>
+              <circle cx="100" cy="156" r="4.5" fill="white" opacity="0.55"/>
+              <circle cx="114" cy="156" r="4.5" fill="white" opacity="0.55"/>
             </svg>
           </div>
           <span style={{ color: C.purple, fontWeight: 800, fontSize: 17, letterSpacing: '-0.3px' }}>
-            Kormerce
+            ormerce
           </span>
         </div>
       </div>
@@ -351,13 +355,17 @@ function MobileDrawer({
               width: 30, height: 30, borderRadius: 8, background: C.purple,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                <path d="M13 2L4.5 13.5H12L11 22L19.5 10.5H12L13 2Z"
-                  fill="white" stroke="white" strokeWidth="1.5"
-                  strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="18" height="24" viewBox="0 0 130 170" fill="none">
+                <path d="M12,0 L12,160" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+                <path d="M14,80 L100,12" stroke="white" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round"/>
+                <polygon points="92,-2 118,20 92,28" fill="#00C77A" stroke="#00C77A" strokeWidth="2" strokeLinejoin="round"/>
+                <path d="M14,80 L100,152" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+                <circle cx="86" cy="156" r="4.5" fill="white" opacity="0.55"/>
+                <circle cx="100" cy="156" r="4.5" fill="white" opacity="0.55"/>
+                <circle cx="114" cy="156" r="4.5" fill="white" opacity="0.55"/>
               </svg>
             </div>
-            <span style={{ color: C.purple, fontWeight: 800, fontSize: 16 }}>Kormerce</span>
+            <span style={{ color: C.purple, fontWeight: 800, fontSize: 16 }}>ormerce</span>
           </div>
           <button onClick={onClose} style={{
             background: 'none', border: 'none', cursor: 'pointer', color: C.mutedLight,
@@ -508,13 +516,17 @@ function Topbar({
           width: 28, height: 28, borderRadius: 7, background: C.purple,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-            <path d="M13 2L4.5 13.5H12L11 22L19.5 10.5H12L13 2Z"
-              fill="white" stroke="white" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="16" height="22" viewBox="0 0 130 170" fill="none">
+            <path d="M12,0 L12,160" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+            <path d="M14,80 L100,12" stroke="white" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round"/>
+            <polygon points="92,-2 118,20 92,28" fill="#00C77A" stroke="#00C77A" strokeWidth="2" strokeLinejoin="round"/>
+            <path d="M14,80 L100,152" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+            <circle cx="86" cy="156" r="4.5" fill="white" opacity="0.55"/>
+            <circle cx="100" cy="156" r="4.5" fill="white" opacity="0.55"/>
+            <circle cx="114" cy="156" r="4.5" fill="white" opacity="0.55"/>
           </svg>
         </div>
-        <span style={{ color: C.purple, fontWeight: 800, fontSize: 15 }}>Kormerce</span>
+        <span style={{ color: C.purple, fontWeight: 800, fontSize: 15 }}>ormerce</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

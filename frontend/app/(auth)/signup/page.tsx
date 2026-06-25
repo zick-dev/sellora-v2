@@ -158,7 +158,15 @@ export default function SignupPage() {
               justifyContent: "center",
             }}
           >
-            <Zap size={18} color="white" fill="white" />
+            <svg width="18" height="24" viewBox="0 0 130 170" fill="none">
+              <path d="M12,0 L12,160" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+              <path d="M14,80 L100,12" stroke="white" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round"/>
+              <polygon points="92,-2 118,20 92,28" fill="#00C77A" stroke="#00C77A" strokeWidth="2" strokeLinejoin="round"/>
+              <path d="M14,80 L100,152" stroke="white" strokeWidth="28" strokeLinecap="round"/>
+              <circle cx="86" cy="156" r="4.5" fill="white" opacity="0.55"/>
+              <circle cx="100" cy="156" r="4.5" fill="white" opacity="0.55"/>
+              <circle cx="114" cy="156" r="4.5" fill="white" opacity="0.55"/>
+            </svg>
           </div>
           <span
             style={{
