@@ -99,7 +99,7 @@ export default function DashboardOverviewPage() {
               Your store is live at{' '}
               <a href={storeUrl} target="_blank" rel="noreferrer"
                 style={{ color: C.purpleLight, textDecoration: 'none' }}>
-                localhost:3000/store/{store.slug}
+                kormerce.com/store/{store.slug}
               </a>
             </p>
           )}
