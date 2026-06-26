@@ -271,7 +271,7 @@ export default function LandingPage() {
       </div>
 
       <style>{`
-        html, body { overflow: hidden; height: 100%; margin: 0; }
+        html, body { height: 100%; margin: 0; overflow-y: hidden; overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; }
         @media (max-width: 640px) {
           .hero-product-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .carousel-arrow { display: none !important; }
