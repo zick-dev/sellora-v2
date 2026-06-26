@@ -35,6 +35,7 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing]     = useState<Product | null>(null);
   const [form, setForm]           = useState(emptyForm);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState('');
   const [deleting, setDeleting]   = useState<string | null>(null);
@@ -497,11 +498,33 @@ export default function ProductsPage() {
 
               {/* Description */}
               <div>
-                <label style={labelStyle}>Description</label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Description</label>
+                  <button
+                    type="button"
+                    disabled={!form.name || generatingDesc}
+                    onClick={async () => {
+                      setGeneratingDesc(true);
+                      try {
+                        const res = await api.post('/api/ai/product-description', { name: form.name, category: form.category || '' });
+                        if (res.data?.description) setForm({ ...form, description: res.data.description });
+                      } catch { /* silently fail */ }
+                      setGeneratingDesc(false);
+                    }}
+                    style={{
+                      background: 'none', border: '1px solid ' + C.inputBorder, borderRadius: 8,
+                      padding: '4px 10px', fontSize: 11, fontWeight: 600,
+                      color: !form.name ? C.muted : C.purple, cursor: !form.name ? 'default' : 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 4, opacity: !form.name ? 0.5 : 1,
+                    }}
+                  >
+                    {generatingDesc ? '⏳ Generating...' : '✨ AI Generate'}
+                  </button>
+                </div>
                 <textarea
                   value={form.description}
                   onChange={e => setForm({ ...form, description: e.target.value })}
-                  placeholder="Describe your product..."
+                  placeholder="Describe your product, or use AI Generate above..."
                   rows={3}
                   style={{ ...inputStyle, resize: 'vertical' }}
                 />

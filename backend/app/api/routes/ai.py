@@ -95,3 +95,74 @@ async def generate_ai_content(
     except (KeyError, IndexError):
         text = "No response generated."
     return {"text": text}
+
+
+@router.post(
+    "/product-description",
+    summary="Generate product description (free for all users)",
+)
+async def generate_product_description(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate a short, compelling product description from the product name
+    and optional category. FREE for all users — no Pro plan required.
+    This is the entry-point to AI value for free-tier merchants.
+    """
+    if not settings.GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI description generator is coming soon!",
+        )
+
+    product_name = payload.get("name", "").strip()
+    category = payload.get("category", "").strip()
+
+    if not product_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Product name is required to generate a description.",
+        )
+
+    prompt = f"""Write a short, compelling product description for an e-commerce store.
+Product name: {product_name}
+{"Category: " + category if category else ""}
+
+Requirements:
+- 1-2 sentences maximum
+- Highlight key selling points
+- Use a friendly, confident tone
+- Do NOT include the product name in the description
+- Do NOT use quotes around the description
+- Write in English"""
+
+    try:
+        import httpx
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
+        body = {"contents": [{"parts": [{"text": prompt}]}]}
+
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.post(url, json=body)
+
+        if res.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI service temporarily unavailable. Try again later.",
+            )
+
+        data = res.json()
+        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        # Clean up any quotes the model might wrap it in
+        if text.startswith('"') and text.endswith('"'):
+            text = text[1:-1]
+
+        return {"description": text}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service temporarily unavailable. Try again later.",
+        )
