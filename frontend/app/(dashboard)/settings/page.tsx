@@ -12,7 +12,7 @@ export default function SettingsPage() {
   const { user } = useDashboard();
   const { logout } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'danger'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'plan' | 'danger'>('profile');
 
   // Profile form
   const [profileForm, setProfileForm] = useState({ name: '', email: '' });
@@ -114,6 +114,7 @@ export default function SettingsPage() {
   const tabs = [
     { key: 'profile',  label: 'Profile',       icon: '👤' },
     { key: 'password', label: 'Password',       icon: '🔒' },
+    { key: 'plan',     label: 'Plan & Billing', icon: '⭐' },
     { key: 'danger',   label: 'Danger Zone',    icon: '⚠️' },
   ];
 
@@ -234,6 +235,45 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Plan & Billing Tab */}
+      {activeTab === 'plan' && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: '24px 22px' }}>
+          <h2 style={{ color: C.text, fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Your Plan</h2>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            {/* Current plan card */}
+            <div style={{ flex: '1 1 240px', background: C.input, borderRadius: 14, padding: '20px 18px', border: '1px solid ' + C.cardBorder }}>
+              <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Current Plan</p>
+              <p style={{ color: C.text, fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
+                {user?.plan === 'pro' ? 'Pro' : 'Free'}
+              </p>
+              {user?.plan === 'pro' ? (
+                <p style={{ color: C.success, fontSize: 13 }}>Active — all features unlocked</p>
+              ) : (
+                <p style={{ color: C.muted, fontSize: 13 }}>15 products · Basic features</p>
+              )}
+            </div>
+            {/* Upgrade card */}
+            {user?.plan !== 'pro' && (
+              <div style={{ flex: '1 1 240px', background: 'rgba(79,70,229,0.06)', borderRadius: 14, padding: '20px 18px', border: '1px solid rgba(79,70,229,0.15)' }}>
+                <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Upgrade to Pro</p>
+                <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>₦5,000<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+                  {['Unlimited products', 'AI tools', 'Custom domain', 'Lead recovery', 'Priority support'].map(f => (
+                    <div key={f} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <span style={{ color: C.success, fontSize: 12, fontWeight: 700 }}>✓</span>
+                      <span style={{ color: C.subtext, fontSize: 13 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <a href="/upgrade" style={{ display: 'block', textAlign: 'center', padding: '12px 0', borderRadius: 10, background: C.purple, color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+                  Upgrade Now
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
