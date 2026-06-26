@@ -182,6 +182,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, token: null, isInitialized: false });
 
     // Hard redirect to login — clears all React state
-    window.location.href = "/login";
+    window.location.href = "/";
   },
 }));
