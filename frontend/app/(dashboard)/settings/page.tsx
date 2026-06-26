@@ -247,16 +247,16 @@ export default function SettingsPage() {
             <div style={{ flex: '1 1 240px', background: C.input, borderRadius: 14, padding: '20px 18px', border: '1px solid ' + C.cardBorder }}>
               <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Current Plan</p>
               <p style={{ color: C.text, fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
-                {user?.plan === 'pro' ? 'Pro' : 'Free'}
+                {(user as any)?.plan === 'pro' ? 'Pro' : 'Free'}
               </p>
-              {user?.plan === 'pro' ? (
+              {(user as any)?.plan === 'pro' ? (
                 <p style={{ color: C.success, fontSize: 13 }}>Active — all features unlocked</p>
               ) : (
                 <p style={{ color: C.muted, fontSize: 13 }}>15 products · Basic features</p>
               )}
             </div>
             {/* Upgrade card */}
-            {user?.plan !== 'pro' && (
+            {(user as any)?.plan !== 'pro' && (
               <div style={{ flex: '1 1 240px', background: 'rgba(79,70,229,0.06)', borderRadius: 14, padding: '20px 18px', border: '1px solid rgba(79,70,229,0.15)' }}>
                 <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Upgrade to Pro</p>
                 <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>₦5,000<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
