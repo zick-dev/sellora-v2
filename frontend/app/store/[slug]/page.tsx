@@ -71,10 +71,13 @@ export default function StorefrontPage() {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
+  const [buyerCurrency, setBuyerCurrency] = useState<string | null>(null);
+  const [showLocal, setShowLocal] = useState(true);
 
   // Convert a product price from its original currency to the store's display currency
+  const displayCurrency = showLocal && buyerCurrency ? buyerCurrency : store?.base_currency;
   const dp = (price: number, priceCurrency?: string | null) =>
-    convertPrice(price, priceCurrency, store?.base_currency, fxRates);
+    convertPrice(price, priceCurrency, displayCurrency, fxRates);
   const [searchFocused, setSearchFocused] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
@@ -101,11 +104,22 @@ export default function StorefrontPage() {
         setStore(sr.data);
         const pr = await api.get('/api/products/public/' + sr.data.id);
         setProducts(pr.data);
-        // Fetch FX rates for price conversion
+        // Detect buyer's local currency via IP geolocation
         try {
-          const fxRes = await api.get('/api/fx/rates/' + (sr.data.base_currency || 'USD'));
+          const geoRes = await fetch('https://ipapi.co/json/');
+          const geoData = await geoRes.json();
+          const detectedCurrency = geoData?.currency || sr.data.base_currency || 'USD';
+          setBuyerCurrency(detectedCurrency);
+          // Fetch FX rates with detected currency as base
+          const fxRes = await api.get('/api/fx/rates/' + detectedCurrency);
           if (fxRes.data?.rates) setFxRates(fxRes.data.rates);
-        } catch { /* FX rates unavailable — prices show unconverted */ }
+        } catch {
+          // Fallback to store's base currency
+          try {
+            const fxRes = await api.get('/api/fx/rates/' + (sr.data.base_currency || 'USD'));
+            if (fxRes.data?.rates) setFxRates(fxRes.data.rates);
+          } catch { /* FX rates unavailable */ }
+        }
       } catch { setNotFound(true); }
       finally { setLoading(false); }
     };
@@ -141,7 +155,7 @@ export default function StorefrontPage() {
   }
 
   const accent = store?.theme_color || '#111111';
-  const sym    = getCurrencySymbol(store?.base_currency);
+  const sym    = getCurrencySymbol(displayCurrency);
   const storeCategories: string[] = (() => { try { return JSON.parse(store?.categories || '[]'); } catch { return []; } })();
   const productCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean) as string[]));
   const allCategories = ['All', ...new Set([...storeCategories, ...productCategories])];
@@ -385,11 +399,21 @@ export default function StorefrontPage() {
 
       {/* PRODUCTS */}
       <div id="products" style={{ maxWidth:1200, margin:'0 auto', padding:'28px 20px 100px' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:8 }}>
           <h2 style={{ color:'#111', fontSize:17, fontWeight:700 }}>
             {searchQuery ? 'Search results' : activeCategory === 'All' ? 'All Products' : activeCategory}
             <span style={{ color:'#bbb', fontWeight:400, fontSize:14, marginLeft:8 }}>({filtered.length})</span>
           </h2>
+          {buyerCurrency && buyerCurrency !== (store?.base_currency || 'USD') && (
+            <button onClick={() => setShowLocal(!showLocal)} style={{
+              fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:20,
+              border:'1px solid #e0e0e0', background: showLocal ? '#f0f0f0' : '#fff',
+              color:'#555', cursor:'pointer', display:'flex', alignItems:'center', gap:4,
+            }}>
+              {showLocal ? getCurrencySymbol(buyerCurrency) + ' ' + buyerCurrency : getCurrencySymbol(store?.base_currency) + ' ' + (store?.base_currency || '')}
+              <span style={{ fontSize:10, color:'#999' }}>⇄</span>
+            </button>
+          )}
           {searchQuery && (
             <button onClick={() => setSearchQuery('')} style={{ fontSize:12, color:'#999', background:'none', border:'none', cursor:'pointer', fontWeight:500 }}>
               Clear search ×
