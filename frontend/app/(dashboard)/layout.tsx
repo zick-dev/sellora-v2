@@ -578,7 +578,7 @@ export default function DashboardLayout({
   useEffect(() => {
     async function load() {
       const token = localStorage.getItem('access_token');
-      if (!token) { router.push('/login'); return; }
+      if (!token) { router.push('/'); return; }
 
       try {
         const [userRes, storeRes] = await Promise.all([
@@ -590,9 +590,9 @@ export default function DashboardLayout({
           }),
         ]);
 
-        if (userRes.status === 401) { router.push('/login'); return; }
+        if (userRes.status === 401) { router.push('/'); return; }
 
-        if (storeRes.status === 401) { router.push('/login'); return; }
+        if (storeRes.status === 401) { router.push('/'); return; }
         if (storeRes.status === 404) { router.push('/onboarding'); return; }
 
         const userData  = await userRes.json();
@@ -601,7 +601,7 @@ export default function DashboardLayout({
         setUser(userData);
         setStore(storeData);
       } catch {
-        router.push('/login');
+        router.push('/');
       } finally {
         setLoading(false);
       }
