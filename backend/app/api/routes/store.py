@@ -207,6 +207,12 @@ async def update_my_store(
         store.delivery_fee = payload.delivery_fee
     if payload.free_delivery_above is not None:
         store.free_delivery_above = payload.free_delivery_above
+    if payload.bank_name is not None:
+        store.bank_name = payload.bank_name
+    if payload.account_name is not None:
+        store.account_name = payload.account_name
+    if payload.account_number is not None:
+        store.account_number = payload.account_number
     if payload.show_trust_bar is not None:
         store.show_trust_bar = payload.show_trust_bar
     # Persist all store updates to the database.
