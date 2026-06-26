@@ -46,17 +46,14 @@ function convertPrice(price: number, fromCurrency: string | null | undefined, to
   const from = (fromCurrency || 'USD').toUpperCase();
   const to = (toCurrency || 'USD').toUpperCase();
   if (from === to) return price;
-  // rates are keyed FROM the store's base_currency TO other currencies
-  // But we need FROM product's price_currency TO store's base_currency
-  // So we need the inverse: if rates are based on store currency,
-  // we need rate from price_currency. Use: price / rates[from] if from !== base
-  // Actually rates come based on store's base_currency, so rates[NGN] = X means 1 base = X NGN
-  // To convert FROM NGN TO base: price / rates[NGN]
-  // To convert FROM base TO NGN: price * rates[NGN]
-  // Our rates are fetched with base = store.base_currency
-  // Product priced in NGN, store displays USD: need NGN -> USD
-  // rates base is USD, rates[NGN] = 1600 means 1 USD = 1600 NGN
-  // So NGN -> USD = price / rates[NGN]
+  // rates are fetched with buyerCurrency as base
+  // rates[X] = how many X per 1 base unit
+  // To convert from A to B: (price / rates[A]) * rates[B]
+  // This converts: A -> base -> B
+  if (rates[from] && rates[to]) {
+    return Math.round((price / rates[from]) * rates[to]);
+  }
+  // Fallback: if target is the base currency itself (rate = 1, not in map)
   if (rates[from]) return Math.round(price / rates[from]);
   return price;
 }
