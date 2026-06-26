@@ -75,6 +75,9 @@ class StoreUpdateRequest(BaseModel):
     banner_type: str | None = Field(None, max_length=10)
     category_type: str | None = Field(None, max_length=30)
     theme_color: str | None = Field(None, max_length=20)
+    bank_name: str | None = Field(None, max_length=100)
+    account_name: str | None = Field(None, max_length=150)
+    account_number: str | None = Field(None, max_length=30)
     whatsapp:    str | None = Field(None, max_length=30)
     instagram:   str | None = Field(None, max_length=100)
     categories:  str | None = None
@@ -182,6 +185,9 @@ class StoreOut(BaseModel):
     popup_message:  str
     delivery_fee:   float
     free_delivery_above:float
+    bank_name: str | None
+    account_name: str | None
+    account_number: str | None
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str

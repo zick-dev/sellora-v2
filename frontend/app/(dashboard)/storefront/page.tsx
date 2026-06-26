@@ -64,6 +64,9 @@ export default function StorefrontPage() {
     show_trust_bar: true,
     delivery_fee:          0,
     free_delivery_above:   10000,
+    bank_name:             '',
+    account_name:          '',
+    account_number:        '',
   });
 
   const categories: string[] = (() => {
@@ -99,6 +102,9 @@ export default function StorefrontPage() {
           show_trust_bar: res.data.show_trust_bar ?? true,
           delivery_fee:         res.data.delivery_fee ?? 0,
           free_delivery_above:  res.data.free_delivery_above ?? 10000,
+          bank_name:            res.data.bank_name ?? '',
+          account_name:         res.data.account_name ?? '',
+          account_number:       res.data.account_number ?? '',
         });
       } finally {
         setLoading(false);
@@ -130,6 +136,9 @@ export default function StorefrontPage() {
         show_trust_bar: form.show_trust_bar,
         delivery_fee:         form.delivery_fee ?? 0,
         free_delivery_above:  form.free_delivery_above ?? 10000,
+        bank_name:            form.bank_name || null,
+        account_name:         form.account_name || null,
+        account_number:       form.account_number || null,
       });
       setStore(res.data);
       setSaved(true);
@@ -638,6 +647,57 @@ export default function StorefrontPage() {
         </div>
       </div>
     )}
+
+      {/* Bank Transfer Details */}
+      {activeTab === 'delivery' && (
+        <div style={{ marginTop: 28 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Bank Transfer Details</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 20 }}>
+            Enable bank transfer as a payment option. Customers will see these details at checkout and upload a transfer receipt.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label style={labelStyle}>Bank Name</label>
+              <input
+                type="text"
+                value={form.bank_name}
+                onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                placeholder="e.g. Access Bank, GTBank, First Bank"
+                style={inputBase}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Account Name</label>
+              <input
+                type="text"
+                value={form.account_name}
+                onChange={e => setForm({ ...form, account_name: e.target.value })}
+                placeholder="e.g. Amaka Johnson"
+                style={inputBase}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Account Number</label>
+              <input
+                type="text"
+                value={form.account_number}
+                onChange={e => setForm({ ...form, account_number: e.target.value })}
+                placeholder="e.g. 0123456789"
+                style={inputBase}
+                maxLength={15}
+              />
+            </div>
+            {form.bank_name && form.account_number && (
+              <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 12, padding: 16 }}>
+                <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Bank Transfer Enabled ✓</p>
+                <p style={{ color: C.muted, fontSize: 13 }}>
+                  Customers will see "Bank Transfer" as a payment option at checkout with your account details.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '15px 0', marginTop: 20, background: saving ? 'rgba(79,70,229,0.4)' : C.purple, border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         {saving ? (

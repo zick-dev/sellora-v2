@@ -19,6 +19,7 @@ interface Order {
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  awaiting_verification: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', label: 'Awaiting Verification' },
   pending:    { color: '#4F46E5', bg: 'rgba(79,70,229,0.1)',  border: 'rgba(79,70,229,0.2)',  label: 'Pending' },
   confirmed:  { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.2)',  label: 'Confirmed' },
   processing: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)',  label: 'Processing' },
@@ -27,6 +28,7 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string;
 };
 
 const NEXT_STATUS: Record<string, string[]> = {
+  awaiting_verification: ['confirmed', 'cancelled'],
   pending:    ['confirmed', 'cancelled'],
   confirmed:  ['processing', 'cancelled'],
   processing: ['delivered', 'cancelled'],
@@ -86,7 +88,7 @@ export default function OrdersPage() {
     window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
   }
 
-  const filters = ['all', 'pending', 'confirmed', 'processing', 'delivered', 'cancelled'];
+  const filters = ['all', 'awaiting_verification', 'pending', 'confirmed', 'processing', 'delivered', 'cancelled'];
 
   const counts = filters.reduce((acc, f) => {
     acc[f] = f === 'all'
@@ -343,6 +345,28 @@ export default function OrdersPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Payment method badge */}
+                    {(order as any).payment_method === 'bank_transfer' && (
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '3px 10px', borderRadius: 20 }}>
+                            Bank Transfer
+                          </span>
+                          {order.status === 'awaiting_verification' && (
+                            <span style={{ fontSize: 11, color: C.muted }}>Awaiting receipt verification</span>
+                          )}
+                        </div>
+                        {(order as any).transfer_receipt_url && (
+                          <div style={{ marginBottom: 4 }}>
+                            <p style={{ color: C.muted, fontSize: 11, marginBottom: 6 }}>Transfer Receipt:</p>
+                            <a href={(order as any).transfer_receipt_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block' }}>
+                              <img src={(order as any).transfer_receipt_url} alt="Transfer receipt" style={{ maxWidth: 200, maxHeight: 160, borderRadius: 10, border: '1px solid ' + C.cardBorder, objectFit: 'cover', cursor: 'pointer' }} />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Action buttons */}
                     <div style={{

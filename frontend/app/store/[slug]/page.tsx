@@ -84,6 +84,9 @@ export default function StorefrontPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', note: '' });
   const [placing, setPlacing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'pay_on_delivery' | 'bank_transfer'>('pay_on_delivery');
+  const [receiptUrl, setReceiptUrl] = useState('');
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [formError, setFormError] = useState('');
   const [success, setSuccess] = useState(false);
   const [orderNums, setOrderNums] = useState<string[]>([]);
@@ -199,6 +202,19 @@ export default function StorefrontPage() {
     return cart.find(i => i.cartKey === key)?.quantity || 0;
   }
 
+  async function handleReceiptUpload(file: File) {
+    setUploadingReceipt(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', 'sellora-storage');
+      const res = await fetch('https://api.cloudinary.com/v1_1/dkun9hvkf/image/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.secure_url) setReceiptUrl(data.secure_url);
+    } catch {}
+    setUploadingReceipt(false);
+  }
+
   async function handleCheckout() {
     if (!checkoutForm.name || !checkoutForm.phone) { setFormError('Please fill in your name and WhatsApp number.'); return; }
     if (!cart.length) { setFormError('Your cart is empty.'); return; }
@@ -209,7 +225,7 @@ export default function StorefrontPage() {
         const variantDesc = item.variant
           ? [item.variant.variant_value_1, item.variant.variant_value_2].filter(Boolean).join(' / ')
           : null;
-        const res = await api.post('/api/orders/', { product_id: item.product.id, variant_id: item.variant?.id || null, variant_description: variantDesc, customer_name: checkoutForm.name, customer_phone: checkoutForm.phone, customer_note: checkoutForm.note || undefined, quantity: item.quantity, discount_percent: discountUnlocked && store ? (store.popup_discount||0) : 0, discount_code: discountUnlocked ? discountCode : undefined, delivery_address: provideAddress ? deliveryAddress : null });
+        const res = await api.post('/api/orders/', { product_id: item.product.id, variant_id: item.variant?.id || null, variant_description: variantDesc, customer_name: checkoutForm.name, customer_phone: checkoutForm.phone, customer_note: checkoutForm.note || undefined, quantity: item.quantity, discount_percent: discountUnlocked && store ? (store.popup_discount||0) : 0, discount_code: discountUnlocked ? discountCode : undefined, delivery_address: provideAddress ? deliveryAddress : null, payment_method: paymentMethod, transfer_receipt_url: paymentMethod === 'bank_transfer' ? receiptUrl : null });
         nums.push(res.data.order_number || res.data.id.slice(0,8).toUpperCase());
       }
       setOrderNums(nums); setCart([]); setSuccess(true); setShowCheckout(false); setShowCart(false);
@@ -660,11 +676,78 @@ export default function StorefrontPage() {
                 {!provideAddress && <p style={{ color:'#999', fontSize:12, marginTop:5, marginLeft:26 }}>Seller will ask on WhatsApp</p>}
               </div>
             </div>
+            {/* Payment Method */}
+            <div style={{ marginBottom:12 }}>
+              <p style={{ color:'#111', fontSize:13, fontWeight:700, marginBottom:8 }}>Payment Method</p>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={() => setPaymentMethod('pay_on_delivery')} style={{
+                  flex:1, padding:'12px 10px', borderRadius:10, cursor:'pointer', textAlign:'center',
+                  border: paymentMethod === 'pay_on_delivery' ? '2px solid '+accent : '1px solid #e5e5e5',
+                  background: paymentMethod === 'pay_on_delivery' ? accent+'10' : '#fff',
+                }}>
+                  <p style={{ fontSize:18, marginBottom:4 }}>🚚</p>
+                  <p style={{ color:'#111', fontSize:12, fontWeight:700 }}>Pay on Delivery</p>
+                </button>
+                {(store as any)?.bank_name && (store as any)?.account_number && (
+                  <button onClick={() => setPaymentMethod('bank_transfer')} style={{
+                    flex:1, padding:'12px 10px', borderRadius:10, cursor:'pointer', textAlign:'center',
+                    border: paymentMethod === 'bank_transfer' ? '2px solid '+accent : '1px solid #e5e5e5',
+                    background: paymentMethod === 'bank_transfer' ? accent+'10' : '#fff',
+                  }}>
+                    <p style={{ fontSize:18, marginBottom:4 }}>🏦</p>
+                    <p style={{ color:'#111', fontSize:12, fontWeight:700 }}>Bank Transfer</p>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Bank Transfer Details */}
+            {paymentMethod === 'bank_transfer' && (
+              <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:10, padding:'14px 16px', marginBottom:12 }}>
+                <p style={{ color:'#166534', fontSize:13, fontWeight:700, marginBottom:10 }}>Transfer to this account:</p>
+                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between' }}>
+                    <span style={{ color:'#555', fontSize:13 }}>Bank</span>
+                    <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.bank_name}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between' }}>
+                    <span style={{ color:'#555', fontSize:13 }}>Account Name</span>
+                    <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_name}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between' }}>
+                    <span style={{ color:'#555', fontSize:13 }}>Account Number</span>
+                    <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_number}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid #bbf7d0', paddingTop:6, marginTop:2 }}>
+                    <span style={{ color:'#555', fontSize:13 }}>Amount</span>
+                    <span style={{ color:'#166534', fontSize:15, fontWeight:800 }}>{sym+cartTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div style={{ marginTop:12 }}>
+                  <p style={{ color:'#166534', fontSize:12, fontWeight:600, marginBottom:6 }}>Upload transfer receipt *</p>
+                  {receiptUrl ? (
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <img src={receiptUrl} alt="Receipt" style={{ width:60, height:60, borderRadius:8, objectFit:'cover', border:'1px solid #bbf7d0' }} />
+                      <div>
+                        <p style={{ color:'#166534', fontSize:12, fontWeight:600 }}>Receipt uploaded ✓</p>
+                        <button onClick={() => setReceiptUrl('')} style={{ color:'#dc2626', fontSize:11, background:'none', border:'none', cursor:'pointer', padding:0 }}>Remove</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label style={{ display:'block', padding:'14px 0', borderRadius:8, border:'2px dashed #bbf7d0', textAlign:'center', cursor:'pointer', background:'#f0fdf4' }}>
+                      <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => { if (e.target.files?.[0]) handleReceiptUpload(e.target.files[0]); }} />
+                      <p style={{ color:'#166534', fontSize:13, fontWeight:600 }}>{uploadingReceipt ? '⏳ Uploading...' : '📎 Tap to upload receipt'}</p>
+                    </label>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div style={{ display:'flex', gap:6, alignItems:'flex-start', background:'#f9f9f9', borderRadius:8, padding:'9px 12px', marginBottom:12 }}>
               <span style={{ flexShrink:0 }}>🔒</span>
-              <p style={{ color:'#888', fontSize:12, lineHeight:1.5 }}>Order sent directly to seller. Pay on delivery or bank transfer.</p>
+              <p style={{ color:'#888', fontSize:12, lineHeight:1.5 }}>Order sent directly to seller. {paymentMethod === 'bank_transfer' ? 'Your receipt will be verified by the seller.' : 'Pay on delivery.'}</p>
             </div>
-            <button onClick={handleCheckout} disabled={placing || !checkoutForm.name || !checkoutForm.phone}
+            <button onClick={handleCheckout} disabled={placing || !checkoutForm.name || !checkoutForm.phone || (paymentMethod === 'bank_transfer' && !receiptUrl)}
               style={{ width:'100%', padding:'14px 0', background: placing||!checkoutForm.name||!checkoutForm.phone ? '#ccc' : accent, border:'none', borderRadius:10, color:'#fff', fontSize:15, fontWeight:800, cursor: placing||!checkoutForm.name||!checkoutForm.phone ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
               {placing ? <span style={{ display:'flex', alignItems:'center', gap:8 }}><span style={{ width:15, height:15, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', animation:'spin 0.8s linear infinite', display:'inline-block' }} />Placing order...</span> : `Place Order · ${sym+cartTotal.toLocaleString()}`}
             </button>

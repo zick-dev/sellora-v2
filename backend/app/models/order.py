@@ -56,6 +56,10 @@ class Order(Base):
     variant_description: Mapped[str | None] = mapped_column(String(200), nullable=True)
     delivery_fee_applied: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
 
+    # ── Payment ────────────────────────────────────────────────────
+    payment_method: Mapped[str] = mapped_column(String(20), default='pay_on_delivery')
+    transfer_receipt_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     # ── Customer Details (entered by customer on storefront) ─────
     customer_name: Mapped[str] = mapped_column(String(150), nullable=False)
     customer_phone: Mapped[str] = mapped_column(String(30), nullable=False)

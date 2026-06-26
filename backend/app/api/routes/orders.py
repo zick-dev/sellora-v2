@@ -124,6 +124,9 @@ async def create_order(
     else:
         product.stock -= payload.quantity
 
+    # Set initial status based on payment method
+    initial_status = "awaiting_verification" if payload.payment_method == "bank_transfer" else "pending"
+
     order = Order(
         store_id=product.store_id,
         product_id=payload.product_id,
@@ -140,7 +143,9 @@ async def create_order(
         delivery_address=payload.delivery_address,
         delivery_fee_applied=delivery_fee_applied,
         order_number=order_number,
-        status="pending",
+        status=initial_status,
+        payment_method=payload.payment_method or 'pay_on_delivery',
+        transfer_receipt_url=payload.transfer_receipt_url,
     )
     db.add(order)
     await db.flush()

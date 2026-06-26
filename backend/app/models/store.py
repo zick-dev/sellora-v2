@@ -110,6 +110,11 @@ class Store(Base):
     # also the amount the buyer physically hands over, so it is ALWAYS the
     # binding currency at cart/checkout/confirmation. Any buyer-side display
     # toggle (see show_currency_converter) only shows approximate estimates.
+    # ── Bank Transfer Details ──────────────────────────────────────
+    bank_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    account_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    account_number: Mapped[str | None] = mapped_column(String(30), nullable=True)
+
     base_currency: Mapped[str] = mapped_column(
         String(10),
         default="USD",

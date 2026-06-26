@@ -19,6 +19,8 @@ class OrderCreate(BaseModel):
     discount_percent:  int = 0
     discount_code:     str | None = None
     delivery_address:  str | None = None
+    payment_method:    str = 'pay_on_delivery'
+    transfer_receipt_url: str | None = None
 
 
 class OrderStatusUpdate(BaseModel):
@@ -43,6 +45,8 @@ class OrderOut(BaseModel):
     discount_code:        str | None
     delivery_address:     str | None
     delivery_fee_applied: float
+    payment_method: str | None
+    transfer_receipt_url: str | None
     order_number:         str | None
     status:               str
     created_at:           datetime
