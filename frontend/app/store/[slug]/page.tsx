@@ -51,12 +51,19 @@ function convertPrice(price: number, fromCurrency: string | null | undefined, to
   // rates[X] = how many X per 1 base unit
   // To convert from A to B: (price / rates[A]) * rates[B]
   // This converts: A -> base -> B
+  let converted = price;
   if (rates[from] && rates[to]) {
-    return Math.round((price / rates[from]) * rates[to]);
+    converted = (price / rates[from]) * rates[to];
+  } else if (rates[from]) {
+    converted = price / rates[from];
+  } else {
+    return price;
   }
-  // Fallback: if target is the base currency itself (rate = 1, not in map)
-  if (rates[from]) return Math.round(price / rates[from]);
-  return price;
+  // Round to clean numbers for better UX
+  if (converted >= 1000) return Math.round(converted / 100) * 100;
+  if (converted >= 100) return Math.round(converted / 10) * 10;
+  if (converted >= 10) return Math.round(converted);
+  return Math.round(converted * 100) / 100;
 }
 
 export default function StorefrontPage() {
