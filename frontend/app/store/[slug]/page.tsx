@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
+import StorefrontChat from '@/components/StorefrontChat';
 
 interface Store {
   id: string; store_name: string; slug: string; description: string | null;
@@ -236,6 +237,18 @@ export default function StorefrontPage() {
         <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #f0f0f0', borderTopColor:'#111', animation:'spin 0.8s linear infinite', margin:'0 auto 10px' }} />
         <p style={{ color:'#999', fontSize:13 }}>Loading store...</p>
       </div>
+      {store && (
+        <StorefrontChat
+          storeName={store.store_name}
+          accentColor={accent}
+          products={products}
+          deliveryFee={(store as any).delivery_fee || 0}
+          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          whatsapp={(store as any).whatsapp}
+          currencySymbol={sym}
+        />
+      )}
+
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -258,6 +271,18 @@ export default function StorefrontPage() {
       {orderNums.length > 0 && <div style={{ background:'#f9f9f9', border:'1px solid #eee', borderRadius:10, padding:'12px 24px', marginBottom:20 }}>{orderNums.map(n => <p key={n} style={{ color:accent, fontSize:14, fontWeight:700 }}>Order #{n}</p>)}</div>}
       {store?.whatsapp && <a href={waLink(store.whatsapp)} target="_blank" rel="noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'12px 24px', borderRadius:8, background:'#25d366', color:'#fff', fontSize:14, fontWeight:700, textDecoration:'none', marginBottom:12 }}>💬 Chat on WhatsApp</a>}
       <button onClick={() => setSuccess(false)} style={{ padding:'12px 28px', borderRadius:8, background:accent, border:'none', color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Continue Shopping</button>
+      {store && (
+        <StorefrontChat
+          storeName={store.store_name}
+          accentColor={accent}
+          products={products}
+          deliveryFee={(store as any).delivery_fee || 0}
+          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          whatsapp={(store as any).whatsapp}
+          currencySymbol={sym}
+        />
+      )}
+
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -895,6 +920,18 @@ export default function StorefrontPage() {
           <span>🎉</span>
           <span style={{ color:'#fff', fontSize:13, fontWeight:700 }}>{store.popup_discount||10}% off · {discountCode}</span>
         </div>
+      )}
+
+      {store && (
+        <StorefrontChat
+          storeName={store.store_name}
+          accentColor={accent}
+          products={products}
+          deliveryFee={(store as any).delivery_fee || 0}
+          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          whatsapp={(store as any).whatsapp}
+          currencySymbol={sym}
+        />
       )}
 
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes trustScroll{0%{transform:translateX(0)}100%{transform:translateX(-33.333%)}} ::-webkit-scrollbar{display:none}`}</style>

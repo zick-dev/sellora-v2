@@ -266,3 +266,82 @@ Return ONLY the JSON object, no markdown, no backticks, no explanation."""
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI service temporarily unavailable.",
         )
+
+
+@router.post(
+    "/storefront-chat",
+    summary="AI chat for storefront buyers (public, no auth)",
+)
+async def storefront_chat(
+    payload: dict,
+):
+    """
+    Public chatbot for buyers browsing a storefront. Answers product
+    questions, pricing, delivery, and availability based on the store's
+    actual catalog data. No authentication required.
+    """
+    if not settings.GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Chat is temporarily unavailable.",
+        )
+
+    message = payload.get("message", "").strip()
+    store_name = payload.get("store_name", "this store")
+    products = payload.get("products", [])
+    delivery_fee = payload.get("delivery_fee", 0)
+    free_delivery_above = payload.get("free_delivery_above", 0)
+    currency = payload.get("currency", "")
+    whatsapp = payload.get("whatsapp", "")
+
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required.")
+
+    # Build product catalog context
+    catalog = ""
+    for p in products[:20]:
+        status_txt = "In stock" if p.get("in_stock") else "Out of stock"
+        catalog += f"- {p['name']}: {currency}{p['price']:,.0f} ({p.get('category', 'General')}) [{status_txt}]\n"
+
+    prompt = f"""You are a helpful, friendly shopping assistant for "{store_name}", an online store.
+
+STORE CATALOG:
+{catalog if catalog else "No products listed yet."}
+
+STORE POLICIES:
+- Delivery fee: {currency}{delivery_fee:,.0f} per order
+- Free delivery on orders above: {currency}{free_delivery_above:,.0f}
+- Payment: Pay on delivery or bank transfer
+{f"- WhatsApp: {whatsapp}" if whatsapp else ""}
+
+CUSTOMER MESSAGE: "{message}"
+
+RULES:
+- Answer based ONLY on the catalog and policies above
+- Be concise (2-3 sentences max)
+- If asked about a product not in the catalog, say you don't have it and suggest similar items from the catalog
+- If asked about sizes/colors not specified, suggest the customer contacts the store on WhatsApp
+- Use a warm, helpful tone like a real shop assistant
+- Include prices when mentioning products
+- Never make up products, prices, or policies not listed above
+- Reply in the same language the customer used"""
+
+    try:
+        import httpx
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
+        body = {"contents": [{"parts": [{"text": prompt}]}]}
+
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.post(url, json=body)
+
+        if res.status_code != 200:
+            raise HTTPException(status_code=503, detail="Chat temporarily unavailable.")
+
+        data = res.json()
+        reply = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        return {"reply": reply}
+
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail="Chat temporarily unavailable.")
