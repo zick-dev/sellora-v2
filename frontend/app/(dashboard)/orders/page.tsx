@@ -50,6 +50,7 @@ export default function OrdersPage() {
   const [orders, setOrders]     = useState<Order[]>([]);
   const [loading, setLoading]   = useState(true);
   const [filter, setFilter]     = useState('all');
+  const [view, setView] = useState<'orders' | 'customers'>('orders');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -132,12 +133,18 @@ export default function OrdersPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{
-          color: C.text, fontSize: 24,
-          fontWeight: 800, marginBottom: 4,
-        }}>
-          Orders
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <h1 style={{
+            color: C.text, fontSize: 24,
+            fontWeight: 800, marginBottom: 0,
+          }}>
+            {view === 'orders' ? 'Orders' : 'Customers'}
+          </h1>
+          <div style={{ display: 'flex', gap: 4, background: C.card, borderRadius: 10, padding: 3, border: '1px solid ' + C.cardBorder }}>
+            <button onClick={() => setView('orders')} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === 'orders' ? C.purple : 'transparent', color: view === 'orders' ? '#fff' : C.muted }}>Orders</button>
+            <button onClick={() => setView('customers')} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === 'customers' ? C.purple : 'transparent', color: view === 'customers' ? '#fff' : C.muted }}>Customers</button>
+          </div>
+        </div>
         <p style={{ color: C.muted, fontSize: 14 }}>
           {orders.length} total · {counts.pending} pending
         </p>
@@ -192,6 +199,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Empty state */}
+      {view === 'orders' && (<>
       {/* Abandoned orders alert banner */}
       {filter !== 'abandoned' && abandonedOrders.length > 0 && (
         <div style={{
@@ -494,6 +502,78 @@ export default function OrdersPage() {
           })}
         </div>
       )}
+
+
+      </>)}
+
+      {/* CUSTOMERS VIEW */}
+      {view === 'customers' && (() => {
+        const customerMap: Record<string, { name: string; phone: string; orders: number; totalSpent: number; lastOrder: string; statuses: string[] }> = {};
+        orders.forEach(o => {
+          const key = (o as any).customer_phone || 'unknown';
+          if (!customerMap[key]) {
+            customerMap[key] = { name: (o as any).customer_name || 'Unknown', phone: key, orders: 0, totalSpent: 0, lastOrder: o.created_at, statuses: [] };
+          }
+          customerMap[key].orders += 1;
+          customerMap[key].totalSpent += Number(o.total_price);
+          customerMap[key].statuses.push(o.status);
+          if (new Date(o.created_at) > new Date(customerMap[key].lastOrder)) customerMap[key].lastOrder = o.created_at;
+        });
+        const customers = Object.values(customerMap).sort((a, b) => b.totalSpent - a.totalSpent);
+        if (customers.length === 0) return (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>👥</p>
+            <p style={{ color: C.text, fontSize: 16, fontWeight: 700 }}>No customers yet</p>
+            <p style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>Customers will appear here automatically when orders come in.</p>
+          </div>
+        );
+        return (
+          <div>
+            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>{customers.length} customer{customers.length !== 1 ? 's' : ''} · Auto-built from order history</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {customers.map((c, i) => {
+                const avatarColor = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                const delivered = c.statuses.filter(s => s === 'delivered').length;
+                return (
+                  <div key={c.phone} style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 14, padding: '16px 18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>
+                        {c.name[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>{c.name}</p>
+                        <p style={{ color: C.muted, fontSize: 12 }}>{c.phone}</p>
+                      </div>
+                      <button
+                        onClick={() => { const clean = c.phone.replace(/^0/, '234'); window.open('https://wa.me/' + clean, '_blank'); }}
+                        style={{ padding: '6px 12px', borderRadius: 8, background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25d366', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                      >WhatsApp</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
+                      <div>
+                        <p style={{ color: C.muted, fontSize: 11, marginBottom: 2 }}>Orders</p>
+                        <p style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>{c.orders}</p>
+                      </div>
+                      <div>
+                        <p style={{ color: C.muted, fontSize: 11, marginBottom: 2 }}>Delivered</p>
+                        <p style={{ color: '#10b981', fontSize: 14, fontWeight: 700 }}>{delivered}</p>
+                      </div>
+                      <div>
+                        <p style={{ color: C.muted, fontSize: 11, marginBottom: 2 }}>Total Spent</p>
+                        <p style={{ color: C.purple, fontSize: 14, fontWeight: 700 }}>{'\u20A6' + c.totalSpent.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p style={{ color: C.muted, fontSize: 11, marginBottom: 2 }}>Last Order</p>
+                        <p style={{ color: C.text, fontSize: 13 }}>{new Date(c.lastOrder).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
