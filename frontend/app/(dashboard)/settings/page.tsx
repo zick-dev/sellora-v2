@@ -114,7 +114,7 @@ export default function SettingsPage() {
   const tabs = [
     { key: 'profile',  label: 'Profile',       icon: '👤' },
     { key: 'password', label: 'Password',       icon: '🔒' },
-    { key: 'plan',     label: 'Plan & Billing', icon: '⭐' },
+    { key: 'plan',     label: 'Plan',           icon: '⭐' },
     { key: 'danger',   label: 'Danger Zone',    icon: '⚠️' },
   ];
 
@@ -159,7 +159,7 @@ export default function SettingsPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: C.card, borderRadius: 12, padding: 4, border: '1px solid ' + C.cardBorder }}>
         {tabs.map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', background: activeTab === tab.key ? (tab.key === 'danger' ? C.red : C.purple) : 'transparent', color: activeTab === tab.key ? C.text : C.muted, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ flex: 1, padding: '10px 6px', borderRadius: 8, minWidth: 60, border: 'none', cursor: 'pointer', background: activeTab === tab.key ? (tab.key === 'danger' ? C.red : C.purple) : 'transparent', color: activeTab === tab.key ? C.text : C.muted, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
             <span style={{ marginRight: 4 }}>{tab.icon}</span>
             {tab.label}
           </button>
