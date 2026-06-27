@@ -36,6 +36,7 @@ export default function ProductsPage() {
   const [editing, setEditing]     = useState<Product | null>(null);
   const [form, setForm]           = useState(emptyForm);
   const [generatingDesc, setGeneratingDesc] = useState(false);
+  const [generatingCatalog, setGeneratingCatalog] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState('');
   const [deleting, setDeleting]   = useState<string | null>(null);
@@ -540,6 +541,35 @@ export default function ProductsPage() {
                   aspectRatio="1"
                   placeholder="🛍️"
                 />
+                {form.image_url && (
+                  <button
+                    type="button"
+                    disabled={generatingCatalog}
+                    onClick={async () => {
+                      setGeneratingCatalog(true);
+                      try {
+                        const res = await api.post('/api/ai/catalog-from-image', { image_url: form.image_url });
+                        if (res.data) {
+                          setForm({
+                            ...form,
+                            name: res.data.name || form.name,
+                            description: res.data.description || form.description,
+                            category: res.data.category || form.category,
+                          });
+                        }
+                      } catch {}
+                      setGeneratingCatalog(false);
+                    }}
+                    style={{
+                      width: '100%', marginTop: 8, padding: '10px 0', borderRadius: 10,
+                      border: '1px solid ' + C.inputBorder, background: generatingCatalog ? C.input : 'rgba(79,70,229,0.06)',
+                      color: C.purple, fontSize: 13, fontWeight: 700, cursor: generatingCatalog ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    {generatingCatalog ? '⏳ Analyzing image...' : '✨ AI Fill Details from Photo'}
+                  </button>
+                )}
               </div>
 
               {/* Available toggle */}

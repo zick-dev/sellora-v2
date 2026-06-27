@@ -166,3 +166,103 @@ Requirements:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI service temporarily unavailable. Try again later.",
         )
+
+
+@router.post(
+    "/catalog-from-image",
+    summary="Generate product details from a photo (free for all users)",
+)
+async def catalog_from_image(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Analyze a product photo and generate title, description, and category.
+    FREE for all users. Uses Gemini vision model.
+    """
+    if not settings.GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI catalog generation is coming soon!",
+        )
+
+    image_url = payload.get("image_url", "").strip()
+    if not image_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Product image URL is required.",
+        )
+
+    prompt = """You are a product catalog assistant for an African e-commerce platform.
+Analyze this product image and return ONLY a JSON object with these fields:
+- "name": a short, catchy product title (max 60 chars)
+- "description": a compelling 1-2 sentence description highlighting key features
+- "category": the most fitting product category from this list: Clothing, Shoes, Bags, Accessories, Electronics, Beauty, Food, Home, Health, Other
+
+Return ONLY the JSON object, no markdown, no backticks, no explanation."""
+
+    try:
+        import httpx
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
+        body = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inline_data": {"mime_type": "image/jpeg", "data": ""}} if image_url.startswith("data:") else
+                    {"file_data": {"mime_type": "image/jpeg", "file_uri": image_url}} if image_url.startswith("gs://") else
+                    {"text": f"Image URL: {image_url}"}
+                ]
+            }]
+        }
+
+        # For HTTP URLs, download the image first and send as base64
+        if image_url.startswith("http"):
+            async with httpx.AsyncClient(timeout=10) as client:
+                img_res = await client.get(image_url)
+            if img_res.status_code == 200:
+                import base64
+                b64 = base64.b64encode(img_res.content).decode("utf-8")
+                content_type = img_res.headers.get("content-type", "image/jpeg")
+                body = {
+                    "contents": [{
+                        "parts": [
+                            {"text": prompt},
+                            {"inline_data": {"mime_type": content_type, "data": b64}}
+                        ]
+                    }]
+                }
+
+        async with httpx.AsyncClient(timeout=20) as client:
+            res = await client.post(url, json=body)
+
+        if res.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI service temporarily unavailable.",
+            )
+
+        data = res.json()
+        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+        # Clean up response
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.replace("```json", "").replace("```", "").strip()
+
+        import json
+        result = json.loads(text)
+        return {
+            "name": result.get("name", ""),
+            "description": result.get("description", ""),
+            "category": result.get("category", "Other"),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service temporarily unavailable.",
+        )
