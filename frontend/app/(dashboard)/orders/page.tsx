@@ -19,6 +19,7 @@ interface Order {
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  abandoned: { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)', label: 'Abandoned' },
   awaiting_verification: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', label: 'Awaiting Verification' },
   pending:    { color: '#4F46E5', bg: 'rgba(79,70,229,0.1)',  border: 'rgba(79,70,229,0.2)',  label: 'Pending' },
   confirmed:  { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.2)',  label: 'Confirmed' },
@@ -88,17 +89,27 @@ export default function OrdersPage() {
     window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
   }
 
-  const filters = ['all', 'awaiting_verification', 'pending', 'confirmed', 'processing', 'delivered', 'cancelled'];
+  const filters = ['all', 'abandoned', 'awaiting_verification', 'pending', 'confirmed', 'processing', 'delivered', 'cancelled'];
+
+  const ABANDONED_HOURS = 24;
+  const isAbandoned = (o: any) => {
+    if (!['pending', 'awaiting_verification'].includes(o.status)) return false;
+    const age = (Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60);
+    return age >= ABANDONED_HOURS;
+  };
+  const abandonedOrders = orders.filter(isAbandoned);
 
   const counts = filters.reduce((acc, f) => {
-    acc[f] = f === 'all'
-      ? orders.length
-      : orders.filter(o => o.status === f).length;
+    if (f === 'all') acc[f] = orders.length;
+    else if (f === 'abandoned') acc[f] = abandonedOrders.length;
+    else acc[f] = orders.filter(o => o.status === f).length;
     return acc;
   }, {} as Record<string, number>);
 
   const filtered = filter === 'all'
     ? orders
+    : filter === 'abandoned'
+    ? abandonedOrders
     : orders.filter(o => o.status === filter);
 
   if (loading) return (
@@ -181,6 +192,37 @@ export default function OrdersPage() {
       </div>
 
       {/* Empty state */}
+      {/* Abandoned orders alert banner */}
+      {filter !== 'abandoned' && abandonedOrders.length > 0 && (
+        <div style={{
+          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+          borderRadius: 14, padding: '14px 18px', marginBottom: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>⚠️</span>
+            <div>
+              <p style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>
+                {abandonedOrders.length} abandoned order{abandonedOrders.length !== 1 ? 's' : ''}
+              </p>
+              <p style={{ color: C.muted, fontSize: 12 }}>
+                Orders stuck for 24+ hours. Follow up on WhatsApp to recover sales.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setFilter('abandoned')}
+            style={{
+              padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+              color: '#ef4444', cursor: 'pointer',
+            }}
+          >
+            View & Recover →
+          </button>
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <div style={{
           background: C.card, border: `1px solid ${C.cardBorder}`,
