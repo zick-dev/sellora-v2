@@ -72,6 +72,8 @@ export default function DashboardOverviewPage() {
     load();
   }, [store?.id]);
 
+  const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
+  const sym = CURRENCY_SYMBOLS[(store as any)?.base_currency || 'NGN'] || ((store as any)?.base_currency || 'NGN') + ' ';
   const totalRevenue     = orders.filter((o: any) => o.status === 'delivered').reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
   const pendingRevenue   = orders.filter((o: any) => ['pending','confirmed','processing'].includes(o.status)).reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
   const pendingCount   = orders.filter((o: any) => o.status === 'pending').length;
@@ -183,7 +185,7 @@ export default function DashboardOverviewPage() {
       {/* Stat cards */}
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
         {[
-          { label: 'Confirmed Revenue', value: loading ? '—' : ('N' + totalRevenue.toLocaleString()),  sub: pendingRevenue > 0 ? 'N' + pendingRevenue.toLocaleString() + ' pending' : 'Delivered orders only' },
+          { label: 'Confirmed Revenue', value: loading ? '—' : (sym + totalRevenue.toLocaleString()),  sub: pendingRevenue > 0 ? sym + pendingRevenue.toLocaleString() + ' pending' : 'Delivered orders only' },
           { label: 'Pending Orders',  value: loading ? '—' : String(pendingCount),                   sub: pendingCount > 0 ? 'Need attention' : 'All clear' },
           { label: 'Active Products', value: loading ? '—' : String(activeProducts),                 sub: products.length > 0 ? products.length + ' total' : 'No products yet' },
           { label: 'New Leads',       value: loading ? '—' : String(newLeads),                       sub: newLeads > 0 ? 'Need follow-up' : 'All followed up' },
@@ -246,7 +248,7 @@ export default function DashboardOverviewPage() {
                       <p style={{ color: C.muted, fontSize: 11 }}>{timeAgo(order.created_at)}</p>
                     </div>
                     <span style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>
-                      {'N' + Number(order.total_price).toLocaleString()}
+                      {sym + Number(order.total_price).toLocaleString()}
                     </span>
                     <StatusBadge status={order.status} />
                   </div>
