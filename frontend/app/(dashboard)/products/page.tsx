@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import VariantBuilder from '@/components/VariantBuilder';
 import api from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
+import { useDashboard } from '../layout';
 
 
 interface Product {
@@ -27,6 +28,9 @@ const emptyForm = {
 export default function ProductsPage() {
   const { C } = useTheme();
   const [products, setProducts]   = useState<Product[]>([]);
+  const { store } = useDashboard();
+  const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
+  const sym = CURRENCY_SYMBOLS[(store as any)?.base_currency || 'NGN'] || ((store as any)?.base_currency || 'NGN') + ' ';
   const [storeId, setStoreId]     = useState('');
   const [storeCategories, setStoreCategories] = useState<string[]>([]);
   const [storeType, setStoreType] = useState('general');
@@ -310,7 +314,7 @@ export default function ProductsPage() {
                   color: C.purple, fontSize: 14,
                   fontWeight: 800, marginBottom: 8,
                 }}>
-                  ₦{Number(product.price).toLocaleString()}
+                  {sym}{Number(product.price).toLocaleString()}
                 </p>
 
                 {/* Actions */}
@@ -438,7 +442,7 @@ export default function ProductsPage() {
               {/* Price + Stock */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={labelStyle}>Price (₦) *</label>
+                  <label style={labelStyle}>Price ({sym}) *</label>
                   <input
                     type="number"
                     value={form.price}
