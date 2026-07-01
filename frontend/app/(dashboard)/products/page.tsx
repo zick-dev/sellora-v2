@@ -42,6 +42,8 @@ export default function ProductsPage() {
   const [form, setForm]           = useState(emptyForm);
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [generatingCatalog, setGeneratingCatalog] = useState(false);
+  const [shareProduct, setShareProduct] = useState<Product | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState('');
   const [deleting, setDeleting]   = useState<string | null>(null);
@@ -323,6 +325,22 @@ export default function ProductsPage() {
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
+                    onClick={() => setShareProduct(product)}
+                    disabled={!(product as any).slug}
+                    title={!(product as any).slug ? 'Share link unavailable' : 'Share this product'}
+                    style={{
+                      padding: '7px 10px',
+                      background: 'rgba(16,185,129,0.1)',
+                      border: '1px solid rgba(16,185,129,0.2)',
+                      borderRadius: 7, color: C.success,
+                      fontSize: 12, fontWeight: 600,
+                      cursor: !(product as any).slug ? 'not-allowed' : 'pointer',
+                      opacity: !(product as any).slug ? 0.4 : 1,
+                    }}
+                  >
+                    📤
+                  </button>
+                  <button
                     onClick={() => openEdit(product)}
                     style={{
                       flex: 1, padding: '7px 0',
@@ -356,6 +374,56 @@ export default function ProductsPage() {
           ))}
         </div>
       )}
+
+      {/* ── Share Modal ────────────────────────────────────────── */}
+      {shareProduct && (() => {
+        const productUrl = typeof window !== 'undefined'
+          ? `${window.location.origin}/store/${store?.slug}/product/${(shareProduct as any).slug}`
+          : '';
+        const waText = encodeURIComponent(`Check out ${shareProduct.name}! ${productUrl}?src=whatsapp`);
+        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl + '?src=facebook')}`;
+        return (
+          <div onClick={() => { setShareProduct(null); setLinkCopied(false); }} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: C.card, borderRadius: 20, padding: 26, maxWidth: 380, width: '100%', border: '1px solid ' + C.cardBorder }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <p style={{ color: C.text, fontSize: 16, fontWeight: 800 }}>Share Product</p>
+                <button onClick={() => { setShareProduct(null); setLinkCopied(false); }} style={{ width: 28, height: 28, borderRadius: '50%', background: C.input, border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16 }}>×</button>
+              </div>
+              <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 16 }}>{shareProduct.name}</p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(productUrl); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: C.input, border: '1px solid ' + C.inputBorder, color: C.text, fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <span style={{ fontSize: 16 }}>🔗</span> {linkCopied ? 'Link Copied!' : 'Copy Link'}
+                </button>
+                <a
+                  href={`https://wa.me/?text=${waText}`} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25d366', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                >
+                  <span style={{ fontSize: 16 }}>💬</span> Share on WhatsApp
+                </a>
+                <a
+                  href={fbUrl} target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(24,119,242,0.1)', border: '1px solid rgba(24,119,242,0.2)', color: '#1877f2', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                >
+                  <span style={{ fontSize: 16 }}>📘</span> Share on Facebook
+                </a>
+              </div>
+
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Or scan QR code</p>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(productUrl)}`}
+                  alt="QR Code"
+                  style={{ width: 160, height: 160, borderRadius: 12, border: '1px solid ' + C.cardBorder, margin: '0 auto' }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Add/Edit Modal ─────────────────────────────────────── */}
       {showModal && (
