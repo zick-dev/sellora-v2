@@ -2,28 +2,44 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { addToStoredCart, StoredCartItem } from '@/lib/storefrontCart';
 
 interface Store {
   id: string; store_name: string; slug: string; logo_url: string | null;
   theme_color: string; base_currency?: string; whatsapp: string | null;
+}
+interface Variant {
+  id: string;
+  variant_type_1: string | null;
+  variant_value_1: string | null;
+  variant_type_2: string | null;
+  variant_value_2: string | null;
+  price: number | null;
+  stock: number;
+  is_available: boolean;
 }
 interface Product {
   id: string; name: string; description: string | null; price: number;
   price_currency?: string | null; stock: number; image_url: string | null;
   category: string | null; is_available: boolean;
   images?: { image_url: string }[];
+  variants?: Variant[];
 }
 
 const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
 
 export default function ProductPageClient({ storeSlug, productSlug }: { storeSlug: string; productSlug: string }) {
+  const router = useRouter();
   const [store, setStore] = useState<Store | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [imgIndex, setImgIndex] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [showQR, setShowQR] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -32,8 +48,9 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
         setStore(sr.data);
         const pr = await api.get(`/api/products/public/${sr.data.id}/slug/${productSlug}`);
         setProduct(pr.data);
-
-        // Track the view/click (fails silently)
+        if (pr.data.variants && pr.data.variants.length > 0) {
+          setSelectedVariant(pr.data.variants[0]);
+        }
         try {
           const urlParams = new URLSearchParams(window.location.search);
           const source = urlParams.get('src') || 'direct';
@@ -62,6 +79,7 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
         <p style={{ fontSize: 40, marginBottom: 12 }}>😕</p>
         <p style={{ fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 6 }}>Product not found</p>
         <p style={{ color: '#999', fontSize: 14 }}>This product may have been removed or the link is incorrect.</p>
+        <Link href={`/store/${storeSlug}`} style={{ marginTop: 16, color: '#4F46E5', fontSize: 14, fontWeight: 600 }}>← Back to store</Link>
       </div>
     );
   }
@@ -72,22 +90,43 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
     ...(product.image_url ? [product.image_url] : []),
     ...((product.images || []).map(img => img.image_url)),
   ];
-  const currentUrl = typeof window !== 'undefined' ? window.location.href.split('?')[0] : '';
+  const hasVariants = product.variants && product.variants.length > 0;
+  const activePrice = selectedVariant?.price != null ? selectedVariant.price : product.price;
+  const activeStock = selectedVariant ? selectedVariant.stock : product.stock;
+  const outOfStock = !product.is_available || activeStock <= 0;
 
-  function copyLink() {
-    navigator.clipboard.writeText(currentUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  function cartKeyFor(variant: Variant | null) {
+    return product!.id + (variant ? ':' + variant.id : '');
   }
 
-  function shareWhatsApp() {
-    const text = encodeURIComponent(`Check out ${product!.name} at ${store!.store_name}! ${currentUrl}?src=whatsapp`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
+  function handleAddToCart() {
+    if (outOfStock) return;
+    setAdding(true);
+    const variantLabel = selectedVariant
+      ? [selectedVariant.variant_value_1, selectedVariant.variant_value_2].filter(Boolean).join(' / ')
+      : null;
+    const item: StoredCartItem = {
+      productId: product!.id,
+      productName: product!.name,
+      productImageUrl: product!.image_url,
+      productPrice: product!.price,
+      productPriceCurrency: product!.price_currency || null,
+      variantId: selectedVariant?.id || null,
+      variantLabel,
+      variantPrice: selectedVariant?.price ?? null,
+      quantity,
+      cartKey: cartKeyFor(selectedVariant),
+    };
+    addToStoredCart(storeSlug, item);
+    setAdding(false);
+    setAdded(true);
+    setTimeout(() => {
+      router.push(`/store/${storeSlug}?cart=1`);
+    }, 700);
   }
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif' }}>
-      {/* Header */}
       <header style={{ borderBottom: '1px solid #f0f0f0', padding: '14px 20px' }}>
         <div style={{ maxWidth: 800, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           <Link href={`/store/${storeSlug}`} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
@@ -102,7 +141,6 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
       </header>
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 0 60px' }}>
-        {/* Image gallery */}
         <div style={{ aspectRatio: '1.3', background: '#f9f9f9', position: 'relative', overflow: 'hidden' }}>
           {gallery.length > 0 ? (
             <>
@@ -121,12 +159,20 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60 }}>🛍️</div>
           )}
+          {outOfStock && (
+            <div style={{ position: 'absolute', top: 12, left: 12, background: '#ef4444', color: '#fff', borderRadius: 7, padding: '3px 10px', fontSize: 11, fontWeight: 800 }}>Out of stock</div>
+          )}
+          {!outOfStock && activeStock <= 5 && (
+            <div style={{ position: 'absolute', top: 12, left: 12, background: activeStock <= 2 ? '#ef4444' : '#f59e0b', color: '#fff', borderRadius: 7, padding: '3px 10px', fontSize: 11, fontWeight: 800 }}>
+              {activeStock <= 2 ? `Only ${activeStock} left!` : `${activeStock} left`}
+            </div>
+          )}
         </div>
 
         <div style={{ padding: '20px 20px 0' }}>
           {product.category && <p style={{ color: '#bbb', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{product.category}</p>}
           <h1 style={{ color: '#111', fontSize: 24, fontWeight: 800, marginBottom: 8 }}>{product.name}</h1>
-          <p style={{ color: accent, fontSize: 26, fontWeight: 900, marginBottom: 16 }}>{sym}{Number(product.price).toLocaleString()}</p>
+          <p style={{ color: accent, fontSize: 26, fontWeight: 900, marginBottom: 16 }}>{sym}{Number(activePrice).toLocaleString()}</p>
 
           {product.description && (
             <p style={{ color: '#555', fontSize: 15, lineHeight: 1.7, marginBottom: 20, background: '#f9f9f9', borderRadius: 10, padding: '14px 16px' }}>
@@ -134,73 +180,71 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
             </p>
           )}
 
-          {/* Stock status */}
-          <div style={{ marginBottom: 20 }}>
-            {product.is_available && product.stock > 0 ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#10b981', fontWeight: 600 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }} /> In stock
-              </span>
-            ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#ef4444', fontWeight: 600 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} /> Out of stock
-              </span>
-            )}
-          </div>
-
-          {/* CTA */}
-          <Link href={`/store/${storeSlug}`} style={{
-            display: 'block', textAlign: 'center', padding: '15px 0', borderRadius: 12,
-            background: accent, color: '#fff', fontWeight: 800, fontSize: 15, textDecoration: 'none', marginBottom: 24,
-          }}>
-            View in Store & Order
-          </Link>
-
-          {/* Share section */}
-          <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: 20 }}>
-            <p style={{ color: '#111', fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Share this product</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={shareWhatsApp} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10,
-                background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25d366',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                WhatsApp
-              </button>
-              <button onClick={copyLink} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10,
-                background: copied ? 'rgba(16,185,129,0.1)' : '#f5f5f5', border: '1px solid ' + (copied ? 'rgba(16,185,129,0.2)' : '#e5e5e5'),
-                color: copied ? '#10b981' : '#444', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}>
-                {copied ? '✓ Copied!' : '🔗 Copy Link'}
-              </button>
-              <button onClick={() => setShowQR(true)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10,
-                background: '#f5f5f5', border: '1px solid #e5e5e5', color: '#444', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}>
-                📱 QR Code
-              </button>
+          {hasVariants && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ color: '#111', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Choose an option</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {product.variants!.map(v => {
+                  const label = [v.variant_value_1, v.variant_value_2].filter(Boolean).join(' / ');
+                  const active = selectedVariant?.id === v.id;
+                  const disabled = !v.is_available || v.stock <= 0;
+                  return (
+                    <button
+                      key={v.id}
+                      disabled={disabled}
+                      onClick={() => setSelectedVariant(v)}
+                      style={{
+                        padding: '9px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                        border: active ? '2px solid ' + accent : '1px solid #e5e5e5',
+                        background: active ? accent + '10' : '#fff',
+                        color: disabled ? '#ccc' : active ? accent : '#333',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        textDecoration: disabled ? 'line-through' : 'none',
+                      }}
+                    >
+                      {label || 'Option'}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
+
+          {!outOfStock && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ color: '#111', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Quantity</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button onClick={() => setQuantity(q => Math.max(1, q - 1))} style={{
+                  width: 34, height: 34, borderRadius: 8, background: '#f5f5f5', border: '1px solid #e5e5e5',
+                  cursor: 'pointer', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>−</button>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#111', minWidth: 20, textAlign: 'center' }}>{quantity}</span>
+                <button onClick={() => setQuantity(q => Math.min(activeStock, q + 1))} style={{
+                  width: 34, height: 34, borderRadius: 8, background: '#f5f5f5', border: '1px solid #e5e5e5',
+                  cursor: 'pointer', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>+</button>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleAddToCart}
+            disabled={outOfStock || adding || added}
+            style={{
+              display: 'block', width: '100%', textAlign: 'center', padding: '15px 0', borderRadius: 12,
+              background: outOfStock ? '#e5e5e5' : added ? '#10b981' : accent,
+              color: outOfStock ? '#999' : '#fff', fontWeight: 800, fontSize: 15, border: 'none',
+              cursor: outOfStock ? 'not-allowed' : 'pointer', marginBottom: 12,
+            }}
+          >
+            {outOfStock ? 'Out of Stock' : added ? '✓ Added to Cart' : adding ? 'Adding...' : 'Add to Cart'}
+          </button>
+
+          <Link href={`/store/${storeSlug}`} style={{ display: 'block', textAlign: 'center', color: '#888', fontSize: 13, textDecoration: 'none' }}>
+            ← Continue browsing {store.store_name}
+          </Link>
         </div>
       </div>
-
-      {/* QR Code modal */}
-      {showQR && (
-        <div onClick={() => setShowQR(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: 28, textAlign: 'center', maxWidth: 320 }}>
-            <p style={{ color: '#111', fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Scan to view this product</p>
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(currentUrl)}`}
-              alt="QR Code"
-              style={{ width: 240, height: 240, borderRadius: 12, border: '1px solid #f0f0f0' }}
-            />
-            <button onClick={() => setShowQR(false)} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 10, background: '#f5f5f5', border: 'none', color: '#444', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

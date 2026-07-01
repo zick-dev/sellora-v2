@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import StorefrontChat from '@/components/StorefrontChat';
+import { getStoredCart, saveStoredCart, StoredCartItem } from '@/lib/storefrontCart';
 
 interface Store {
   id: string; store_name: string; slug: string; description: string | null;
@@ -68,6 +69,7 @@ function convertPrice(price: number, fromCurrency: string | null | undefined, to
 
 export default function StorefrontPage() {
   const { slug } = useParams();
+  const router = useRouter();
   const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,6 +115,21 @@ export default function StorefrontPage() {
         setStore(sr.data);
         const pr = await api.get('/api/products/public/' + sr.data.id);
         setProducts(pr.data);
+
+        // Sync cart from localStorage (items may have been added from a standalone product page)
+        try {
+          const stored = getStoredCart(String(slug));
+          if (stored.length > 0) {
+            const restored: CartItem[] = [];
+            for (const s of stored) {
+              const matchedProduct = pr.data.find((p: Product) => p.id === s.productId);
+              if (!matchedProduct) continue;
+              const matchedVariant = s.variantId ? matchedProduct.variants?.find((v: Variant) => v.id === s.variantId) : null;
+              restored.push({ product: matchedProduct, quantity: s.quantity, variant: matchedVariant || null, cartKey: s.cartKey });
+            }
+            if (restored.length > 0) setCart(restored);
+          }
+        } catch {}
         // Detect buyer's local currency via IP geolocation
         try {
           const geoRes = await fetch('https://ipapi.co/json/');
@@ -134,6 +151,15 @@ export default function StorefrontPage() {
     };
     load();
   }, [slug]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('cart') === '1') {
+      setShowCart(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -184,6 +210,23 @@ export default function StorefrontPage() {
   function effectivePrice(p: Product, v?: Variant | null) { return v?.price != null ? v.price : p.price; }
   function effectiveStock(p: Product, v?: Variant | null) { return v ? v.stock : p.stock; }
   function makeCartKey(productId: string, variantId?: string | null) { return variantId ? productId + ':' + variantId : productId; }
+
+  useEffect(() => {
+    if (!slug || cart.length === 0) return;
+    const toStore: StoredCartItem[] = cart.map(c => ({
+      productId: c.product.id,
+      productName: c.product.name,
+      productImageUrl: c.product.image_url,
+      productPrice: c.product.price,
+      productPriceCurrency: c.product.price_currency || null,
+      variantId: c.variant?.id || null,
+      variantLabel: c.variant ? [c.variant.variant_value_1, c.variant.variant_value_2].filter(Boolean).join(' / ') : null,
+      variantPrice: c.variant?.price ?? null,
+      quantity: c.quantity,
+      cartKey: c.cartKey,
+    }));
+    saveStoredCart(String(slug), toStore);
+  }, [cart, slug]);
 
   function addToCart(p: Product, v?: Variant | null) {
     const key = makeCartKey(p.id, v?.id);
@@ -497,7 +540,7 @@ export default function StorefrontPage() {
                 <div key={product.id} style={{ background:'#fff', border:'1px solid #f0f0f0', borderRadius:12, overflow:'hidden', transition:'box-shadow 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.08)')}
                   onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-                  <div onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); setSelectedImageIndex(0); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
+                  <div onClick={() => { if (!oos && product.slug) { router.push(`/store/${slug}/product/${product.slug}`); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
                     {product.image_url
                       ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'contain', transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
                       : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, color:'#ddd' }}>🛍️</div>}
@@ -509,7 +552,7 @@ export default function StorefrontPage() {
                     {oos && <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.75)', display:'flex', alignItems:'center', justifyContent:'center' }}><span style={{ background:'#111', color:'#fff', fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:6 }}>Sold Out</span></div>}
                   </div>
                   <div style={{ padding:'12px 14px' }}>
-                    <p onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); setSelectedImageIndex(0); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
+                    <p onClick={() => { if (!oos && product.slug) { router.push(`/store/${slug}/product/${product.slug}`); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
                     {product.category && <p style={{ color:'#bbb', fontSize:11, marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>{product.category}</p>}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6 }}>
                       <p style={{ color:accent, fontSize:16, fontWeight:800 }}>{sym + dp(product.price, product.price_currency).toLocaleString()}</p>
