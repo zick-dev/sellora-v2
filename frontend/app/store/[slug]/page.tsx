@@ -214,7 +214,12 @@ export default function StorefrontPage() {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', 'sellora-storage');
-      const res = await fetch('https://api.cloudinary.com/v1_1/dkun9hvkf/image/upload', { method: 'POST', body: fd });
+      // PDFs must go through Cloudinary's /raw/upload endpoint, images through /image/upload
+      const isPdf = file.type === 'application/pdf';
+      const endpoint = isPdf
+        ? 'https://api.cloudinary.com/v1_1/dkun9hvkf/raw/upload'
+        : 'https://api.cloudinary.com/v1_1/dkun9hvkf/image/upload';
+      const res = await fetch(endpoint, { method: 'POST', body: fd });
       const data = await res.json();
       if (data.secure_url) setReceiptUrl(data.secure_url);
     } catch {}
@@ -235,6 +240,15 @@ export default function StorefrontPage() {
         nums.push(res.data.order_number || res.data.id.slice(0,8).toUpperCase());
       }
       setOrderNums(nums); setCart([]); setSuccess(true); setShowCheckout(false); setShowCart(false);
+
+      // Notify merchant on WhatsApp for bank transfer orders, including the receipt link
+      if (paymentMethod === 'bank_transfer' && store?.whatsapp && receiptUrl) {
+        const orderList = nums.map(n => '#' + n).join(', ');
+        const msg = encodeURIComponent(
+          `New order from ${checkoutForm.name} (${checkoutForm.phone})\nOrder: ${orderList}\nTotal: ${sym}${cartTotal.toLocaleString()}\nPayment: Bank Transfer\nReceipt: ${receiptUrl}`
+        );
+        window.open('https://wa.me/' + store.whatsapp.replace(/[^0-9]/g, '') + '?text=' + msg, '_blank');
+      }
     } catch (err: any) { setFormError(err.response?.data?.detail || 'Failed to place order. Please try again.'); }
     finally { setPlacing(false); }
   }
@@ -715,7 +729,7 @@ export default function StorefrontPage() {
                   <p style={{ fontSize:18, marginBottom:4 }}>🚚</p>
                   <p style={{ color:'#111', fontSize:12, fontWeight:700 }}>Pay on Delivery</p>
                 </button>
-                {(store as any)?.bank_name && (store as any)?.account_number && (
+                {(store as any)?.bank_name && ((store as any)?.account_number || (store as any)?.bank_iban || (store as any)?.bank_routing_number) && (
                   <button onClick={() => setPaymentMethod('bank_transfer')} style={{
                     flex:1, padding:'12px 10px', borderRadius:10, cursor:'pointer', textAlign:'center',
                     border: paymentMethod === 'bank_transfer' ? '2px solid '+accent : '1px solid #e5e5e5',
@@ -741,10 +755,28 @@ export default function StorefrontPage() {
                     <span style={{ color:'#555', fontSize:13 }}>Account Name</span>
                     <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_name}</span>
                   </div>
-                  <div style={{ display:'flex', justifyContent:'space-between' }}>
-                    <span style={{ color:'#555', fontSize:13 }}>Account Number</span>
-                    <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_number}</span>
-                  </div>
+                  {(store as any)?.bank_iban ? (
+                    <div style={{ display:'flex', justifyContent:'space-between' }}>
+                      <span style={{ color:'#555', fontSize:13 }}>IBAN</span>
+                      <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.bank_iban}</span>
+                    </div>
+                  ) : (store as any)?.bank_routing_number ? (
+                    <>
+                      <div style={{ display:'flex', justifyContent:'space-between' }}>
+                        <span style={{ color:'#555', fontSize:13 }}>Routing Number</span>
+                        <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.bank_routing_number}</span>
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between' }}>
+                        <span style={{ color:'#555', fontSize:13 }}>Account Number</span>
+                        <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_number}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ display:'flex', justifyContent:'space-between' }}>
+                      <span style={{ color:'#555', fontSize:13 }}>Account Number</span>
+                      <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_number}</span>
+                    </div>
+                  )}
                   <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid #bbf7d0', paddingTop:6, marginTop:2 }}>
                     <span style={{ color:'#555', fontSize:13 }}>Amount</span>
                     <span style={{ color:'#166534', fontSize:15, fontWeight:800 }}>{sym+cartTotal.toLocaleString()}</span>
@@ -762,8 +794,8 @@ export default function StorefrontPage() {
                     </div>
                   ) : (
                     <label style={{ display:'block', padding:'14px 0', borderRadius:8, border:'2px dashed #bbf7d0', textAlign:'center', cursor:'pointer', background:'#f0fdf4' }}>
-                      <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => { if (e.target.files?.[0]) handleReceiptUpload(e.target.files[0]); }} />
-                      <p style={{ color:'#166534', fontSize:13, fontWeight:600 }}>{uploadingReceipt ? '⏳ Uploading...' : '📎 Tap to upload receipt'}</p>
+                      <input type="file" accept="image/*,application/pdf" style={{ display:'none' }} onChange={e => { if (e.target.files?.[0]) handleReceiptUpload(e.target.files[0]); }} />
+                      <p style={{ color:'#166534', fontSize:13, fontWeight:600 }}>{uploadingReceipt ? '⏳ Uploading...' : '📎 Tap to upload receipt (image or PDF)'}</p>
                     </label>
                   )}
                 </div>

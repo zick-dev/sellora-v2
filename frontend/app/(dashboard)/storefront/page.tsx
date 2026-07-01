@@ -67,6 +67,9 @@ export default function StorefrontPage() {
     bank_name:             '',
     account_name:          '',
     account_number:        '',
+    bank_iban:              '',
+    bank_routing_number:    '',
+    bank_account_type:      'local',
   });
 
   const categories: string[] = (() => {
@@ -105,6 +108,9 @@ export default function StorefrontPage() {
           bank_name:            res.data.bank_name ?? '',
           account_name:         res.data.account_name ?? '',
           account_number:       res.data.account_number ?? '',
+          bank_iban:            res.data.bank_iban ?? '',
+          bank_routing_number:  res.data.bank_routing_number ?? '',
+          bank_account_type:    res.data.bank_iban ? 'iban' : res.data.bank_routing_number ? 'us' : 'local',
         });
       } finally {
         setLoading(false);
@@ -138,7 +144,9 @@ export default function StorefrontPage() {
         free_delivery_above:  form.free_delivery_above ?? 10000,
         bank_name:            form.bank_name || null,
         account_name:         form.account_name || null,
-        account_number:       form.account_number || null,
+        account_number:       form.bank_account_type === 'local' ? (form.account_number || null) : null,
+        bank_iban:            form.bank_account_type === 'iban' ? (form.bank_iban || null) : null,
+        bank_routing_number:  form.bank_account_type === 'us' ? (form.bank_routing_number || null) : null,
       });
       setStore(res.data);
       setSaved(true);
@@ -657,15 +665,31 @@ export default function StorefrontPage() {
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={labelStyle}>Bank Name</label>
-              <input
-                type="text"
-                value={form.bank_name}
-                onChange={e => setForm({ ...form, bank_name: e.target.value })}
-                placeholder="e.g. Access Bank, GTBank, First Bank"
-                style={inputBase}
-              />
+              <label style={labelStyle}>Account Type</label>
+              <p style={{ color: C.muted, fontSize: 12, marginBottom: 10 }}>Choose the type that matches how you receive payments.</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[
+                  { key: 'local', label: 'Local Bank Account' },
+                  { key: 'iban', label: 'IBAN' },
+                  { key: 'us', label: 'US Bank Account' },
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setForm({ ...form, bank_account_type: opt.key })}
+                    style={{
+                      padding: '8px 14px', borderRadius: 20, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                      border: form.bank_account_type === opt.key ? '1.5px solid ' + C.purple : '1px solid ' + C.inputBorder,
+                      background: form.bank_account_type === opt.key ? 'rgba(79,70,229,0.08)' : 'transparent',
+                      color: form.bank_account_type === opt.key ? C.purple : C.muted,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
             <div>
               <label style={labelStyle}>Account Name</label>
               <input
@@ -676,18 +700,97 @@ export default function StorefrontPage() {
                 style={inputBase}
               />
             </div>
-            <div>
-              <label style={labelStyle}>Account Number</label>
-              <input
-                type="text"
-                value={form.account_number}
-                onChange={e => setForm({ ...form, account_number: e.target.value })}
-                placeholder="e.g. 0123456789"
-                style={inputBase}
-                maxLength={15}
-              />
-            </div>
-            {form.bank_name && form.account_number && (
+
+            {form.bank_account_type === 'local' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Bank Name</label>
+                  <input
+                    type="text"
+                    value={form.bank_name}
+                    onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                    placeholder="e.g. Access Bank, GTBank, First Bank"
+                    style={inputBase}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Account Number</label>
+                  <input
+                    type="text"
+                    value={form.account_number}
+                    onChange={e => setForm({ ...form, account_number: e.target.value })}
+                    placeholder="e.g. 0123456789"
+                    style={inputBase}
+                    maxLength={15}
+                  />
+                </div>
+              </>
+            )}
+
+            {form.bank_account_type === 'iban' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Bank Name</label>
+                  <input
+                    type="text"
+                    value={form.bank_name}
+                    onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                    placeholder="e.g. Türkiye İş Bankası, Deutsche Bank"
+                    style={inputBase}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>IBAN</label>
+                  <input
+                    type="text"
+                    value={form.bank_iban}
+                    onChange={e => setForm({ ...form, bank_iban: e.target.value.toUpperCase() })}
+                    placeholder="e.g. TR98 0006 4000 0011 2345 6789 01"
+                    style={inputBase}
+                    maxLength={34}
+                  />
+                </div>
+              </>
+            )}
+
+            {form.bank_account_type === 'us' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Bank Name</label>
+                  <input
+                    type="text"
+                    value={form.bank_name}
+                    onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                    placeholder="e.g. Chase, Bank of America"
+                    style={inputBase}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Routing Number</label>
+                  <input
+                    type="text"
+                    value={form.bank_routing_number}
+                    onChange={e => setForm({ ...form, bank_routing_number: e.target.value })}
+                    placeholder="e.g. 021000021"
+                    style={inputBase}
+                    maxLength={9}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Account Number</label>
+                  <input
+                    type="text"
+                    value={form.account_number}
+                    onChange={e => setForm({ ...form, account_number: e.target.value })}
+                    placeholder="e.g. 1234567890"
+                    style={inputBase}
+                    maxLength={17}
+                  />
+                </div>
+              </>
+            )}
+
+            {form.bank_name && (form.account_number || form.bank_iban || form.bank_routing_number) && (
               <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 12, padding: 16 }}>
                 <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Bank Transfer Enabled ✓</p>
                 <p style={{ color: C.muted, fontSize: 13 }}>

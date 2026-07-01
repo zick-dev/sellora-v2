@@ -114,6 +114,8 @@ class Store(Base):
     bank_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     account_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
     account_number: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    bank_iban: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    bank_routing_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     base_currency: Mapped[str] = mapped_column(
         String(10),

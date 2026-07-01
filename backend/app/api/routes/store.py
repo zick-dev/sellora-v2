@@ -213,6 +213,10 @@ async def update_my_store(
         store.account_name = payload.account_name
     if payload.account_number is not None:
         store.account_number = payload.account_number
+    if payload.bank_iban is not None:
+        store.bank_iban = payload.bank_iban
+    if payload.bank_routing_number is not None:
+        store.bank_routing_number = payload.bank_routing_number
     if payload.show_trust_bar is not None:
         store.show_trust_bar = payload.show_trust_bar
     # Persist all store updates to the database.

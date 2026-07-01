@@ -78,6 +78,8 @@ class StoreUpdateRequest(BaseModel):
     bank_name: str | None = Field(None, max_length=100)
     account_name: str | None = Field(None, max_length=150)
     account_number: str | None = Field(None, max_length=30)
+    bank_iban: str | None = Field(None, max_length=40)
+    bank_routing_number: str | None = Field(None, max_length=20)
     whatsapp:    str | None = Field(None, max_length=30)
     instagram:   str | None = Field(None, max_length=100)
     categories:  str | None = None
@@ -188,6 +190,8 @@ class StoreOut(BaseModel):
     bank_name: str | None
     account_name: str | None
     account_number: str | None
+    bank_iban: str | None
+    bank_routing_number: str | None
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str
