@@ -3,6 +3,7 @@ import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useDashboard } from '../layout';
 
 
 interface Order {
@@ -49,6 +50,9 @@ export default function OrdersPage() {
   const { C } = useTheme();
   const [orders, setOrders]     = useState<Order[]>([]);
   const [loading, setLoading]   = useState(true);
+  const { store } = useDashboard();
+  const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
+  const sym = CURRENCY_SYMBOLS[(store as any)?.base_currency || 'NGN'] || ((store as any)?.base_currency || 'NGN') + ' ';
   const [filter, setFilter]     = useState('all');
   const [view, setView] = useState<'orders' | 'customers'>('orders');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -319,7 +323,7 @@ export default function OrdersPage() {
                       color: C.text, fontSize: 14,
                       fontWeight: 700, marginBottom: 4,
                     }}>
-                      ₦{Number(order.total_price).toLocaleString()}
+                      {sym}{Number(order.total_price).toLocaleString()}
                     </p>
                     <span style={{
                       fontSize: 11, fontWeight: 600,
@@ -385,13 +389,13 @@ export default function OrdersPage() {
                       <div>
                         <span style={{ color: C.muted }}>Unit: </span>
                         <span style={{ color: C.text, fontWeight: 600 }}>
-                          ₦{Number(order.unit_price).toLocaleString()}
+                          {sym}{Number(order.unit_price).toLocaleString()}
                         </span>
                       </div>
                       <div>
                         <span style={{ color: C.muted }}>Total: </span>
                         <span style={{ color: C.text, fontWeight: 600 }}>
-                          ₦{Number(order.total_price).toLocaleString()}
+                          {sym}{Number(order.total_price).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -560,7 +564,7 @@ export default function OrdersPage() {
                       </div>
                       <div>
                         <p style={{ color: C.muted, fontSize: 11, marginBottom: 2 }}>Total Spent</p>
-                        <p style={{ color: C.purple, fontSize: 14, fontWeight: 700 }}>{'\u20A6' + c.totalSpent.toLocaleString()}</p>
+                        <p style={{ color: C.purple, fontSize: 14, fontWeight: 700 }}>{sym + c.totalSpent.toLocaleString()}</p>
                       </div>
                       <div>
                         <p style={{ color: C.muted, fontSize: 11, marginBottom: 2 }}>Last Order</p>
