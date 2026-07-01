@@ -4,6 +4,7 @@ import { useTheme } from '@/lib/theme';
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import api from '@/lib/api';
+import { detectProPricing, ProPricing } from '@/lib/proPricing';
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 
 
@@ -23,6 +24,8 @@ export default function UpgradePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError]     = useState('');
 
+  const [pricing, setPricing] = useState<ProPricing>({ amount: 15, currency: 'USD', display: '$15/month', region: 'global' });
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -32,13 +35,14 @@ export default function UpgradePage() {
       finally { setLoading(false); }
     };
     load();
+    detectProPricing().then(setPricing);
   }, []);
 
   const config = {
     public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY!,
     tx_ref:     'kormerce-pro-' + Date.now(),
-    amount:     5000,
-    currency:   'NGN',
+    amount:     pricing.amount,
+    currency:   pricing.currency,
     payment_options: 'card,ussd,banktransfer',
     customer: {
       email:        user?.email || '',
@@ -165,7 +169,7 @@ export default function UpgradePage() {
           <div style={{ marginBottom: 20 }}>
             <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Free</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-              <span style={{ color: C.text, fontSize: 36, fontWeight: 800 }}>₦0</span>
+              <span style={{ color: C.text, fontSize: 36, fontWeight: 800 }}>$0</span>
               <span style={{ color: C.muted, fontSize: 14 }}>/month</span>
             </div>
             <p style={{ color: C.muted, fontSize: 13 }}>Perfect to get started</p>
@@ -192,7 +196,7 @@ export default function UpgradePage() {
           <div style={{ marginBottom: 20 }}>
             <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Pro</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-              <span style={{ color: C.text, fontSize: 36, fontWeight: 800 }}>₦5,000</span>
+              <span style={{ color: C.text, fontSize: 36, fontWeight: 800 }}>{pricing.currency === 'NGN' ? '₦' + pricing.amount.toLocaleString() : '$' + pricing.amount}</span>
               <span style={{ color: C.muted, fontSize: 14 }}>/month</span>
             </div>
             <p style={{ color: C.muted, fontSize: 13 }}>For serious sellers</p>
@@ -215,9 +219,9 @@ export default function UpgradePage() {
                 Verifying payment...
               </span>
             ) : status?.is_pro ? (
-              '⭐ Extend Pro — ₦5,000'
+              `⭐ Extend Pro — ${pricing.currency === 'NGN' ? '₦' + pricing.amount.toLocaleString() : '$' + pricing.amount}`
             ) : (
-              '⭐ Upgrade to Pro — ₦5,000'
+              `⭐ Upgrade to Pro — ${pricing.currency === 'NGN' ? '₦' + pricing.amount.toLocaleString() : '$' + pricing.amount}`
             )}
           </button>
         </div>

@@ -4,6 +4,7 @@ import { useTheme } from '@/lib/theme';
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import api from '@/lib/api';
+import { detectProPricing, ProPricing } from '@/lib/proPricing';
 import { useAuthStore } from '@/lib/auth';
 
 
@@ -13,6 +14,7 @@ export default function SettingsPage() {
   const { logout } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'plan' | 'danger'>('profile');
+  const [proPricing, setProPricing] = useState<ProPricing>({ amount: 15, currency: 'USD', display: '$15/month', region: 'global' });
 
   // Profile form
   const [profileForm, setProfileForm] = useState({ name: '', email: '' });
@@ -32,6 +34,8 @@ export default function SettingsPage() {
   const [showFinalConfirm, setShowFinalConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+    useEffect(() => { detectProPricing().then(setProPricing); }, []);
 
   useEffect(() => {
     if (user) {
@@ -259,7 +263,7 @@ export default function SettingsPage() {
             {(user as any)?.plan !== 'pro' && (
               <div style={{ flex: '1 1 240px', background: 'rgba(79,70,229,0.06)', borderRadius: 14, padding: '20px 18px', border: '1px solid rgba(79,70,229,0.15)' }}>
                 <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Upgrade to Pro</p>
-                <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>₦5,000<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
+                <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>{proPricing.currency === 'NGN' ? '₦' + proPricing.amount.toLocaleString() : '$' + proPricing.amount}<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
                   {['Unlimited products', 'AI tools', 'Custom domain', 'Lead recovery', 'Priority support'].map(f => (
                     <div key={f} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

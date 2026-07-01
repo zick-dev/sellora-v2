@@ -167,10 +167,10 @@ export default function LandingPage() {
                 <div style={{ background: '#fafafa', padding: '20px 20px 24px' }}>
                   <div className="hero-product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 11 }}>
                     {[
-                      { name: 'Ankara Wrap Dress', price: '₦15,000', img: 'https://images.unsplash.com/photo-1612722432474-b971cdcea546?w=400&q=70' },
-                      { name: 'Denim Jacket', price: '₦22,000', img: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=70' },
-                      { name: 'Kente Blouse', price: '₦9,500', img: 'https://images.unsplash.com/photo-1485231183945-fffde7cc051e?w=400&q=70' },
-                      { name: 'Beaded Necklace', price: '₦6,500', img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&q=70' },
+                      { name: 'Ankara Wrap Dress', price: '$10', img: 'https://images.unsplash.com/photo-1612722432474-b971cdcea546?w=400&q=70' },
+                      { name: 'Denim Jacket', price: '$15', img: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=70' },
+                      { name: 'Kente Blouse', price: '$6', img: 'https://images.unsplash.com/photo-1485231183945-fffde7cc051e?w=400&q=70' },
+                      { name: 'Beaded Necklace', price: '$4', img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&q=70' },
                     ].map(p => (
                       <div key={p.name} style={{ background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0', overflow: 'hidden' }}>
                         <div style={{ aspectRatio: '1', overflow: 'hidden' }}>
@@ -215,7 +215,7 @@ export default function LandingPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, maxWidth: 600, margin: '0 auto' }}>
                 <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 18, padding: '22px 20px' }}>
                   <p style={{ fontSize: 12.5, fontWeight: 700, color: '#71717a', marginBottom: 5 }}>Free</p>
-                  <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 14, color: '#111' }}>₦0</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 14, color: '#111' }}>$0</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
                     {['15 products', 'Basic storefront', 'Manual tracking'].map(f => (
                       <div key={f} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
@@ -232,7 +232,7 @@ export default function LandingPage() {
                   <div style={{ position: 'absolute', top: -10, right: 16, background: EMERALD, color: '#fff', fontSize: 9.5, fontWeight: 800, padding: '3px 10px', borderRadius: 20, letterSpacing: '0.04em' }}>POPULAR</div>
                   <p style={{ fontSize: 12.5, fontWeight: 700, color: '#a5b4fc', marginBottom: 5 }}>Pro</p>
                   <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 1, color: '#fff' }}>
-                    ₦5,000<span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>/mo</span>
+                    $5<span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>/mo</span>
                   </p>
                   <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>Billed monthly</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
