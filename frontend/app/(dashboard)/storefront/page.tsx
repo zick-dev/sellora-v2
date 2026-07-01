@@ -34,6 +34,8 @@ interface Store {
   popup_message: string;
 }
 
+const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
+
 export default function StorefrontPage() {
   const { C } = useTheme();
   const [store, setStore]         = useState<Store | null>(null);
@@ -75,6 +77,7 @@ export default function StorefrontPage() {
   const categories: string[] = (() => {
     try { return JSON.parse(form.categories); } catch { return []; }
   })();
+  const sym = CURRENCY_SYMBOLS[form.base_currency] || form.base_currency + ' ';
 
   useEffect(() => {
     const load = async () => {
@@ -295,6 +298,7 @@ export default function StorefrontPage() {
                 <option value="EGP">EGP — Egyptian Pound (E&#163;)</option>
                 <option value="GBP">GBP — British Pound (&#163;)</option>
                 <option value="EUR">EUR — Euro (&#8364;)</option>
+                <option value="TRY">TRY — Turkish Lira (&#8378;)</option>
               </select>
               <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Prices on your storefront will show in this currency</p>
             </div>
@@ -612,7 +616,7 @@ export default function StorefrontPage() {
       <div>
         <label style={labelStyle}>Delivery Fee Amount</label>
         <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>₦</span>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>{sym}</span>
           <input
             type="number"
             min="0"
@@ -628,7 +632,7 @@ export default function StorefrontPage() {
       <div>
         <label style={labelStyle}>Free Delivery Above</label>
         <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>₦</span>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>{sym}</span>
           <input
             type="number"
             min="0"
@@ -645,10 +649,10 @@ export default function StorefrontPage() {
             <div style={{ background: 'rgba(79,70,229,0.05)', border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12, padding: 16 }}>
               <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Preview</p>
               <p style={{ color: C.muted, fontSize: 13 }}>
-                Orders below <span style={{ color: C.text, fontWeight: 700 }}>{'₦' + Number(form.free_delivery_above).toLocaleString()}</span> → delivery fee of <span style={{ color: C.purple, fontWeight: 700 }}>{'₦' + Number(form.delivery_fee).toLocaleString()}</span>
+                Orders below <span style={{ color: C.text, fontWeight: 700 }}>{sym + Number(form.free_delivery_above).toLocaleString()}</span> → delivery fee of <span style={{ color: C.purple, fontWeight: 700 }}>{sym + Number(form.delivery_fee).toLocaleString()}</span>
               </p>
               <p style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>
-                Orders above <span style={{ color: C.text, fontWeight: 700 }}>{'₦' + Number(form.free_delivery_above).toLocaleString()}</span> → <span style={{ color: C.success, fontWeight: 700 }}>Free delivery</span>
+                Orders above <span style={{ color: C.text, fontWeight: 700 }}>{sym + Number(form.free_delivery_above).toLocaleString()}</span> → <span style={{ color: C.success, fontWeight: 700 }}>Free delivery</span>
               </p>
             </div>
           )}
