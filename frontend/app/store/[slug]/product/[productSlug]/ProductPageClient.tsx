@@ -36,6 +36,7 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [imgIndex, setImgIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
@@ -141,19 +142,46 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
       </header>
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 0 60px' }}>
-        <div style={{ aspectRatio: '1.3', background: '#f9f9f9', position: 'relative', overflow: 'hidden' }}>
+        <div
+          style={{ aspectRatio: '1.3', background: '#f9f9f9', position: 'relative', overflow: 'hidden' }}
+          onTouchStart={e => setTouchStartX(e.touches[0].clientX)}
+          onTouchEnd={e => {
+            if (touchStartX === null || gallery.length <= 1) return;
+            const deltaX = e.changedTouches[0].clientX - touchStartX;
+            if (deltaX > 50) setImgIndex(i => (i - 1 + gallery.length) % gallery.length);
+            else if (deltaX < -50) setImgIndex(i => (i + 1) % gallery.length);
+            setTouchStartX(null);
+          }}
+        >
           {gallery.length > 0 ? (
             <>
-              <img src={gallery[imgIndex]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src={gallery[imgIndex]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain', userSelect: 'none' }} draggable={false} />
               {gallery.length > 1 && (
-                <div style={{ position: 'absolute', bottom: 12, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 6 }}>
-                  {gallery.map((_, i) => (
-                    <button key={i} onClick={() => setImgIndex(i)} style={{
-                      width: i === imgIndex ? 18 : 7, height: 7, borderRadius: 100,
-                      background: i === imgIndex ? accent : 'rgba(0,0,0,0.2)', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.2s',
-                    }} />
-                  ))}
-                </div>
+                <>
+                  <button
+                    onClick={() => setImgIndex(i => (i - 1 + gallery.length) % gallery.length)}
+                    style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button
+                    onClick={() => setImgIndex(i => (i + 1) % gallery.length)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                  <div style={{ position: 'absolute', bottom: 12, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 6 }}>
+                    {gallery.map((_, i) => (
+                      <button key={i} onClick={() => setImgIndex(i)} style={{
+                        width: i === imgIndex ? 18 : 7, height: 7, borderRadius: 100,
+                        background: i === imgIndex ? accent : 'rgba(0,0,0,0.3)', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.2s',
+                      }} />
+                    ))}
+                  </div>
+                  <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20 }}>
+                    {imgIndex + 1} / {gallery.length}
+                  </div>
+                </>
               )}
             </>
           ) : (

@@ -305,19 +305,23 @@ export default function SettingsPage() {
                 value={deleteConfirm}
                 onChange={e => setDeleteConfirm(e.target.value)}
                 placeholder="DELETE"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                autoComplete="off"
+                spellCheck={false}
                 style={{ ...inputBase, border: '1.5px solid rgba(239,68,68,0.3)' }}
               />
             </div>
             <button
-              disabled={deleteConfirm !== 'DELETE'}
+              disabled={deleteConfirm.trim() !== 'DELETE'}
               onClick={() => setShowFinalConfirm(true)}
               style={{
                 padding: '11px 20px', borderRadius: 10,
-                background: deleteConfirm === 'DELETE' ? C.red : 'rgba(239,68,68,0.1)',
+                background: deleteConfirm.trim() === 'DELETE' ? C.red : 'rgba(239,68,68,0.1)',
                 border: '1px solid rgba(239,68,68,0.3)',
-                color: deleteConfirm === 'DELETE' ? 'white' : C.red,
+                color: deleteConfirm.trim() === 'DELETE' ? 'white' : C.red,
                 fontSize: 14, fontWeight: 700,
-                cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed',
+                cursor: deleteConfirm.trim() === 'DELETE' ? 'pointer' : 'not-allowed',
               }}
             >
               Delete My Account
