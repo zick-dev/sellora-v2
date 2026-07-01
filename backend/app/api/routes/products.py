@@ -24,6 +24,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.product import Product
 from app.models.product_variant import ProductVariant
+from app.models.product_image import ProductImage
 from app.models.store import Store
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductOut, ProductPublic, ProductUpdate
@@ -167,7 +168,14 @@ async def create_product(
             db.add(variant)
         await db.flush()
 
-    await db.refresh(product)
+    # ── Create gallery images if provided (max 5) ───────────────────
+    if payload.images:
+        for i, img_url in enumerate(payload.images[:5]):
+            image = ProductImage(product_id=product.id, image_url=img_url, sort_order=i)
+            db.add(image)
+        await db.flush()
+
+    await db.refresh(product, attribute_names=['variants', 'images'])
     return ProductOut.model_validate(product)
 
 
@@ -214,6 +222,7 @@ async def update_product(
 
     update_data = payload.model_dump(exclude_unset=True)
     variants_payload = update_data.pop("variants", None)
+    images_payload = update_data.pop("images", None)
 
     for field, value in update_data.items():
         setattr(product, field, value)
@@ -241,7 +250,21 @@ async def update_product(
             db.add(variant)
         await db.flush()
 
-    await db.refresh(product)
+    # ── Replace gallery images if provided (delete old, create new, max 5) ──
+    if images_payload is not None:
+        existing_images = await db.execute(
+            select(ProductImage).where(ProductImage.product_id == product.id)
+        )
+        for old_image in existing_images.scalars().all():
+            await db.delete(old_image)
+        await db.flush()
+
+        for i, img_url in enumerate(images_payload[:5]):
+            image = ProductImage(product_id=product.id, image_url=img_url, sort_order=i)
+            db.add(image)
+        await db.flush()
+
+    await db.refresh(product, attribute_names=['variants', 'images'])
     return ProductOut.model_validate(product)
 
 

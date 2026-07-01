@@ -7,6 +7,7 @@ Pydantic schemas for product request/response validation.
 from datetime import datetime
 from pydantic import BaseModel
 from app.schemas.product_variant import VariantCreate, VariantOut
+from app.schemas.product_image import ProductImageCreate, ProductImageOut
 
 
 class ProductCreate(BaseModel):
@@ -18,6 +19,7 @@ class ProductCreate(BaseModel):
     image_url: str | None = None
     category: str | None = None
     variants: list[VariantCreate] | None = None
+    images: list[str] | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -30,6 +32,7 @@ class ProductUpdate(BaseModel):
     category: str | None = None
     is_available: bool | None = None
     variants: list[VariantCreate] | None = None
+    images: list[str] | None = None
 
 
 class ProductOut(BaseModel):
@@ -48,6 +51,7 @@ class ProductOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     variants: list[VariantOut] = []
+    images: list[ProductImageOut] = []
 
     model_config = {"from_attributes": True}
 
@@ -65,5 +69,6 @@ class ProductPublic(BaseModel):
     price_currency: str | None
     is_available: bool
     variants: list[VariantOut] = []
+    images: list[ProductImageOut] = []
 
     model_config = {"from_attributes": True}

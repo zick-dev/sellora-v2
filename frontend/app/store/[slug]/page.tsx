@@ -96,6 +96,7 @@ export default function StorefrontPage() {
   const [success, setSuccess] = useState(false);
   const [orderNums, setOrderNums] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [provideAddress, setProvideAddress] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -482,7 +483,7 @@ export default function StorefrontPage() {
                 <div key={product.id} style={{ background:'#fff', border:'1px solid #f0f0f0', borderRadius:12, overflow:'hidden', transition:'box-shadow 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.08)')}
                   onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-                  <div onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
+                  <div onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); setSelectedImageIndex(0); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
                     {product.image_url
                       ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'contain', transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
                       : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, color:'#ddd' }}>🛍️</div>}
@@ -494,7 +495,7 @@ export default function StorefrontPage() {
                     {oos && <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.75)', display:'flex', alignItems:'center', justifyContent:'center' }}><span style={{ background:'#111', color:'#fff', fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:6 }}>Sold Out</span></div>}
                   </div>
                   <div style={{ padding:'12px 14px' }}>
-                    <p onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
+                    <p onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); setSelectedImageIndex(0); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
                     {product.category && <p style={{ color:'#bbb', fontSize:11, marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>{product.category}</p>}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6 }}>
                       <p style={{ color:accent, fontSize:16, fontWeight:800 }}>{sym + dp(product.price, product.price_currency).toLocaleString()}</p>
@@ -504,6 +505,7 @@ export default function StorefrontPage() {
                           if (product.variants && product.variants.length > 0) {
                             setSelectedVariant(null);
                             setSelectedProduct(product);
+                            setSelectedImageIndex(0);
                           } else {
                             addToCart(product);
                           }
@@ -786,7 +788,37 @@ export default function StorefrontPage() {
           <div onClick={() => setSelectedProduct(null)} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)' }} />
           <div style={{ position:'relative', width:'100%', maxWidth:520, background:'#fff', borderRadius:'20px 20px 0 0', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 -8px 40px rgba(0,0,0,0.12)' }}>
             <div style={{ aspectRatio:'1.5', background:'#f9f9f9', position:'relative', overflow:'hidden', borderRadius:'20px 20px 0 0' }}>
-              {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name} style={{ width:'100%', height:'100%', objectFit:'contain' }} /> : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:60 }}>🛍️</div>}
+              {(() => {
+                const gallery = [
+                  ...(selectedProduct.image_url ? [selectedProduct.image_url] : []),
+                  ...((selectedProduct as any).images?.map((img: any) => img.image_url) || []),
+                ];
+                if (gallery.length === 0) return <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:60 }}>🛍️</div>;
+                const idx = Math.min(selectedImageIndex, gallery.length - 1);
+                return (
+                  <>
+                    <img src={gallery[idx]} alt={selectedProduct.name} style={{ width:'100%', height:'100%', objectFit:'contain' }} />
+                    {gallery.length > 1 && (
+                      <>
+                        <div style={{ position:'absolute', bottom:10, left:0, right:0, display:'flex', justifyContent:'center', gap:5 }}>
+                          {gallery.map((_, i) => (
+                            <button key={i} onClick={() => setSelectedImageIndex(i)} style={{
+                              width: i === idx ? 16 : 6, height: 6, borderRadius: 100,
+                              background: i === idx ? accent : 'rgba(0,0,0,0.2)', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.2s',
+                            }} />
+                          ))}
+                        </div>
+                        <button onClick={() => setSelectedImageIndex((idx - 1 + gallery.length) % gallery.length)} style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.85)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <button onClick={() => setSelectedImageIndex((idx + 1) % gallery.length)} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.85)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
               <button onClick={() => setSelectedProduct(null)} style={{ position:'absolute', top:12, right:12, width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.9)', border:'none', cursor:'pointer', fontSize:17, display:'flex', alignItems:'center', justifyContent:'center', color:'#111' }}>×</button>
               {(() => {
                 const stockShown = selectedVariant ? selectedVariant.stock : selectedProduct.stock;

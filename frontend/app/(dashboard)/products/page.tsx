@@ -23,6 +23,7 @@ interface Product {
 const emptyForm = {
   name: '', price: '', stock: '', category: '',
   description: '', image_url: '', is_available: true,
+  images: [] as string[],
 };
 
 export default function ProductsPage() {
@@ -83,6 +84,7 @@ export default function ProductsPage() {
       category:    p.category || '',
       description: p.description || '',
       image_url:   p.image_url || '',
+      images:      (p as any).images?.map((img: any) => img.image_url) || [],
       is_available: p.is_available,
     });
     setVariants((p as any).variants || []);
@@ -105,6 +107,7 @@ export default function ProductsPage() {
         category:    form.category || null,
         description: form.description || null,
         image_url:   form.image_url || null,
+        images:      form.images.length > 0 ? form.images : undefined,
         is_available: form.is_available,
         variants:    variants.length > 0 ? variants : [],
       };
@@ -574,6 +577,55 @@ export default function ProductsPage() {
                     {generatingCatalog ? '⏳ Analyzing image...' : '✨ AI Fill Details from Photo'}
                   </button>
                 )}
+              </div>
+
+              {/* Gallery Images (up to 5) */}
+              <div>
+                <label style={labelStyle}>More Photos (optional, up to 5)</label>
+                <p style={{ color: C.muted, fontSize: 11, marginBottom: 8 }}>Add extra angles so buyers can see more of the product.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: 8 }}>
+                  {form.images.map((url, i) => (
+                    <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: 10, overflow: 'hidden', border: '1px solid ' + C.inputBorder }}>
+                      <img src={url} alt={'Photo ' + (i + 1)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) })}
+                        style={{
+                          position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%',
+                          background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', fontSize: 12,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >×</button>
+                    </div>
+                  ))}
+                  {form.images.length < 5 && (
+                    <label style={{
+                      aspectRatio: '1', borderRadius: 10, border: '1.5px dashed ' + C.inputBorder,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', background: C.input,
+                    }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const fd = new FormData();
+                          fd.append('file', file);
+                          fd.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
+                          try {
+                            const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: fd });
+                            const data = await res.json();
+                            if (data.secure_url) setForm({ ...form, images: [...form.images, data.secure_url] });
+                          } catch {}
+                          e.target.value = '';
+                        }}
+                      />
+                      <span style={{ fontSize: 20, color: C.muted }}>+</span>
+                    </label>
+                  )}
+                </div>
               </div>
 
               {/* Available toggle */}

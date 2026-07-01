@@ -31,6 +31,7 @@ from app.models.product import Product                        # noqa: F401
 from app.models.order import Order                            # noqa: F401
 from app.models.abandoned_interest import AbandonedInterest  # noqa: F401
 from app.models.product_variant import ProductVariant         # noqa: F401
+from app.models.product_image import ProductImage             # noqa: F401
 from app.models.deleted_account_record import DeletedAccountRecord  # noqa: F401
 
 # Import routers

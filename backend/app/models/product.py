@@ -78,6 +78,13 @@ class Product(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    images: Mapped[list["ProductImage"]] = relationship(
+        "ProductImage",
+        backref="product",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="ProductImage.sort_order",
+    )
 
     def __repr__(self) -> str:
         return f"<Product id={self.id} name={self.name}>"
