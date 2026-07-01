@@ -584,9 +584,11 @@ export default function DashboardLayout({
         const [userRes, storeRes] = await Promise.all([
           fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
           }),
           fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/store/me', {
             headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
           }),
         ]);
 
