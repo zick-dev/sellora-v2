@@ -39,7 +39,9 @@ export default function ProductPageClient({ storeSlug, productSlug }: { storeSlu
           const source = urlParams.get('src') || 'direct';
           await api.post('/api/products/track-click', { product_id: pr.data.id, store_id: sr.data.id, source });
         } catch {}
-      } catch {}
+      } catch (err) {
+        console.error('Product page load error:', err);
+      }
       setLoading(false);
     }
     load();
