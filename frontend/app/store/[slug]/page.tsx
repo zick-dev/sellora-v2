@@ -308,14 +308,6 @@ export default function StorefrontPage() {
               : <div style={{ width:34, height:34, borderRadius:8, background:accent, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>🏪</div>}
             <span style={{ color:'#111', fontWeight:800, fontSize:16, letterSpacing:'-0.3px' }}>{store?.store_name}</span>
           </div>
-          <div style={{ display:'flex', gap:4, flex:1, justifyContent:'center', overflow:'hidden' }}>
-            {allCategories.slice(0,5).map(cat => (
-              <button key={cat} onClick={() => { setActiveCategory(cat); document.getElementById('products')?.scrollIntoView({ behavior:'smooth' }); }}
-                style={{ padding:'5px 13px', borderRadius:20, fontSize:13, fontWeight:500, whiteSpace:'nowrap', cursor:'pointer', border:'none', background: activeCategory===cat ? accent : 'transparent', color: activeCategory===cat ? '#fff' : '#555', transition:'all 0.15s', display: typeof window !== 'undefined' && window.innerWidth < 640 ? 'none' : 'block' }}>
-                {cat}
-              </button>
-            ))}
-          </div>
           <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
             <button onClick={() => setShowCart(true)} style={{ position:'relative', padding:'8px 14px', borderRadius:8, background:accent, border:'none', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
@@ -428,18 +420,22 @@ export default function StorefrontPage() {
         </div>
       )}
 
-      {/* CATEGORY PILLS */}
+      {/* CATEGORY NAV */}
       {allCategories.length > 1 && (
-        <div style={{ background:'#fff', borderBottom:'1px solid #f0f0f0' }}>
-          <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 20px', display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none', height:50, alignItems:'center' }}>
+        <nav style={{ background:'#fff', borderBottom:'1px solid #f0f0f0', position:'sticky', top:60, zIndex:90 }}>
+          <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 20px', display:'flex', gap:4, overflowX:'auto', scrollbarWidth:'none', height:46, alignItems:'center' }}>
             {allCategories.map(cat => (
-              <button key={cat} onClick={() => setActiveCategory(cat)}
-                style={{ padding:'5px 15px', borderRadius:20, fontSize:13, fontWeight:500, whiteSpace:'nowrap', cursor:'pointer', border: activeCategory===cat ? 'none' : '1px solid #e5e5e5', background: activeCategory===cat ? accent : '#fff', color: activeCategory===cat ? '#fff' : '#444', transition:'all 0.15s', flexShrink:0 }}>
+              <button key={cat} onClick={() => { setActiveCategory(cat); document.getElementById('products')?.scrollIntoView({ behavior:'smooth' }); }}
+                style={{
+                  padding:'8px 14px', fontSize:13, fontWeight: activeCategory===cat ? 700 : 500, whiteSpace:'nowrap', cursor:'pointer',
+                  border:'none', borderBottom: activeCategory===cat ? '2px solid '+accent : '2px solid transparent',
+                  background:'transparent', color: activeCategory===cat ? accent : '#666', transition:'all 0.15s', flexShrink:0,
+                }}>
                 {cat}
               </button>
             ))}
           </div>
-        </div>
+        </nav>
       )}
 
       {/* PRODUCTS */}
