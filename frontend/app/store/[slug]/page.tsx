@@ -25,7 +25,7 @@ interface Variant {
   is_available: boolean;
 }
 interface Product {
-  id: string; name: string; description: string | null; price: number;
+  id: string; name: string; slug?: string | null; description: string | null; price: number;
   stock: number; image_url: string | null; category: string | null; is_available: boolean;
   price_currency?: string | null;
   variants?: Variant[];
@@ -828,9 +828,20 @@ export default function StorefrontPage() {
             <div style={{ padding:'18px 20px 32px' }}>
               {selectedProduct.category && <p style={{ color:'#bbb', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>{selectedProduct.category}</p>}
               <h2 style={{ color:'#111', fontSize:19, fontWeight:800, marginBottom:6 }}>{selectedProduct.name}</h2>
-              <p style={{ color:accent, fontSize:22, fontWeight:900, marginBottom:12 }}>
-                {sym+dp(selectedVariant?.price != null ? selectedVariant.price : selectedProduct.price, selectedProduct.price_currency).toLocaleString()}
-              </p>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <p style={{ color:accent, fontSize:22, fontWeight:900 }}>
+                  {sym+dp(selectedVariant?.price != null ? selectedVariant.price : selectedProduct.price, selectedProduct.price_currency).toLocaleString()}
+                </p>
+                {selectedProduct.slug && (
+                  <a href={`/store/${slug}/product/${selectedProduct.slug}`} target="_blank" rel="noreferrer" style={{
+                    display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:8,
+                    background:'#f5f5f5', border:'1px solid #e5e5e5', color:'#666', fontSize:12, fontWeight:600, textDecoration:'none',
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Share
+                  </a>
+                )}
+              </div>
               {selectedProduct.description && <p style={{ color:'#555', fontSize:14, lineHeight:1.7, marginBottom:14, background:'#f9f9f9', borderRadius:8, padding:'11px 13px' }}>{selectedProduct.description}</p>}
 
               {/* Variant picker */}

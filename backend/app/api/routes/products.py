@@ -25,6 +25,7 @@ from app.core.security import get_current_user
 from app.models.product import Product
 from app.models.product_variant import ProductVariant
 from app.models.product_image import ProductImage
+from app.models.link_click import LinkClick
 from app.models.store import Store
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductOut, ProductPublic, ProductUpdate
@@ -88,6 +89,55 @@ async def list_public_products(
         ).order_by(Product.created_at.desc())
     )
     return [ProductPublic.model_validate(p) for p in result.scalars().all()]
+
+
+@router.get(
+    "/public/{store_id}/slug/{product_slug}",
+    response_model=ProductPublic,
+    summary="Get a single product by slug (public)",
+)
+async def get_public_product_by_slug(
+    store_id: str,
+    product_slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Returns a single product for the standalone product page."""
+    result = await db.execute(
+        select(Product).where(
+            Product.store_id == store_id,
+            Product.slug == product_slug,
+        )
+    )
+    product = result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return ProductPublic.model_validate(product)
+
+
+@router.post(
+    "/track-click",
+    status_code=204,
+    summary="Track a link click (public, foundation for Link Engine analytics)",
+)
+async def track_link_click(
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Records a click on a shared product/store link. No auth required.
+    Fails silently on bad input — tracking should never break the user's flow.
+    """
+    try:
+        click = LinkClick(
+            product_id=payload.get("product_id"),
+            store_id=payload["store_id"],
+            source=payload.get("source", "unknown"),
+        )
+        db.add(click)
+        await db.flush()
+    except Exception:
+        pass
+    return None
 
 
 # ── Seller Routes ─────────────────────────────────────────────────
