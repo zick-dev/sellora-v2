@@ -29,7 +29,7 @@ const emptyForm = {
 export default function ProductsPage() {
   const { C } = useTheme();
   const [products, setProducts]   = useState<Product[]>([]);
-  const { store } = useDashboard();
+  const { store, user } = useDashboard();
   const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
   const sym = CURRENCY_SYMBOLS[(store as any)?.base_currency || 'NGN'] || ((store as any)?.base_currency || 'NGN') + ' ';
   const [storeId, setStoreId]     = useState('');
@@ -404,21 +404,41 @@ export default function ProductsPage() {
                 >
                   <span style={{ fontSize: 16 }}>💬</span> Share on WhatsApp
                 </a>
-                <a
-                  href={fbUrl} target="_blank" rel="noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(24,119,242,0.1)', border: '1px solid rgba(24,119,242,0.2)', color: '#1877f2', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-                >
-                  <span style={{ fontSize: 16 }}>📘</span> Share on Facebook
-                </a>
+                {(user as any)?.plan === 'pro' ? (
+                  <a
+                    href={fbUrl} target="_blank" rel="noreferrer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(24,119,242,0.1)', border: '1px solid rgba(24,119,242,0.2)', color: '#1877f2', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    <span style={{ fontSize: 16 }}>📘</span> Share on Facebook
+                  </a>
+                ) : (
+                  <a
+                    href="/upgrade"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 14px', borderRadius: 12, background: C.input, border: '1px solid ' + C.inputBorder, color: C.muted, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 16 }}>📘</span> Share on Facebook</span>
+                    <span style={{ background: 'linear-gradient(90deg, #4F46E5, #ec4899)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20 }}>PRO</span>
+                  </a>
+                )}
               </div>
 
               <div style={{ textAlign: 'center' }}>
                 <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Or scan QR code</p>
-                <img
+                {(user as any)?.plan === 'pro' ? (
+                  <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(productUrl)}`}
                   alt="QR Code"
-                  style={{ width: 160, height: 160, borderRadius: 12, border: '1px solid ' + C.cardBorder, margin: '0 auto' }}
-                />
+                    style={{ width: 160, height: 160, borderRadius: 12, border: '1px solid ' + C.cardBorder, margin: '0 auto' }}
+                  />
+                ) : (
+                  <a href="/upgrade" style={{ display: 'block', width: 160, height: 160, borderRadius: 12, border: '1px dashed ' + C.cardBorder, margin: '0 auto', textDecoration: 'none', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', inset: 0, background: C.input, opacity: 0.7 }} />
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 22 }}>🔒</span>
+                      <span style={{ background: 'linear-gradient(90deg, #4F46E5, #ec4899)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 20 }}>Unlock with Pro</span>
+                    </div>
+                  </a>
+                )}
               </div>
             </div>
           </div>
