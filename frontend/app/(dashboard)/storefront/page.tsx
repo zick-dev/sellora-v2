@@ -244,10 +244,21 @@ export default function StorefrontPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: C.card, borderRadius: 12, padding: 4, border: '1px solid ' + C.cardBorder, flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 8, marginBottom: 24 }}>
         {tabs.map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ flex: '1 1 80px', padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', background: activeTab === tab.key ? C.purple : 'transparent', color: activeTab === tab.key ? C.text : C.muted, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
-            <span style={{ marginRight: 4 }}>{tab.icon}</span>
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+              padding: '14px 8px', borderRadius: 12, cursor: 'pointer',
+              background: activeTab === tab.key ? 'rgba(79,70,229,0.1)' : C.card,
+              border: activeTab === tab.key ? '1.5px solid ' + C.purple : '1px solid ' + C.cardBorder,
+              color: activeTab === tab.key ? C.purple : C.muted,
+              fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
+            }}
+          >
+            <span style={{ fontSize: 18 }}>{tab.icon}</span>
             {tab.label}
           </button>
         ))}

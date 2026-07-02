@@ -491,11 +491,11 @@ function Topbar({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <ThemeToggle />
         {/* Avatar */}
-        <div style={{
+        <Link href="/settings" style={{
           width: 30, height: 30, borderRadius: '50%',
           background: C.purple,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          overflow: 'hidden', position: 'relative',
+          overflow: 'hidden', position: 'relative', cursor: 'pointer',
         }}>
           {user?.avatar_url ? (
             <img src={user.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -509,7 +509,7 @@ function Topbar({
             width: 8, height: 8, borderRadius: '50%',
             background: C.success, border: '1.5px solid ' + C.topbar,
           }} />
-        </div>
+        </Link>
       </div>
     </header>
   );
@@ -529,7 +529,7 @@ function DesktopTopbar({ user, store }: { user: UserData; store: StoreData }) {
       <ThemeToggle />
 
       {/* Avatar */}
-      <div style={{
+      <Link href="/settings" style={{
         width: 34, height: 34, borderRadius: '50%',
         background: C.purple,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -547,7 +547,7 @@ function DesktopTopbar({ user, store }: { user: UserData; store: StoreData }) {
           width: 9, height: 9, borderRadius: '50%',
           background: C.success, border: '1.5px solid ' + C.topbar,
         }} />
-      </div>
+      </Link>
     </header>
   );
 }

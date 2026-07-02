@@ -259,24 +259,24 @@ export default function SettingsPage() {
                 <p style={{ color: C.muted, fontSize: 13 }}>15 products · Basic features</p>
               )}
             </div>
-            {/* Upgrade card */}
-            {(user as any)?.plan !== 'pro' && (
-              <div style={{ flex: '1 1 240px', background: 'rgba(79,70,229,0.06)', borderRadius: 14, padding: '20px 18px', border: '1px solid rgba(79,70,229,0.15)' }}>
-                <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Upgrade to Pro</p>
-                <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>{proPricing.currency === 'NGN' ? '₦' + proPricing.amount.toLocaleString() : '$' + proPricing.amount}<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-                  {['Unlimited products', 'AI tools', 'Custom domain', 'Lead recovery', 'Priority support'].map(f => (
-                    <div key={f} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <span style={{ color: C.success, fontSize: 12, fontWeight: 700 }}>✓</span>
-                      <span style={{ color: C.subtext, fontSize: 13 }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <a href="/upgrade" style={{ display: 'block', textAlign: 'center', padding: '12px 0', borderRadius: 10, background: C.purple, color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-                  Upgrade Now
-                </a>
+            {/* Upgrade / Extend card */}
+            <div style={{ flex: '1 1 240px', background: 'rgba(79,70,229,0.06)', borderRadius: 14, padding: '20px 18px', border: '1px solid rgba(79,70,229,0.15)' }}>
+              <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                {(user as any)?.plan === 'pro' ? 'Extend Pro' : 'Upgrade to Pro'}
+              </p>
+              <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>{proPricing.currency === 'NGN' ? '₦' + proPricing.amount.toLocaleString() : '$' + proPricing.amount}<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+                {['Unlimited products', 'AI tools', 'Custom domain', 'Lead recovery', 'Priority support'].map(f => (
+                  <div key={f} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <span style={{ color: C.success, fontSize: 12, fontWeight: 700 }}>✓</span>
+                    <span style={{ color: C.subtext, fontSize: 13 }}>{f}</span>
+                  </div>
+                ))}
               </div>
-            )}
+              <a href="/upgrade" style={{ display: 'block', textAlign: 'center', padding: '12px 0', borderRadius: 10, background: C.purple, color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+                {(user as any)?.plan === 'pro' ? 'Extend Now' : 'Upgrade Now'}
+              </a>
+            </div>
           </div>
         </div>
       )}
