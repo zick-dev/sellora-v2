@@ -27,6 +27,7 @@ class ProductUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     price: float | None = None
+    price_currency: str | None = None
     stock: int | None = None
     image_url: str | None = None
     category: str | None = None
