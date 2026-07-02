@@ -30,8 +30,14 @@ from app.models.store import Store
 
 router = APIRouter(prefix="/ai", tags=["AI Tools"])
 
-OPENROUTER_TEXT_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
-OPENROUTER_VISION_MODEL = "google/gemma-4-26b-a4b:free"
+OPENROUTER_TEXT_MODELS = [
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen3-next-80b-a3b-instruct:free",
+    "nousresearch/hermes-3-llama-3.1-405b:free",
+]
+OPENROUTER_VISION_MODELS = [
+    "google/gemma-4-26b-a4b:free",
+]
 
 
 def user_is_pro(user: User | None) -> bool:
@@ -63,29 +69,31 @@ async def call_gemini_text(prompt: str) -> str | None:
 
 
 async def call_openrouter_text(prompt: str) -> str | None:
-    """Try OpenRouter for a text-only prompt. Returns None on any failure."""
+    """Try OpenRouter for a text-only prompt, cycling through fallback models. Returns None if all fail."""
     if not settings.OPENROUTER_API_KEY:
         return None
-    try:
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        body = {
-            "model": OPENROUTER_TEXT_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-        }
-        async with httpx.AsyncClient(timeout=20) as client:
-            res = await client.post(url, headers=headers, json=body)
-        if res.status_code != 200:
-            print(f"⚠️ OpenRouter text error {res.status_code}: {res.text[:200]}")
-            return None
-        data = res.json()
-        return data["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"⚠️ OpenRouter text exception: {e}")
-        return None
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    for model in OPENROUTER_TEXT_MODELS:
+        try:
+            body = {
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            async with httpx.AsyncClient(timeout=20) as client:
+                res = await client.post(url, headers=headers, json=body)
+            if res.status_code != 200:
+                print(f"⚠️ OpenRouter text error ({model}) {res.status_code}: {res.text[:200]}")
+                continue
+            data = res.json()
+            return data["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"⚠️ OpenRouter text exception ({model}): {e}")
+            continue
+    return None
 
 
 async def call_ai_text(prompt: str, prefer_gemini: bool) -> str:
@@ -133,36 +141,38 @@ async def call_gemini_vision(prompt: str, image_bytes: bytes, content_type: str)
 
 
 async def call_openrouter_vision(prompt: str, image_bytes: bytes, content_type: str) -> str | None:
-    """Try OpenRouter vision model. Returns None on any failure."""
+    """Try OpenRouter vision models, cycling through fallback list. Returns None if all fail."""
     if not settings.OPENROUTER_API_KEY:
         return None
-    try:
-        b64 = base64.b64encode(image_bytes).decode("utf-8")
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        body = {
-            "model": OPENROUTER_VISION_MODEL,
-            "messages": [{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": f"data:{content_type};base64,{b64}"}},
-                ],
-            }],
-        }
-        async with httpx.AsyncClient(timeout=25) as client:
-            res = await client.post(url, headers=headers, json=body)
-        if res.status_code != 200:
-            print(f"⚠️ OpenRouter vision error {res.status_code}: {res.text[:200]}")
-            return None
-        data = res.json()
-        return data["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"⚠️ OpenRouter vision exception: {e}")
-        return None
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    for model in OPENROUTER_VISION_MODELS:
+        try:
+            body = {
+                "model": model,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:{content_type};base64,{b64}"}},
+                    ],
+                }],
+            }
+            async with httpx.AsyncClient(timeout=25) as client:
+                res = await client.post(url, headers=headers, json=body)
+            if res.status_code != 200:
+                print(f"⚠️ OpenRouter vision error ({model}) {res.status_code}: {res.text[:200]}")
+                continue
+            data = res.json()
+            return data["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"⚠️ OpenRouter vision exception ({model}): {e}")
+            continue
+    return None
 
 
 async def call_ai_vision(prompt: str, image_bytes: bytes, content_type: str, prefer_gemini: bool) -> str:
