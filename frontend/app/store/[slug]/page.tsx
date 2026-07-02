@@ -107,6 +107,8 @@ export default function StorefrontPage() {
   const [popupSubmitting, setPopupSubmitting] = useState(false);
   const [discountUnlocked, setDiscountUnlocked] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
+  const [connectionIssue, setConnectionIssue] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -146,11 +148,23 @@ export default function StorefrontPage() {
             if (fxRes.data?.rates) setFxRates(fxRes.data.rates);
           } catch { /* FX rates unavailable */ }
         }
-      } catch { setNotFound(true); }
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 404) {
+          setNotFound(true);
+        } else {
+          // Network/connection error, not a real 404 — retry a couple times before giving up
+          setConnectionIssue(true);
+          if (retryCount < 3) {
+            setTimeout(() => setRetryCount(c => c + 1), 2000);
+            return; // don't set loading false yet, we're retrying
+          }
+        }
+      }
       finally { setLoading(false); }
     };
     load();
-  }, [slug]);
+  }, [slug, retryCount]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -300,7 +314,7 @@ export default function StorefrontPage() {
     <div style={{ minHeight:'100vh', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ textAlign:'center' }}>
         <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #f0f0f0', borderTopColor:'#111', animation:'spin 0.8s linear infinite', margin:'0 auto 10px' }} />
-        <p style={{ color:'#999', fontSize:13 }}>Loading store...</p>
+        <p style={{ color:'#999', fontSize:13 }}>{connectionIssue ? "Hang tight, reconnecting..." : "Loading store..."}</p>
       </div>
       {store && (
         <StorefrontChat
@@ -323,6 +337,16 @@ export default function StorefrontPage() {
       <div style={{ fontSize:48 }}>🏪</div>
       <h1 style={{ color:'#111', fontSize:20, fontWeight:700 }}>Store not found</h1>
       <p style={{ color:'#999', fontSize:14 }}>This link may have changed or been removed.</p>
+    </div>
+  );
+  if (connectionIssue && !store) return (
+    <div style={{ minHeight:'100vh', background:'#fff', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:14, padding:'24px 20px', textAlign:'center' }}>
+      <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #f0f0f0', borderTopColor:'#111', animation:'spin 0.8s linear infinite' }} />
+      <h1 style={{ color:'#111', fontSize:18, fontWeight:700 }}>Just a moment...</h1>
+      <p style={{ color:'#999', fontSize:14, maxWidth:280 }}>We're having trouble connecting. This usually clears up in a few seconds.</p>
+      <button onClick={() => { setConnectionIssue(false); setRetryCount(c => c + 1); }} style={{ padding:'10px 20px', borderRadius:8, background:'#f5f5f5', border:'1px solid #e5e5e5', color:'#444', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+        Try Again
+      </button>
     </div>
   );
 
