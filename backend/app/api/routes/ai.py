@@ -193,13 +193,18 @@ async def call_ai_vision(prompt: str, image_bytes: bytes, content_type: str, pre
 
 
 def clean_json_response(text: str) -> str:
-    """Strip markdown code fences some models wrap JSON responses in."""
+    """
+    Extract a JSON object from a model's raw text response. Smaller/free
+    models often wrap JSON in markdown fences or add preamble text despite
+    instructions not to — this pulls out just the {...} block.
+    """
     text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-    return text.replace("```json", "").replace("```", "").strip()
+    text = text.replace("```json", "").replace("```", "").strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return text[start:end + 1]
+    return text
 
 
 @router.post(
