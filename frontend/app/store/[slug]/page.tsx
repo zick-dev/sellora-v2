@@ -318,6 +318,7 @@ export default function StorefrontPage() {
       </div>
       {store && (
         <StorefrontChat
+          storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
           products={products}
@@ -362,6 +363,7 @@ export default function StorefrontPage() {
       <button onClick={() => setSuccess(false)} style={{ padding:'12px 28px', borderRadius:8, background:accent, border:'none', color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Continue Shopping</button>
       {store && (
         <StorefrontChat
+          storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
           products={products}
@@ -1069,6 +1071,7 @@ export default function StorefrontPage() {
 
       {store && (
         <StorefrontChat
+          storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
           products={products}

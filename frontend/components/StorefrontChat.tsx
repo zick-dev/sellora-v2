@@ -8,6 +8,7 @@ interface Message {
 }
 
 interface Props {
+  storeId: string;
   storeName: string;
   accentColor: string;
   products: { name: string; price: number; category: string | null; description: string | null; stock: number; is_available: boolean }[];
@@ -17,7 +18,7 @@ interface Props {
   currencySymbol: string;
 }
 
-export default function StorefrontChat({ storeName, accentColor, products, deliveryFee, freeDeliveryAbove, whatsapp, currencySymbol }: Props) {
+export default function StorefrontChat({ storeId, storeName, accentColor, products, deliveryFee, freeDeliveryAbove, whatsapp, currencySymbol }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -41,6 +42,7 @@ export default function StorefrontChat({ storeName, accentColor, products, deliv
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
+          store_id: storeId,
           store_name: storeName,
           products: products.slice(0, 20).map(p => ({
             name: p.name,

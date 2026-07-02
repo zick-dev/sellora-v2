@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     # Claude API key for AI reply suggestions, FAQ generation etc.
     # Optional — AI features are disabled if not provided
     GEMINI_API_KEY: str = ""
+    OPENROUTER_API_KEY: str = ""
 
     # Cloudinary — used server-side to delete images on account deletion
     CLOUDINARY_CLOUD_NAME: str = "dkun9hvkf"
