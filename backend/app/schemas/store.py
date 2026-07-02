@@ -198,6 +198,9 @@ class StoreOut(BaseModel):
     return_policy: str | None
     shipping_policy: str | None
     terms_of_service: str | None
+    compliance_status: str | None = "active"
+    compliance_reason: str | None = None
+    compliance_grace_deadline: object | None = None
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str

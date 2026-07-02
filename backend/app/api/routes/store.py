@@ -106,6 +106,11 @@ async def get_store_by_slug(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Store not found",
         )
+    if getattr(store, "compliance_status", "active") == "suspended":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Store not found",
+        )
     return store
 
 # ── GET /api/store/me ─────────────────────────────────────────────

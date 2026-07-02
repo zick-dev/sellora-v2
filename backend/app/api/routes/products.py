@@ -26,6 +26,7 @@ from app.models.product import Product
 from app.models.product_variant import ProductVariant
 from app.models.product_image import ProductImage
 from app.models.link_click import LinkClick
+from app.services.compliance_service import scan_product
 from app.models.store import Store
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductOut, ProductPublic, ProductUpdate
@@ -291,6 +292,7 @@ async def create_product(
         await db.flush()
 
     await db.refresh(product, attribute_names=['variants', 'images'])
+    await scan_product(db, product)
     return ProductOut.model_validate(product)
 
 
@@ -380,6 +382,7 @@ async def update_product(
         await db.flush()
 
     await db.refresh(product, attribute_names=['variants', 'images'])
+    await scan_product(db, product)
     return ProductOut.model_validate(product)
 
 
