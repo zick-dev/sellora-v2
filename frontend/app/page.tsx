@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import MobileDemoPhone from '@/components/MobileDemoPhone';
 
 
 const INDIGO = '#4F46E5';
@@ -14,7 +15,7 @@ export default function LandingPage() {
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const slides = ['hero', 'preview', 'features', 'pricing'];
+  const slides = ['hero', 'preview', 'mobile', 'features', 'pricing'];
 
   useEffect(() => {
     if (paused) return;
@@ -188,8 +189,14 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* SLIDE 2 — Features */}
+          {/* SLIDE 2 — Mobile Demo */}
           {activeSlide === 2 && (
+            <div key="mobile" className="slide-fade" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <MobileDemoPhone />
+            </div>
+          )}
+          {/* SLIDE 3 — Features */}
+          {activeSlide === 3 && (
             <div key="features" className="slide-fade" style={{ width: '100%' }}>
               <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px', color: '#111' }}>
                 Everything you need. <span style={{ color: INDIGO }}>Nothing you don't.</span>
@@ -207,7 +214,7 @@ export default function LandingPage() {
           )}
 
           {/* SLIDE 3 — Pricing */}
-          {activeSlide === 3 && (
+          {activeSlide === 4 && (
             <div key="pricing" className="slide-fade" style={{ width: '100%' }}>
               <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px', color: '#111' }}>
                 Start free. <span style={{ color: INDIGO }}>Pay only if you grow.</span>
@@ -236,7 +243,7 @@ export default function LandingPage() {
                   </p>
                   <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>Billed monthly</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
-                    {['Unlimited products', 'AI tools included', 'Custom domain'].map(f => (
+                    {['Unlimited products', 'AI tools & catalog generation', 'Custom domain', 'Abandoned order recovery', 'Facebook share & QR codes', 'Priority support'].map(f => (
                       <div key={f} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                         <span style={{ color: EMERALD, fontWeight: 700, fontSize: 11 }}>+</span>
                         <span style={{ color: '#e4e4e7', fontSize: 12.5 }}>{f}</span>
