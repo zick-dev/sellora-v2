@@ -71,7 +71,7 @@ function PageFooter() {
   return (
     <footer style={{ textAlign: 'center', paddingBottom: 32, marginTop: 8 }}>
       <p style={{ color: C.muted, fontSize: 12 }}>
-        © 2024 Kormerce • Premium Seller Tools
+        © 2026 Kormerce • Premium Seller Tools
       </p>
     </footer>
   );

@@ -707,7 +707,7 @@ export default function DashboardLayout({
                 padding: '12px 32px',
                 textAlign: 'center',
               }}>
-                <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Kormerce • Premium Seller Tools</p>
+                <p style={{ color: C.muted, fontSize: 12 }}>© 2026 Kormerce • Premium Seller Tools</p>
               </footer>
             </div>
           </div>

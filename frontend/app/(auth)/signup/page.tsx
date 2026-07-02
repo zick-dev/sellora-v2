@@ -444,7 +444,7 @@ export default function SignupPage() {
         </Link>
       </p>
       <p style={{ color: "#1f2937", fontSize: 11, marginTop: 12 }}>
-        © 2024 Kormerce • Premium Seller Tools
+        © 2026 Kormerce • Premium Seller Tools
       </p>
 
       <style>{`

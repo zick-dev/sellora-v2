@@ -489,7 +489,7 @@ export default function OnboardingPage() {
         )}
 
         <footer style={{ textAlign: 'center', marginTop: 32, paddingBottom: 16 }}>
-          <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Kormerce • Premium Seller Tools</p>
+          <p style={{ color: C.muted, fontSize: 12 }}>© 2026 Kormerce • Premium Seller Tools</p>
         </footer>
       </main>
     </>

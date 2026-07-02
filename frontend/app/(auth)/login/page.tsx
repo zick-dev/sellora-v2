@@ -435,7 +435,7 @@ export default function LoginPage() {
         🔒 SECURED BY KORMERCE CLOUD AUTH
       </p>
       <p style={{ color: "#1f2937", fontSize: 11, marginTop: 4 }}>
-        © 2024 Kormerce • Premium Seller Tools
+        © 2026 Kormerce • Premium Seller Tools
       </p>
 
       {/* Spin animation */}
