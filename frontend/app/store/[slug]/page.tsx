@@ -108,6 +108,7 @@ export default function StorefrontPage() {
   const [discountUnlocked, setDiscountUnlocked] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const [connectionIssue, setConnectionIssue] = useState(false);
+  const [activePolicy, setActivePolicy] = useState<'return_policy' | 'shipping_policy' | 'terms_of_service' | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
@@ -656,7 +657,15 @@ export default function StorefrontPage() {
             </div>
           </div>
           {/* Bottom row */}
-          <div style={{ borderTop:'1px solid #222', paddingTop:20, display:'flex', flexWrap:'wrap', gap:12, alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ borderTop:'1px solid #222', paddingTop:20, display:'flex', flexDirection:'column', gap:12 }}>
+            {((store as any)?.return_policy || (store as any)?.shipping_policy || (store as any)?.terms_of_service) && (
+              <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                {(store as any)?.return_policy && <button onClick={() => setActivePolicy('return_policy')} style={{ background:'none', border:'none', color:'#888', fontSize:12, cursor:'pointer', padding:0, textDecoration:'underline' }}>Return Policy</button>}
+                {(store as any)?.shipping_policy && <button onClick={() => setActivePolicy('shipping_policy')} style={{ background:'none', border:'none', color:'#888', fontSize:12, cursor:'pointer', padding:0, textDecoration:'underline' }}>Shipping Policy</button>}
+                {(store as any)?.terms_of_service && <button onClick={() => setActivePolicy('terms_of_service')} style={{ background:'none', border:'none', color:'#888', fontSize:12, cursor:'pointer', padding:0, textDecoration:'underline' }}>Terms of Service</button>}
+              </div>
+            )}
+          <div style={{ display:'flex', flexWrap:'wrap', gap:12, alignItems:'center', justifyContent:'space-between' }}>
             <p style={{ color:'#555', fontSize:12 }}>© {new Date().getFullYear()} {store?.store_name}. All rights reserved.</p>
             <div style={{ display:'flex', gap:16 }}>
               <span style={{ color:'#444', fontSize:12 }}>🚚 Pay on Delivery</span>
@@ -664,8 +673,28 @@ export default function StorefrontPage() {
               <span style={{ color:'#444', fontSize:12 }}>💬 WhatsApp Support</span>
             </div>
           </div>
+          </div>
         </div>
       </footer>
+
+      {/* POLICY MODAL */}
+      {activePolicy && (() => {
+        const policyLabels: Record<string, string> = { return_policy: 'Return & Refund Policy', shipping_policy: 'Shipping & Delivery Policy', terms_of_service: 'Terms of Service' };
+        const content = (store as any)?.[activePolicy] || '';
+        return (
+          <div onClick={() => setActivePolicy(null)} style={{ position:'fixed', inset:0, zIndex:400, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', maxWidth:560, maxHeight:'80vh', overflowY:'auto', boxShadow:'0 -8px 40px rgba(0,0,0,0.15)' }}>
+              <div style={{ position:'sticky', top:0, background:'#fff', borderBottom:'1px solid #f0f0f0', padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <p style={{ color:'#111', fontSize:16, fontWeight:800 }}>{policyLabels[activePolicy]}</p>
+                <button onClick={() => setActivePolicy(null)} style={{ width:30, height:30, borderRadius:'50%', background:'#f5f5f5', border:'none', cursor:'pointer', fontSize:16, color:'#666' }}>×</button>
+              </div>
+              <div style={{ padding:'20px 24px 32px' }}>
+                <p style={{ color:'#333', fontSize:14, lineHeight:1.8, whiteSpace:'pre-wrap' }}>{content}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* WHATSAPP FLOAT BUTTON — visible when cart is empty */}
       {store?.whatsapp && cartCount === 0 && !showCart && !showCheckout && (
