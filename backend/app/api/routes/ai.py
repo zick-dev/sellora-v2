@@ -404,3 +404,47 @@ RULES:
 
     reply = await call_ai_text(prompt, prefer_gemini=prefer_gemini)
     return {"reply": reply}
+
+
+@router.post(
+    "/generate-policy",
+    summary="Generate a store policy document (free for all, Gemini for Pro)",
+)
+async def generate_policy(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Auto-generate a Return Policy, Shipping Policy, or Terms of Service
+    tailored to the merchant's store. FREE for all users. Pro users get
+    Gemini quality; free tier uses OpenRouter.
+    """
+    policy_type = payload.get("policy_type", "").strip()
+    store_name = payload.get("store_name", "the store").strip()
+    delivery_fee_info = payload.get("delivery_info", "").strip()
+
+    valid_types = {"return_policy": "Return &amp; Refund Policy", "shipping_policy": "Shipping &amp; Delivery Policy", "terms_of_service": "Terms of Service"}
+    if policy_type not in valid_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="policy_type must be one of: return_policy, shipping_policy, terms_of_service",
+        )
+
+    label = valid_types[policy_type]
+
+    prompts = {
+        "return_policy": f"""Write a clear, fair Return & Refund Policy for an online store called "{store_name}".
+This store sells on a pay-on-delivery / social commerce basis (WhatsApp/Instagram orders, delivered locally).
+Include: return window (7 days is standard), condition items must be in, how to request a return, refund method and timeline, and any exceptions (e.g. final sale items).
+Write in plain, friendly language a small business would use. Format as short paragraphs with clear headers. Keep it under 300 words.""",
+        "shipping_policy": f"""Write a clear Shipping & Delivery Policy for an online store called "{store_name}".
+This store delivers locally and may offer pay-on-delivery. Include: delivery timeframes, delivery fee explanation, what happens if delivery fails, and how customers can track their order (via WhatsApp).
+Write in plain, friendly language a small business would use. Format as short paragraphs with clear headers. Keep it under 250 words.""",
+        "terms_of_service": f"""Write simple, fair Terms of Service for an online store called "{store_name}" operating on a social commerce platform (orders via WhatsApp/Instagram, pay on delivery or bank transfer).
+Include: acceptance of terms, order process, pricing and payment, delivery, returns (reference a separate return policy), limitation of liability, and contact method.
+Write in plain, accessible language, not dense legal jargon. Format as short numbered sections. Keep it under 400 words.""",
+    }
+
+    prompt = prompts[policy_type]
+    text = await call_ai_text(prompt, prefer_gemini=user_is_pro(current_user))
+    return {"policy_type": policy_type, "label": label, "content": text}

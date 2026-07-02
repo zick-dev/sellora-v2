@@ -117,6 +117,11 @@ class Store(Base):
     bank_iban: Mapped[str | None] = mapped_column(String(40), nullable=True)
     bank_routing_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
+    # ── Store Policies ─────────────────────────────
+    return_policy: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shipping_policy: Mapped[str | None] = mapped_column(Text, nullable=True)
+    terms_of_service: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     base_currency: Mapped[str] = mapped_column(
         String(10),
         default="USD",

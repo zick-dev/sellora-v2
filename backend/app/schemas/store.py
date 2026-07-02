@@ -80,6 +80,9 @@ class StoreUpdateRequest(BaseModel):
     account_number: str | None = Field(None, max_length=30)
     bank_iban: str | None = Field(None, max_length=40)
     bank_routing_number: str | None = Field(None, max_length=20)
+    return_policy: str | None = None
+    shipping_policy: str | None = None
+    terms_of_service: str | None = None
     whatsapp:    str | None = Field(None, max_length=30)
     instagram:   str | None = Field(None, max_length=100)
     categories:  str | None = None
@@ -192,6 +195,9 @@ class StoreOut(BaseModel):
     account_number: str | None
     bank_iban: str | None
     bank_routing_number: str | None
+    return_policy: str | None
+    shipping_policy: str | None
+    terms_of_service: str | None
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str
