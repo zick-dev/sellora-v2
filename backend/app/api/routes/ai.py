@@ -31,11 +31,13 @@ from app.models.store import Store
 router = APIRouter(prefix="/ai", tags=["AI Tools"])
 
 OPENROUTER_TEXT_MODELS = [
+    "openrouter/free",
     "meta-llama/llama-3.3-70b-instruct:free",
     "qwen/qwen3-next-80b-a3b-instruct:free",
     "nousresearch/hermes-3-llama-3.1-405b:free",
 ]
 OPENROUTER_VISION_MODELS = [
+    "openrouter/free",
     "google/gemma-4-26b-a4b:free",
 ]
 
