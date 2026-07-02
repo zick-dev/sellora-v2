@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     # Optional — AI features are disabled if not provided
     GEMINI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
+    FRONTEND_URL: str = "https://sellora-v2-blue.vercel.app"
 
     # Cloudinary — used server-side to delete images on account deletion
     CLOUDINARY_CLOUD_NAME: str = "dkun9hvkf"

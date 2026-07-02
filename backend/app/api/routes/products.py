@@ -16,7 +16,7 @@ Seller routes (JWT required):
 import re
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -138,6 +138,71 @@ async def track_link_click(
     except Exception:
         pass
     return None
+
+
+@router.get(
+    "/store/{store_id}/catalog.csv",
+    summary="Meta Commerce Catalog feed (public CSV, for Facebook/Instagram/WhatsApp Shopping)",
+)
+async def get_catalog_feed(
+    store_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Generates a product feed in Meta's Commerce Catalog CSV format.
+    Merchants can connect this URL directly in Meta Commerce Manager to
+    sync their Kormerce products to Facebook Shop, Instagram Shopping,
+    and WhatsApp Business catalogs -- no Kormerce-side Meta approval needed
+    for this manual-feed-URL method (Meta ingests the URL on a schedule).
+
+    Feed spec: https://www.facebook.com/business/help/120325381656392
+    """
+    from app.core.config import settings
+    import csv
+    import io
+
+    store_result = await db.execute(select(Store).where(Store.id == store_id))
+    store = store_result.scalar_one_or_none()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+
+    products_result = await db.execute(
+        select(Product).where(
+            Product.store_id == store_id,
+            Product.is_available == True,  # noqa: E712
+        ).order_by(Product.created_at.desc())
+    )
+    products = products_result.scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "title", "description", "availability", "condition", "price", "link", "image_link", "brand"])
+
+    currency = store.base_currency or "USD"
+    for p in products:
+        availability = "in stock" if p.stock > 0 else "out of stock"
+        product_currency = p.price_currency or currency
+        price_str = f"{p.price:.2f} {product_currency}"
+        link = f"{settings.FRONTEND_URL}/store/{store.slug}/product/{p.slug}" if p.slug else f"{settings.FRONTEND_URL}/store/{store.slug}"
+        image = p.image_url or ""
+        writer.writerow([
+            p.id,
+            p.name,
+            (p.description or "")[:5000].replace("\n", " "),
+            availability,
+            "new",
+            price_str,
+            link,
+            image,
+            store.store_name,
+        ])
+
+    csv_content = output.getvalue()
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'inline; filename="{store.slug}-catalog.csv"'},
+    )
 
 
 # ── Seller Routes ─────────────────────────────────────────────────

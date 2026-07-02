@@ -383,6 +383,32 @@ export default function StorefrontPage() {
         </div>
       )}
 
+      {activeTab === 'general' && store && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, marginTop: 16 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Sell on Facebook &amp; Instagram</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>
+            Connect this feed URL in Meta Commerce Manager to sync your products to Facebook Shop, Instagram Shopping, and WhatsApp catalogs.
+          </p>
+          <div style={{ background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <p style={{ color: C.purple, fontSize: 12.5, fontFamily: 'monospace', wordBreak: 'break-all', flex: '1 1 240px' }}>
+              https://sellora-v2-production.up.railway.app/api/products/store/{store.id}/catalog.csv
+            </p>
+            <button
+              onClick={() => {
+                const feedUrl = 'https://sellora-v2-production.up.railway.app/api/products/store/' + store.id + '/catalog.csv';
+                navigator.clipboard.writeText(feedUrl);
+              }}
+              style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.2)', color: C.purple, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            >
+              Copy Feed URL
+            </button>
+          </div>
+          <p style={{ color: C.muted, fontSize: 11.5, marginTop: 10 }}>
+            In Meta Commerce Manager: Catalog → Add Items → Data Feed → paste this URL. Meta will re-check it periodically for updates.
+          </p>
+        </div>
+      )}
+
       {activeTab === 'appearance' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
