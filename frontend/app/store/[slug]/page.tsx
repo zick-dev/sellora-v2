@@ -203,7 +203,7 @@ export default function StorefrontPage() {
   const cartSubtotal  = cart.reduce((s, i) => s + dp(Number(i.variant?.price != null ? i.variant.price : i.product.price), i.product.price_currency) * i.quantity, 0);
   const discountAmt   = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
   const discountedSub = cartSubtotal - discountAmt;
-  const deliveryFee   = store && (store.delivery_fee||0) > 0 && discountedSub < (store.free_delivery_above||0) ? (store.delivery_fee||0) : 0;
+  const deliveryFee   = store && (store.delivery_fee||0) > 0 && discountedSub < dp(store.free_delivery_above||0, store.base_currency) ? dp(store.delivery_fee||0, store.base_currency) : 0;
   const cartTotal     = discountedSub + deliveryFee;
   const cartCount     = cart.reduce((s, i) => s + i.quantity, 0);
 
