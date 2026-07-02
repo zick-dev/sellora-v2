@@ -42,10 +42,11 @@ export default function StorefrontPage() {
   const [isPro, setIsPro]         = useState(false);
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
+  const [generatingPolicy, setGeneratingPolicy] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [error, setError]         = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup' | 'delivery'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup' | 'delivery' | 'policies'>('general');
   const [catInput, setCatInput]   = useState('');
 
   const [form, setForm] = useState({
@@ -72,6 +73,9 @@ export default function StorefrontPage() {
     bank_iban:              '',
     bank_routing_number:    '',
     bank_account_type:      'local',
+    return_policy:          '',
+    shipping_policy:        '',
+    terms_of_service:       '',
   });
 
   const categories: string[] = (() => {
@@ -114,6 +118,9 @@ export default function StorefrontPage() {
           bank_iban:            res.data.bank_iban ?? '',
           bank_routing_number:  res.data.bank_routing_number ?? '',
           bank_account_type:    res.data.bank_iban ? 'iban' : res.data.bank_routing_number ? 'us' : 'local',
+          return_policy:        res.data.return_policy ?? '',
+          shipping_policy:      res.data.shipping_policy ?? '',
+          terms_of_service:     res.data.terms_of_service ?? '',
         });
       } finally {
         setLoading(false);
@@ -150,6 +157,9 @@ export default function StorefrontPage() {
         account_number:       form.bank_account_type === 'local' ? (form.account_number || null) : null,
         bank_iban:            form.bank_account_type === 'iban' ? (form.bank_iban || null) : null,
         bank_routing_number:  form.bank_account_type === 'us' ? (form.bank_routing_number || null) : null,
+        return_policy:        form.return_policy || null,
+        shipping_policy:      form.shipping_policy || null,
+        terms_of_service:     form.terms_of_service || null,
       });
       setStore(res.data);
       setSaved(true);
@@ -204,6 +214,7 @@ export default function StorefrontPage() {
     { key: 'categories', label: 'Categories', icon: '🏷️' },
     { key: 'popup',      label: 'Popup',      icon: '🎁' },
     { key: 'delivery', label: 'Delivery', icon: '🚚' },
+    { key: 'policies', label: 'Policies', icon: '📜' },
   ];
 
   if (loading) return (
@@ -842,6 +853,58 @@ export default function StorefrontPage() {
           </div>
         </div>
       )}
+
+      {activeTab === 'policies' && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Store Policies</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 20 }}>
+            Write your own policies or let AI draft them for you. Shown to buyers on your storefront.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {[
+              { key: 'return_policy', label: 'Return & Refund Policy', policyType: 'return_policy' },
+              { key: 'shipping_policy', label: 'Shipping & Delivery Policy', policyType: 'shipping_policy' },
+              { key: 'terms_of_service', label: 'Terms of Service', policyType: 'terms_of_service' },
+            ].map(p => (
+              <div key={p.key}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>{p.label}</label>
+                  <button
+                    type="button"
+                    disabled={generatingPolicy === p.key}
+                    onClick={async () => {
+                      setGeneratingPolicy(p.key);
+                      try {
+                        const res = await api.post('/api/ai/generate-policy', {
+                          policy_type: p.policyType,
+                          store_name: form.store_name || 'my store',
+                        });
+                        if (res.data?.content) setForm({ ...form, [p.key]: res.data.content });
+                      } catch {}
+                      setGeneratingPolicy(null);
+                    }}
+                    style={{
+                      background: 'none', border: '1px solid ' + C.inputBorder, borderRadius: 8,
+                      padding: '4px 10px', fontSize: 11, fontWeight: 600,
+                      color: C.purple, cursor: 'pointer',
+                    }}
+                  >
+                    {generatingPolicy === p.key ? '⏳ Generating...' : '✨ AI Generate'}
+                  </button>
+                </div>
+                <textarea
+                  value={(form as any)[p.key]}
+                  onChange={e => setForm({ ...form, [p.key]: e.target.value })}
+                  placeholder={`Write your ${p.label.toLowerCase()}, or use AI Generate above...`}
+                  rows={6}
+                  style={{ ...inputBase, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '15px 0', marginTop: 20, background: saving ? 'rgba(79,70,229,0.4)' : C.purple, border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         {saving ? (
