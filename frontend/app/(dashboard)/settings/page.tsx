@@ -3,6 +3,7 @@ import { useTheme } from '@/lib/theme';
 
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
+import ImageUpload from '@/components/ImageUpload';
 import api from '@/lib/api';
 import { detectProPricing, ProPricing } from '@/lib/proPricing';
 import { useAuthStore } from '@/lib/auth';
@@ -10,7 +11,7 @@ import { useAuthStore } from '@/lib/auth';
 
 export default function SettingsPage() {
   const { C } = useTheme();
-  const { user } = useDashboard();
+  const { user, setUser } = useDashboard();
   const { logout } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'plan' | 'danger'>('profile');
@@ -31,6 +32,16 @@ export default function SettingsPage() {
 
   // Danger zone
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [savingAvatar, setSavingAvatar] = useState(false);
+
+  async function handleAvatarChange(url: string) {
+    setSavingAvatar(true);
+    try {
+      const res = await api.put('/api/auth/me', { avatar_url: url });
+      setUser(res.data);
+    } catch {}
+    setSavingAvatar(false);
+  }
   const [showFinalConfirm, setShowFinalConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -132,19 +143,36 @@ export default function SettingsPage() {
       </div>
 
       {/* Avatar */}
-      <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: '50%',
-          background: user?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #4F46E5, #ec4899)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, fontWeight: 700, color: 'white', flexShrink: 0,
-          overflow: 'hidden',
-        }}>
-          {user?.avatar_url ? (
-            <img src={user.avatar_url} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            user?.name?.[0]?.toUpperCase() || '?'
+      <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: '50%',
+            background: user?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #4F46E5, #ec4899)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 24, fontWeight: 700, color: 'white',
+            overflow: 'hidden',
+          }}>
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              user?.name?.[0]?.toUpperCase() || '?'
+            )}
+          </div>
+          {savingAvatar && (
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+            </div>
           )}
+        </div>
+        <div style={{ flex: '1 1 160px' }}>
+          <ImageUpload
+            value={user?.avatar_url || ''}
+            onChange={handleAvatarChange}
+            label="Profile Photo"
+            hint="Square image recommended."
+            aspectRatio="1"
+            placeholder="👤"
+          />
         </div>
         <div>
           <p style={{ color: C.text, fontSize: 16, fontWeight: 700, marginBottom: 2 }}>{user?.name}</p>

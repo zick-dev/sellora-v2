@@ -27,7 +27,8 @@ const DashboardContext = createContext<{
   store: StoreData;
   user: UserData;
   loading: boolean;
-}>({ store: null, user: null, loading: true });
+  setUser: (user: UserData) => void;
+}>({ store: null, user: null, loading: true, setUser: () => {} });
 
 export const useDashboard = () => useContext(DashboardContext);
 
@@ -659,7 +660,7 @@ export default function DashboardLayout({
         a:hover { opacity: 0.85; }
       `}</style>
 
-      <DashboardContext.Provider value={{ store, user, loading }}>
+      <DashboardContext.Provider value={{ store, user, loading, setUser }}>
         {isMobile ? (
           // ── Mobile layout ──────────────────────────────────────
           <div style={{ minHeight: '100vh', background: C.bg }}>
