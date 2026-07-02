@@ -307,8 +307,8 @@ export default function StorefrontPage() {
           storeName={store.store_name}
           accentColor={accent}
           products={products}
-          deliveryFee={(store as any).delivery_fee || 0}
-          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
+          freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
           currencySymbol={sym}
         />
@@ -341,8 +341,8 @@ export default function StorefrontPage() {
           storeName={store.store_name}
           accentColor={accent}
           products={products}
-          deliveryFee={(store as any).delivery_fee || 0}
-          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
+          freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
           currencySymbol={sym}
         />
@@ -1048,8 +1048,8 @@ export default function StorefrontPage() {
           storeName={store.store_name}
           accentColor={accent}
           products={products}
-          deliveryFee={(store as any).delivery_fee || 0}
-          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
+          freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
           currencySymbol={sym}
         />
