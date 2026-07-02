@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import MobileDemoPhone from '@/components/MobileDemoPhone';
+import { detectProPricing, ProPricing } from '@/lib/proPricing';
 
 
 const INDIGO = '#4F46E5';
@@ -12,6 +13,9 @@ const SLIDE_DURATION = 6000;
 
 export default function LandingPage() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [pricing, setPricing] = useState<ProPricing>({ amount: 15, currency: 'USD', display: '$15/month', region: 'global' });
+
+  useEffect(() => { detectProPricing().then(setPricing); }, []);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -239,7 +243,7 @@ export default function LandingPage() {
                   <div style={{ position: 'absolute', top: -10, right: 16, background: EMERALD, color: '#fff', fontSize: 9.5, fontWeight: 800, padding: '3px 10px', borderRadius: 20, letterSpacing: '0.04em' }}>POPULAR</div>
                   <p style={{ fontSize: 12.5, fontWeight: 700, color: '#a5b4fc', marginBottom: 5 }}>Pro</p>
                   <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 1, color: '#fff' }}>
-                    $5<span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>/mo</span>
+                    {pricing.currency === 'NGN' ? '₦' + pricing.amount.toLocaleString() : '$' + pricing.amount}<span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>/mo</span>
                   </p>
                   <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>Billed monthly</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
@@ -278,10 +282,10 @@ export default function LandingPage() {
       </div>
 
       <style>{`
-        html, body { height: 100%; margin: 0; overflow-y: hidden; overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; }
+        html, body { height: 100%; margin: 0; }
         @media (max-width: 640px) {
           .hero-product-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .carousel-arrow { display: none !important; }
+          .carousel-arrow { width: 32px !important; height: 32px !important; }
         }
         @media (max-height: 700px) {
           .slide-fade h1 { font-size: clamp(22px, 6vw, 34px) !important; }
