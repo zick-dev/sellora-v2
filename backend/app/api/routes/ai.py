@@ -30,8 +30,8 @@ from app.models.store import Store
 
 router = APIRouter(prefix="/ai", tags=["AI Tools"])
 
-OPENROUTER_TEXT_MODEL = "meta-llama/llama-3.1-8b-instruct:free"
-OPENROUTER_VISION_MODEL = "meta-llama/llama-3.2-11b-vision-instruct:free"
+OPENROUTER_TEXT_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+OPENROUTER_VISION_MODEL = "google/gemma-4-26b-a4b:free"
 
 
 def user_is_pro(user: User | None) -> bool:
