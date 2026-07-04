@@ -43,9 +43,17 @@ Each of these ships and is pushed on its own; none depend on each other.
       removed automatically on Pro. Classic Wix/Carrd-style growth loop.
       Shipped: is_owner_pro computed field on public store lookup, badge rendered in
       storefront footer, hidden automatically when the store owner has active Pro.
-- [ ] 1e. **Multi-language storefront detection** -- reuses the existing
+- [x] 1e. **Multi-language storefront detection** -- reuses the existing
       geolocation/currency-detection pattern to auto-adapt storefront language
       (French, Arabic, Turkish, etc.) for wider regional reach.
+      Shipped: lib/i18n.ts translation dictionary (English/French/Arabic/Turkish),
+      language auto-detected from the same IP geolocation call already used for
+      currency, manual switcher dropdown for buyers to override. Merchant content
+      (product names/descriptions) is intentionally never auto-translated -- only
+      storefront UI chrome. Initial string coverage is partial (All Products heading,
+      Checkout button) -- extending to cart/checkout/order-success strings throughout
+      is straightforward incremental work using the same tr() helper, deferred to
+      avoid a large risky find-replace pass across the storefront file in one sitting.
 - [x] 1f. **"Demo Order" simulation for new merchants** -- reduces new-merchant anxiety
       by showing what an order looks like before real traffic arrives.
       Shipped: "See a Demo Order" button on empty Orders state creates a realistic
