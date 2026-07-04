@@ -82,6 +82,7 @@ export default function StorefrontPage() {
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
   const [buyerCurrency, setBuyerCurrency] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<'all' | 'low' | 'mid' | 'high'>('all');
+  const [sizeFilter, setSizeFilter] = useState<string>('all');
   const [showLocal, setShowLocal] = useState(true);
   const [lang, setLang] = useState<Lang>('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -221,6 +222,13 @@ export default function StorefrontPage() {
   const priceMax = allPrices.length ? Math.max(...allPrices) : 0;
   const priceLowCutoff = priceMax / 3;
   const priceMidCutoff = (priceMax / 3) * 2;
+  const isSizeType = (t: string | null) => !!t && t.toLowerCase().includes('size');
+  const availableSizes = Array.from(new Set(
+    products.flatMap(p => (p.variants || []).flatMap(v => [
+      isSizeType(v.variant_type_1) ? v.variant_value_1 : null,
+      isSizeType(v.variant_type_2) ? v.variant_value_2 : null,
+    ])).filter(Boolean) as string[]
+  ));
   const filtered = products.filter(p => {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
     const q = searchQuery.toLowerCase().trim();
@@ -230,7 +238,11 @@ export default function StorefrontPage() {
       || (priceFilter === 'low' && productPrice <= priceLowCutoff)
       || (priceFilter === 'mid' && productPrice > priceLowCutoff && productPrice <= priceMidCutoff)
       || (priceFilter === 'high' && productPrice > priceMidCutoff);
-    return matchesCategory && matchesSearch && matchesPrice;
+    const matchesSize = sizeFilter === 'all' || (p.variants || []).some(v =>
+      (isSizeType(v.variant_type_1) && v.variant_value_1 === sizeFilter) ||
+      (isSizeType(v.variant_type_2) && v.variant_value_2 === sizeFilter)
+    );
+    return matchesCategory && matchesSearch && matchesPrice && matchesSize;
   });
   const cartSubtotal  = cart.reduce((s, i) => s + dp(Number(i.variant?.price != null ? i.variant.price : i.product.price), i.product.price_currency) * i.quantity, 0);
   const discountAmt   = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
@@ -557,6 +569,31 @@ export default function StorefrontPage() {
                 color: priceFilter===f.key ? '#fff' : '#666', flexShrink:0,
               }}>
                 {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {template.showSizeFilter && availableSizes.length > 0 && (
+        <div style={{ background:'#fff', borderBottom:'1px solid #f0f0f0' }}>
+          <div style={{ maxWidth:1200, margin:'0 auto', padding:'8px 20px', display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none', alignItems:'center' }}>
+            <span style={{ fontSize:11, color:'#999', fontWeight:600, flexShrink:0, marginRight:2 }}>Size</span>
+            <button onClick={() => setSizeFilter('all')} style={{
+              padding:'5px 12px', borderRadius:20, fontSize:11.5, fontWeight:600, whiteSpace:'nowrap', cursor:'pointer',
+              border: sizeFilter==='all' ? 'none' : '1px solid #e0e0e0',
+              background: sizeFilter==='all' ? accent : '#fff',
+              color: sizeFilter==='all' ? '#fff' : '#666', flexShrink:0,
+            }}>
+              All
+            </button>
+            {availableSizes.map(s => (
+              <button key={s} onClick={() => setSizeFilter(s)} style={{
+                padding:'5px 12px', borderRadius:20, fontSize:11.5, fontWeight:600, whiteSpace:'nowrap', cursor:'pointer',
+                border: sizeFilter===s ? 'none' : '1px solid #e0e0e0',
+                background: sizeFilter===s ? accent : '#fff',
+                color: sizeFilter===s ? '#fff' : '#666', flexShrink:0,
+              }}>
+                {s}
               </button>
             ))}
           </div>

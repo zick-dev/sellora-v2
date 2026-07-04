@@ -14,6 +14,7 @@ export interface StorefrontTemplate {
   gridGapDesktop: number;       // px gap between product cards
   emptyStateIcon: string;       // icon shown when no products match
   heroAccentIcon: string;       // small decorative icon near store name
+  showSizeFilter: boolean;      // surface a size filter derived from variants
 }
 
 export const STOREFRONT_TEMPLATES: Record<string, StorefrontTemplate> = {
@@ -24,6 +25,7 @@ export const STOREFRONT_TEMPLATES: Record<string, StorefrontTemplate> = {
     gridGapDesktop: 14,
     emptyStateIcon: '👕',
     heroAccentIcon: '✨',
+      showSizeFilter: true,
   },
   electronics: {
     productImageAspect: '1/1',
@@ -32,6 +34,7 @@ export const STOREFRONT_TEMPLATES: Record<string, StorefrontTemplate> = {
     gridGapDesktop: 12,
     emptyStateIcon: '💻',
     heroAccentIcon: '⚡',
+      showSizeFilter: false,
   },
   food: {
     productImageAspect: '1/1',
@@ -40,6 +43,7 @@ export const STOREFRONT_TEMPLATES: Record<string, StorefrontTemplate> = {
     gridGapDesktop: 10,
     emptyStateIcon: '🍔',
     heroAccentIcon: '🔥',
+      showSizeFilter: false,
   },
   beauty: {
     productImageAspect: '1/1',
@@ -48,6 +52,7 @@ export const STOREFRONT_TEMPLATES: Record<string, StorefrontTemplate> = {
     gridGapDesktop: 12,
     emptyStateIcon: '✨',
     heroAccentIcon: '💖',
+      showSizeFilter: false,
   },
   general: {
     productImageAspect: '1/1',
@@ -56,6 +61,7 @@ export const STOREFRONT_TEMPLATES: Record<string, StorefrontTemplate> = {
     gridGapDesktop: 11,
     emptyStateIcon: '🛍️',
     heroAccentIcon: '⭐',
+      showSizeFilter: false,
   },
 };
 
