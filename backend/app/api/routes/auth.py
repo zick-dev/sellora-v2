@@ -57,12 +57,13 @@ limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-def make_token_response(user: User) -> TokenResponse:
+def make_token_response(user: User, referral_applied: bool = False) -> TokenResponse:
     """Build standard auth response after any successful login."""
     return TokenResponse(
         access_token=create_access_token(user.id),
         refresh_token=create_refresh_token(user.id),
         user=UserOut.model_validate(user),
+        referral_applied=referral_applied,
     )
 
 
@@ -116,6 +117,7 @@ async def signup(
     # ── Referral bonus: if a valid referral code was used, extend the
     # referred user's Pro trial by 30 days, AND give the referrer 30 days
     # of Pro (extending their current expiry, or starting fresh if none).
+    referral_applied = False
     if payload.referral_code:
         referrer_result = await db.execute(
             select(User).where(User.referral_code == payload.referral_code.strip().upper())
@@ -125,6 +127,7 @@ async def signup(
             user.referred_by = referrer.id
             user.plan = "pro"
             user.plan_expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+            referral_applied = True
 
             referrer_base = referrer.plan_expires_at if (
                 referrer.plan == "pro" and referrer.plan_expires_at and referrer.plan_expires_at > datetime.now(timezone.utc)
@@ -135,7 +138,7 @@ async def signup(
 
     await db.flush()
     await db.refresh(user)
-    return make_token_response(user)
+    return make_token_response(user, referral_applied=referral_applied)
 
 
 # ── POST /api/auth/login ──────────────────────────────────────────
@@ -198,6 +201,7 @@ async def google_auth(
     Creates account if new user, logs in if existing user.
     Returns has_store flag so frontend knows where to redirect.
     """
+    google_referral_applied = False
     google_user = await verify_google_token(payload.token)
     if not google_user:
         raise HTTPException(
@@ -250,6 +254,7 @@ async def google_auth(
             await db.flush()
 
             # Referral bonus: same logic as email signup
+            google_referral_applied = False
             if payload.referral_code:
                 referrer_result = await db.execute(
                     select(User).where(User.referral_code == payload.referral_code.strip().upper())
@@ -259,6 +264,7 @@ async def google_auth(
                     user.referred_by = referrer.id
                     user.plan = "pro"
                     user.plan_expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+                    google_referral_applied = True
 
                     referrer_base = referrer.plan_expires_at if (
                         referrer.plan == "pro" and referrer.plan_expires_at and referrer.plan_expires_at > datetime.now(timezone.utc)
@@ -277,7 +283,7 @@ async def google_auth(
     )
     has_store = store_result.scalar_one_or_none() is not None
 
-    response_data = make_token_response(user).model_dump()
+    response_data = make_token_response(user, referral_applied=google_referral_applied).model_dump()
     response_data["is_new_user"] = is_new_user
     response_data["has_store"] = has_store
     return response_data

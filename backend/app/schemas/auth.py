@@ -107,6 +107,7 @@ class TokenResponse(BaseModel):
     refresh_token: str  # Long-lived JWT (7 days)
     token_type: str = "bearer"  # Always "bearer" — HTTP standard
     user: UserOut       # User data to display immediately after login
+    referral_applied: bool = False  # True if a valid referral code granted a bonus on signup
 
 
 # Rebuild needed because TokenResponse references UserOut

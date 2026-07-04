@@ -35,13 +35,13 @@ interface AuthState {
   init: () => void;
 
   // Sign up with email and password
-  signup: (name: string, email: string, password: string, referralCode?: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, referralCode?: string) => Promise<{ referral_applied: boolean }>;
 
   // Log in with email and password
   login: (email: string, password: string) => Promise<void>;
 
   // Log in or sign up with Google ID token
-  googleAuth: (token: string, referralCode?: string) => Promise<{ is_new_user: boolean; has_store: boolean }>;
+  googleAuth: (token: string, referralCode?: string) => Promise<{ is_new_user: boolean; has_store: boolean; referral_applied: boolean }>;
 
   // Fetch current user profile from backend
   loadUser: () => Promise<void>;
@@ -101,6 +101,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         referral_code: referralCode || undefined,
       });
       saveTokens(set, res.data);
+      return { referral_applied: !!res.data.referral_applied };
    } catch (error) {
   set({ isLoading: false });
   throw error;
@@ -147,6 +148,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     return {
       is_new_user: res.data.is_new_user,
       has_store: res.data.has_store,
+      referral_applied: !!res.data.referral_applied,
     };
   } catch (error) {
     set({ isLoading: false });

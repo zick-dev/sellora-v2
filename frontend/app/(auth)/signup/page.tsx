@@ -44,8 +44,12 @@ function SignupPageInner() {
     setLoading(true);
     setError("");
     try {
-      await signup(name, email, password, referralCode);
-      toast.success("Account created! Let's set up your store.");
+      const result = await signup(name, email, password, referralCode);
+      if (result.referral_applied) {
+        toast.success("🎉 You've been referred! Enjoy 30 days of Pro, free.");
+      } else {
+        toast.success("Account created! Let's set up your store.");
+      }
       window.location.href = '/onboarding';
     } catch (err: any) {
       setError(
@@ -63,7 +67,11 @@ function SignupPageInner() {
   setError('');
   try {
     const result = await googleAuth(response.access_token, referralCode);
-    toast.success('Welcome to Kormerce!');
+    if (result.referral_applied) {
+      toast.success("🎉 You've been referred! Enjoy 30 days of Pro, free.");
+    } else {
+      toast.success('Welcome to Kormerce!');
+    }
      // Small delay to ensure token is saved to localStorage
     window.location.href = '/dashboard';
     

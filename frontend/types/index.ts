@@ -21,6 +21,7 @@ export interface TokenResponse {
   refresh_token: string;
   token_type: string;
   user: User;
+  referral_applied?: boolean;
 }
 
 // ── Store Types ───────────────────────────────────────────────────
