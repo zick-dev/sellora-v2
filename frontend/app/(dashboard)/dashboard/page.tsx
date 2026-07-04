@@ -52,6 +52,12 @@ export default function DashboardOverviewPage() {
   const [orders, setOrders]     = useState<any[]>([]);
   const [leads, setLeads]       = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [linkShared, setLinkShared] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('kormerce_store_link_shared') === 'true') {
+      setLinkShared(true);
+    }
+  }, []);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
@@ -125,24 +131,24 @@ export default function DashboardOverviewPage() {
           { done: !!store.logo_url, label: 'Upload your logo', desc: 'Add a logo so customers recognize your brand', href: '/storefront' },
           { done: products.length > 0, label: 'Add your first product', desc: 'List something for sale with a photo and price', href: '/products' },
           { done: ((store as any).delivery_fee || 0) > 0, label: 'Set your delivery fee', desc: 'Tell buyers what delivery costs', href: '/storefront' },
-          { done: false, label: 'Share your store link', desc: '', href: '' },
+          { done: linkShared, label: 'Share your store link', desc: 'Copy your link and send it on WhatsApp or Instagram', href: '' },
         ];
         const completed = steps.filter(s => s.done).length;
-        const allDone = completed >= 4;
+        const allDone = completed >= steps.length;
         if (allDone) return null;
         return (
           <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: '20px 22px', marginBottom: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
                 <h3 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Get started with Kormerce</h3>
-                <p style={{ color: C.muted, fontSize: 12 }}>{completed} of {steps.length - 1} steps complete</p>
+                <p style={{ color: C.muted, fontSize: 12 }}>{completed} of {steps.length} steps complete</p>
               </div>
               <div style={{ width: 80, height: 6, borderRadius: 3, background: C.inputBorder, overflow: 'hidden' }}>
-                <div style={{ width: `${(completed / 4) * 100}%`, height: '100%', borderRadius: 3, background: '#10b981', transition: 'width 0.3s' }} />
+                <div style={{ width: `${(completed / steps.length) * 100}%`, height: '100%', borderRadius: 3, background: '#10b981', transition: 'width 0.3s' }} />
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {steps.slice(0, 4).map((step, i) => (
+              {steps.map((step, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 22, height: 22, borderRadius: '50%',
@@ -153,7 +159,20 @@ export default function DashboardOverviewPage() {
                   }}>
                     {step.done && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
                   </div>
-                  {step.href && !step.done ? (
+                  {i === 4 && !step.done && store ? (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.origin + '/store/' + store.slug);
+                        localStorage.setItem('kormerce_store_link_shared', 'true');
+                        setLinkShared(true);
+                        alert('Store link copied!');
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+                    >
+                      <p style={{ color: C.purple, fontSize: 13, fontWeight: 600 }}>{step.label}</p>
+                      <p style={{ color: C.muted, fontSize: 11 }}>{step.desc}</p>
+                    </button>
+                  ) : step.href && !step.done ? (
                     <Link href={step.href} style={{ textDecoration: 'none' }}>
                       <p style={{ color: C.purple, fontSize: 13, fontWeight: 600 }}>{step.label}</p>
                       <p style={{ color: C.muted, fontSize: 11 }}>{step.desc}</p>
@@ -166,17 +185,6 @@ export default function DashboardOverviewPage() {
                   )}
                 </div>
               ))}
-              {!steps[4].done && store && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', border: '2px solid ' + C.inputBorder, flexShrink: 0 }} />
-                  <div>
-                    <button onClick={() => { navigator.clipboard.writeText(window.location.origin + '/store/' + store.slug); alert('Store link copied!'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                      <p style={{ color: C.purple, fontSize: 13, fontWeight: 600, textAlign: 'left' }}>Share your store link</p>
-                      <p style={{ color: C.muted, fontSize: 11, textAlign: 'left' }}>Copy your link and send it on WhatsApp or Instagram</p>
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         );
