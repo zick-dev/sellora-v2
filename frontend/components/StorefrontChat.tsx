@@ -42,6 +42,7 @@ export default function StorefrontChat({ storeId, storeName, accentColor, produc
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
+          history: messages.slice(-6).map(m => ({ role: m.role, text: m.text })),
           store_id: storeId,
           store_name: storeName,
           products: (() => {

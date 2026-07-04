@@ -346,6 +346,7 @@ async def storefront_chat(
     subscription, otherwise OpenRouter.
     """
     message = payload.get("message", "").strip()
+    history = payload.get("history", [])
     store_name = payload.get("store_name", "this store")
     store_id = payload.get("store_id", "")
     products = payload.get("products", [])
@@ -390,10 +391,14 @@ STORE POLICIES:
 - Payment: Pay on delivery or bank transfer
 {f"- WhatsApp: {whatsapp}" if whatsapp else ""}
 
+{"CONVERSATION SO FAR:" if history else ""}
+{chr(10).join([("Customer: " + h.get("text","")) if h.get("role") == "user" else ("You: " + h.get("text","")) for h in history[:-1]]) if history else ""}
+
 CUSTOMER MESSAGE: "{message}"
 
 RULES:
 - Before answering, carefully scan the ENTIRE catalog above line by line. Do not assume an item is unavailable without checking every line first.
+- Use the conversation history above to understand follow-up questions (e.g. "what's the cheapest for that size" refers to whatever product/size was just discussed)
 - Answer based ONLY on the catalog and policies above
 - Be concise (2-3 sentences max)
 - If, after checking every line, a product genuinely is not in the catalog, say so clearly and suggest similar items from the catalog
