@@ -34,16 +34,19 @@ interface Store {
   popup_message: string;
 }
 
+const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
+
 export default function StorefrontPage() {
   const { C } = useTheme();
   const [store, setStore]         = useState<Store | null>(null);
   const [isPro, setIsPro]         = useState(false);
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
+  const [generatingPolicy, setGeneratingPolicy] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [error, setError]         = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup' | 'delivery'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup' | 'delivery' | 'policies'>('general');
   const [catInput, setCatInput]   = useState('');
 
   const [form, setForm] = useState({
@@ -67,11 +70,18 @@ export default function StorefrontPage() {
     bank_name:             '',
     account_name:          '',
     account_number:        '',
+    bank_iban:              '',
+    bank_routing_number:    '',
+    bank_account_type:      'local',
+    return_policy:          '',
+    shipping_policy:        '',
+    terms_of_service:       '',
   });
 
   const categories: string[] = (() => {
     try { return JSON.parse(form.categories); } catch { return []; }
   })();
+  const sym = CURRENCY_SYMBOLS[form.base_currency] || form.base_currency + ' ';
 
   useEffect(() => {
     const load = async () => {
@@ -105,6 +115,12 @@ export default function StorefrontPage() {
           bank_name:            res.data.bank_name ?? '',
           account_name:         res.data.account_name ?? '',
           account_number:       res.data.account_number ?? '',
+          bank_iban:            res.data.bank_iban ?? '',
+          bank_routing_number:  res.data.bank_routing_number ?? '',
+          bank_account_type:    res.data.bank_iban ? 'iban' : res.data.bank_routing_number ? 'us' : 'local',
+          return_policy:        res.data.return_policy ?? '',
+          shipping_policy:      res.data.shipping_policy ?? '',
+          terms_of_service:     res.data.terms_of_service ?? '',
         });
       } finally {
         setLoading(false);
@@ -138,7 +154,12 @@ export default function StorefrontPage() {
         free_delivery_above:  form.free_delivery_above ?? 10000,
         bank_name:            form.bank_name || null,
         account_name:         form.account_name || null,
-        account_number:       form.account_number || null,
+        account_number:       form.bank_account_type === 'local' ? (form.account_number || null) : null,
+        bank_iban:            form.bank_account_type === 'iban' ? (form.bank_iban || null) : null,
+        bank_routing_number:  form.bank_account_type === 'us' ? (form.bank_routing_number || null) : null,
+        return_policy:        form.return_policy || null,
+        shipping_policy:      form.shipping_policy || null,
+        terms_of_service:     form.terms_of_service || null,
       });
       setStore(res.data);
       setSaved(true);
@@ -193,6 +214,7 @@ export default function StorefrontPage() {
     { key: 'categories', label: 'Categories', icon: '🏷️' },
     { key: 'popup',      label: 'Popup',      icon: '🎁' },
     { key: 'delivery', label: 'Delivery', icon: '🚚' },
+    { key: 'policies', label: 'Policies', icon: '📜' },
   ];
 
   if (loading) return (
@@ -233,10 +255,21 @@ export default function StorefrontPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: C.card, borderRadius: 12, padding: 4, border: '1px solid ' + C.cardBorder, flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 8, marginBottom: 24 }}>
         {tabs.map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ flex: '1 1 80px', padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', background: activeTab === tab.key ? C.purple : 'transparent', color: activeTab === tab.key ? C.text : C.muted, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
-            <span style={{ marginRight: 4 }}>{tab.icon}</span>
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+              padding: '14px 8px', borderRadius: 12, cursor: 'pointer',
+              background: activeTab === tab.key ? 'rgba(79,70,229,0.1)' : C.card,
+              border: activeTab === tab.key ? '1.5px solid ' + C.purple : '1px solid ' + C.cardBorder,
+              color: activeTab === tab.key ? C.purple : C.muted,
+              fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
+            }}
+          >
+            <span style={{ fontSize: 18 }}>{tab.icon}</span>
             {tab.label}
           </button>
         ))}
@@ -287,6 +320,7 @@ export default function StorefrontPage() {
                 <option value="EGP">EGP — Egyptian Pound (E&#163;)</option>
                 <option value="GBP">GBP — British Pound (&#163;)</option>
                 <option value="EUR">EUR — Euro (&#8364;)</option>
+                <option value="TRY">TRY — Turkish Lira (&#8378;)</option>
               </select>
               <p style={{ color: C.muted, fontSize: 11, marginTop: 6 }}>Prices on your storefront will show in this currency</p>
             </div>
@@ -357,6 +391,32 @@ export default function StorefrontPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'general' && store && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, marginTop: 16 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Sell on Facebook &amp; Instagram</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>
+            Connect this feed URL in Meta Commerce Manager to sync your products to Facebook Shop, Instagram Shopping, and WhatsApp catalogs.
+          </p>
+          <div style={{ background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <p style={{ color: C.purple, fontSize: 12.5, fontFamily: 'monospace', wordBreak: 'break-all', flex: '1 1 240px' }}>
+              https://sellora-v2-production.up.railway.app/api/products/store/{store.id}/catalog.csv
+            </p>
+            <button
+              onClick={() => {
+                const feedUrl = 'https://sellora-v2-production.up.railway.app/api/products/store/' + store.id + '/catalog.csv';
+                navigator.clipboard.writeText(feedUrl);
+              }}
+              style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.2)', color: C.purple, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            >
+              Copy Feed URL
+            </button>
+          </div>
+          <p style={{ color: C.muted, fontSize: 11.5, marginTop: 10 }}>
+            In Meta Commerce Manager: Catalog → Add Items → Data Feed → paste this URL. Meta will re-check it periodically for updates.
+          </p>
         </div>
       )}
 
@@ -604,7 +664,7 @@ export default function StorefrontPage() {
       <div>
         <label style={labelStyle}>Delivery Fee Amount</label>
         <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>₦</span>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>{sym}</span>
           <input
             type="number"
             min="0"
@@ -620,7 +680,7 @@ export default function StorefrontPage() {
       <div>
         <label style={labelStyle}>Free Delivery Above</label>
         <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>₦</span>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.muted, fontSize: 14, fontWeight: 700 }}>{sym}</span>
           <input
             type="number"
             min="0"
@@ -637,10 +697,10 @@ export default function StorefrontPage() {
             <div style={{ background: 'rgba(79,70,229,0.05)', border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12, padding: 16 }}>
               <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Preview</p>
               <p style={{ color: C.muted, fontSize: 13 }}>
-                Orders below <span style={{ color: C.text, fontWeight: 700 }}>{'₦' + Number(form.free_delivery_above).toLocaleString()}</span> → delivery fee of <span style={{ color: C.purple, fontWeight: 700 }}>{'₦' + Number(form.delivery_fee).toLocaleString()}</span>
+                Orders below <span style={{ color: C.text, fontWeight: 700 }}>{sym + Number(form.free_delivery_above).toLocaleString()}</span> → delivery fee of <span style={{ color: C.purple, fontWeight: 700 }}>{sym + Number(form.delivery_fee).toLocaleString()}</span>
               </p>
               <p style={{ color: C.muted, fontSize: 13, marginTop: 4 }}>
-                Orders above <span style={{ color: C.text, fontWeight: 700 }}>{'₦' + Number(form.free_delivery_above).toLocaleString()}</span> → <span style={{ color: C.success, fontWeight: 700 }}>Free delivery</span>
+                Orders above <span style={{ color: C.text, fontWeight: 700 }}>{sym + Number(form.free_delivery_above).toLocaleString()}</span> → <span style={{ color: C.success, fontWeight: 700 }}>Free delivery</span>
               </p>
             </div>
           )}
@@ -657,15 +717,31 @@ export default function StorefrontPage() {
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={labelStyle}>Bank Name</label>
-              <input
-                type="text"
-                value={form.bank_name}
-                onChange={e => setForm({ ...form, bank_name: e.target.value })}
-                placeholder="e.g. Access Bank, GTBank, First Bank"
-                style={inputBase}
-              />
+              <label style={labelStyle}>Account Type</label>
+              <p style={{ color: C.muted, fontSize: 12, marginBottom: 10 }}>Choose the type that matches how you receive payments.</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[
+                  { key: 'local', label: 'Local Bank Account' },
+                  { key: 'iban', label: 'IBAN' },
+                  { key: 'us', label: 'US Bank Account' },
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setForm({ ...form, bank_account_type: opt.key })}
+                    style={{
+                      padding: '8px 14px', borderRadius: 20, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                      border: form.bank_account_type === opt.key ? '1.5px solid ' + C.purple : '1px solid ' + C.inputBorder,
+                      background: form.bank_account_type === opt.key ? 'rgba(79,70,229,0.08)' : 'transparent',
+                      color: form.bank_account_type === opt.key ? C.purple : C.muted,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
             <div>
               <label style={labelStyle}>Account Name</label>
               <input
@@ -676,18 +752,97 @@ export default function StorefrontPage() {
                 style={inputBase}
               />
             </div>
-            <div>
-              <label style={labelStyle}>Account Number</label>
-              <input
-                type="text"
-                value={form.account_number}
-                onChange={e => setForm({ ...form, account_number: e.target.value })}
-                placeholder="e.g. 0123456789"
-                style={inputBase}
-                maxLength={15}
-              />
-            </div>
-            {form.bank_name && form.account_number && (
+
+            {form.bank_account_type === 'local' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Bank Name</label>
+                  <input
+                    type="text"
+                    value={form.bank_name}
+                    onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                    placeholder="e.g. Access Bank, GTBank, First Bank"
+                    style={inputBase}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Account Number</label>
+                  <input
+                    type="text"
+                    value={form.account_number}
+                    onChange={e => setForm({ ...form, account_number: e.target.value })}
+                    placeholder="e.g. 0123456789"
+                    style={inputBase}
+                    maxLength={15}
+                  />
+                </div>
+              </>
+            )}
+
+            {form.bank_account_type === 'iban' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Bank Name</label>
+                  <input
+                    type="text"
+                    value={form.bank_name}
+                    onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                    placeholder="e.g. Türkiye İş Bankası, Deutsche Bank"
+                    style={inputBase}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>IBAN</label>
+                  <input
+                    type="text"
+                    value={form.bank_iban}
+                    onChange={e => setForm({ ...form, bank_iban: e.target.value.toUpperCase() })}
+                    placeholder="e.g. TR98 0006 4000 0011 2345 6789 01"
+                    style={inputBase}
+                    maxLength={34}
+                  />
+                </div>
+              </>
+            )}
+
+            {form.bank_account_type === 'us' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Bank Name</label>
+                  <input
+                    type="text"
+                    value={form.bank_name}
+                    onChange={e => setForm({ ...form, bank_name: e.target.value })}
+                    placeholder="e.g. Chase, Bank of America"
+                    style={inputBase}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Routing Number</label>
+                  <input
+                    type="text"
+                    value={form.bank_routing_number}
+                    onChange={e => setForm({ ...form, bank_routing_number: e.target.value })}
+                    placeholder="e.g. 021000021"
+                    style={inputBase}
+                    maxLength={9}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Account Number</label>
+                  <input
+                    type="text"
+                    value={form.account_number}
+                    onChange={e => setForm({ ...form, account_number: e.target.value })}
+                    placeholder="e.g. 1234567890"
+                    style={inputBase}
+                    maxLength={17}
+                  />
+                </div>
+              </>
+            )}
+
+            {form.bank_name && (form.account_number || form.bank_iban || form.bank_routing_number) && (
               <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 12, padding: 16 }}>
                 <p style={{ color: C.subtext, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Bank Transfer Enabled ✓</p>
                 <p style={{ color: C.muted, fontSize: 13 }}>
@@ -698,6 +853,58 @@ export default function StorefrontPage() {
           </div>
         </div>
       )}
+
+      {activeTab === 'policies' && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Store Policies</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 20 }}>
+            Write your own policies or let AI draft them for you. Shown to buyers on your storefront.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {[
+              { key: 'return_policy', label: 'Return & Refund Policy', policyType: 'return_policy' },
+              { key: 'shipping_policy', label: 'Shipping & Delivery Policy', policyType: 'shipping_policy' },
+              { key: 'terms_of_service', label: 'Terms of Service', policyType: 'terms_of_service' },
+            ].map(p => (
+              <div key={p.key}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>{p.label}</label>
+                  <button
+                    type="button"
+                    disabled={generatingPolicy === p.key}
+                    onClick={async () => {
+                      setGeneratingPolicy(p.key);
+                      try {
+                        const res = await api.post('/api/ai/generate-policy', {
+                          policy_type: p.policyType,
+                          store_name: form.store_name || 'my store',
+                        });
+                        if (res.data?.content) setForm({ ...form, [p.key]: res.data.content });
+                      } catch {}
+                      setGeneratingPolicy(null);
+                    }}
+                    style={{
+                      background: 'none', border: '1px solid ' + C.inputBorder, borderRadius: 8,
+                      padding: '4px 10px', fontSize: 11, fontWeight: 600,
+                      color: C.purple, cursor: 'pointer',
+                    }}
+                  >
+                    {generatingPolicy === p.key ? '⏳ Generating...' : '✨ AI Generate'}
+                  </button>
+                </div>
+                <textarea
+                  value={(form as any)[p.key]}
+                  onChange={e => setForm({ ...form, [p.key]: e.target.value })}
+                  placeholder={`Write your ${p.label.toLowerCase()}, or use AI Generate above...`}
+                  rows={6}
+                  style={{ ...inputBase, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '15px 0', marginTop: 20, background: saving ? 'rgba(79,70,229,0.4)' : C.purple, border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         {saving ? (

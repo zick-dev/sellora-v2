@@ -3,16 +3,19 @@ import { useTheme } from '@/lib/theme';
 
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
+import ImageUpload from '@/components/ImageUpload';
 import api from '@/lib/api';
+import { detectProPricing, ProPricing } from '@/lib/proPricing';
 import { useAuthStore } from '@/lib/auth';
 
 
 export default function SettingsPage() {
   const { C } = useTheme();
-  const { user } = useDashboard();
+  const { user, setUser } = useDashboard();
   const { logout } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'plan' | 'danger'>('profile');
+  const [proPricing, setProPricing] = useState<ProPricing>({ amount: 15, currency: 'USD', display: '$15/month', region: 'global' });
 
   // Profile form
   const [profileForm, setProfileForm] = useState({ name: '', email: '' });
@@ -29,9 +32,21 @@ export default function SettingsPage() {
 
   // Danger zone
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [savingAvatar, setSavingAvatar] = useState(false);
+
+  async function handleAvatarChange(url: string) {
+    setSavingAvatar(true);
+    try {
+      const res = await api.put('/api/auth/me', { avatar_url: url });
+      setUser(res.data);
+    } catch {}
+    setSavingAvatar(false);
+  }
   const [showFinalConfirm, setShowFinalConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+    useEffect(() => { detectProPricing().then(setProPricing); }, []);
 
   useEffect(() => {
     if (user) {
@@ -128,19 +143,36 @@ export default function SettingsPage() {
       </div>
 
       {/* Avatar */}
-      <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: '50%',
-          background: user?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #4F46E5, #ec4899)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, fontWeight: 700, color: 'white', flexShrink: 0,
-          overflow: 'hidden',
-        }}>
-          {user?.avatar_url ? (
-            <img src={user.avatar_url} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            user?.name?.[0]?.toUpperCase() || '?'
+      <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: '50%',
+            background: user?.avatar_url ? 'transparent' : 'linear-gradient(135deg, #4F46E5, #ec4899)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 24, fontWeight: 700, color: 'white',
+            overflow: 'hidden',
+          }}>
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              user?.name?.[0]?.toUpperCase() || '?'
+            )}
+          </div>
+          {savingAvatar && (
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+            </div>
           )}
+        </div>
+        <div style={{ flex: '1 1 160px' }}>
+          <ImageUpload
+            value={user?.avatar_url || ''}
+            onChange={handleAvatarChange}
+            label="Profile Photo"
+            hint="Square image recommended."
+            aspectRatio="1"
+            placeholder="👤"
+          />
         </div>
         <div>
           <p style={{ color: C.text, fontSize: 16, fontWeight: 700, marginBottom: 2 }}>{user?.name}</p>
@@ -255,24 +287,24 @@ export default function SettingsPage() {
                 <p style={{ color: C.muted, fontSize: 13 }}>15 products · Basic features</p>
               )}
             </div>
-            {/* Upgrade card */}
-            {(user as any)?.plan !== 'pro' && (
-              <div style={{ flex: '1 1 240px', background: 'rgba(79,70,229,0.06)', borderRadius: 14, padding: '20px 18px', border: '1px solid rgba(79,70,229,0.15)' }}>
-                <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Upgrade to Pro</p>
-                <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>₦5,000<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-                  {['Unlimited products', 'AI tools', 'Custom domain', 'Lead recovery', 'Priority support'].map(f => (
-                    <div key={f} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <span style={{ color: C.success, fontSize: 12, fontWeight: 700 }}>✓</span>
-                      <span style={{ color: C.subtext, fontSize: 13 }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <a href="/upgrade" style={{ display: 'block', textAlign: 'center', padding: '12px 0', borderRadius: 10, background: C.purple, color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-                  Upgrade Now
-                </a>
+            {/* Upgrade / Extend card */}
+            <div style={{ flex: '1 1 240px', background: 'rgba(79,70,229,0.06)', borderRadius: 14, padding: '20px 18px', border: '1px solid rgba(79,70,229,0.15)' }}>
+              <p style={{ color: C.purple, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                {(user as any)?.plan === 'pro' ? 'Extend Pro' : 'Upgrade to Pro'}
+              </p>
+              <p style={{ color: C.text, fontSize: 22, fontWeight: 800, marginBottom: 4 }}>{proPricing.currency === 'NGN' ? '₦' + proPricing.amount.toLocaleString() : '$' + proPricing.amount}<span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>/month</span></p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+                {['Unlimited products', 'AI tools', 'Custom domain', 'Lead recovery', 'Priority support'].map(f => (
+                  <div key={f} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <span style={{ color: C.success, fontSize: 12, fontWeight: 700 }}>✓</span>
+                    <span style={{ color: C.subtext, fontSize: 13 }}>{f}</span>
+                  </div>
+                ))}
               </div>
-            )}
+              <a href="/upgrade" style={{ display: 'block', textAlign: 'center', padding: '12px 0', borderRadius: 10, background: C.purple, color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+                {(user as any)?.plan === 'pro' ? 'Extend Now' : 'Upgrade Now'}
+              </a>
+            </div>
           </div>
         </div>
       )}
@@ -305,19 +337,23 @@ export default function SettingsPage() {
                 value={deleteConfirm}
                 onChange={e => setDeleteConfirm(e.target.value)}
                 placeholder="DELETE"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                autoComplete="off"
+                spellCheck={false}
                 style={{ ...inputBase, border: '1.5px solid rgba(239,68,68,0.3)' }}
               />
             </div>
             <button
-              disabled={deleteConfirm !== 'DELETE'}
+              disabled={deleteConfirm.trim() !== 'DELETE'}
               onClick={() => setShowFinalConfirm(true)}
               style={{
                 padding: '11px 20px', borderRadius: 10,
-                background: deleteConfirm === 'DELETE' ? C.red : 'rgba(239,68,68,0.1)',
+                background: deleteConfirm.trim() === 'DELETE' ? C.red : 'rgba(239,68,68,0.1)',
                 border: '1px solid rgba(239,68,68,0.3)',
-                color: deleteConfirm === 'DELETE' ? 'white' : C.red,
+                color: deleteConfirm.trim() === 'DELETE' ? 'white' : C.red,
                 fontSize: 14, fontWeight: 700,
-                cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed',
+                cursor: deleteConfirm.trim() === 'DELETE' ? 'pointer' : 'not-allowed',
               }}
             >
               Delete My Account

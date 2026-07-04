@@ -25,7 +25,8 @@ from app.models.user import User
 
 router = APIRouter(prefix="/subscription", tags=["Subscription"])
 
-PRO_PRICE_NGN = 5000  # ₦5,000/month
+PRO_PRICE_NGN = 5000  # ₦5,000/month (Africa pricing)
+PRO_PRICE_USD = 15    # $15/month (global pricing)
 PRO_DURATION_DAYS = 30
 
 
@@ -100,11 +101,13 @@ async def verify_payment(
 
     tx_data = data.get("data", {})
 
-    # Verify amount paid is correct
+    # Verify amount paid is correct — accept either NGN (Africa) or USD (global) pricing
     amount_paid = tx_data.get("amount", 0)
     currency    = tx_data.get("currency", "")
 
-    if currency != "NGN" or amount_paid < PRO_PRICE_NGN:
+    valid_ngn = currency == "NGN" and amount_paid >= PRO_PRICE_NGN
+    valid_usd = currency == "USD" and amount_paid >= PRO_PRICE_USD
+    if not (valid_ngn or valid_usd):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid payment amount",

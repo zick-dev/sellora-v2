@@ -8,6 +8,7 @@ interface Message {
 }
 
 interface Props {
+  storeId: string;
   storeName: string;
   accentColor: string;
   products: { name: string; price: number; category: string | null; description: string | null; stock: number; is_available: boolean }[];
@@ -17,7 +18,7 @@ interface Props {
   currencySymbol: string;
 }
 
-export default function StorefrontChat({ storeName, accentColor, products, deliveryFee, freeDeliveryAbove, whatsapp, currencySymbol }: Props) {
+export default function StorefrontChat({ storeId, storeName, accentColor, products, deliveryFee, freeDeliveryAbove, whatsapp, currencySymbol }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -41,8 +42,22 @@ export default function StorefrontChat({ storeName, accentColor, products, deliv
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
+          store_id: storeId,
           store_name: storeName,
-          products: products.slice(0, 20).map(p => ({
+          products: (() => {
+            // Prioritize products relevant to the buyer's message so large
+            // catalogs (60+ products) don't silently hide items past a
+            // blind slice. Falls back to the first 20 if nothing matches.
+            const msgWords = userMsg.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+            const scored = products.map(p => {
+              const haystack = (p.name + ' ' + (p.category || '')).toLowerCase();
+              const score = msgWords.filter((w: string) => haystack.includes(w)).length;
+              return { p, score };
+            });
+            const matched = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score).map(s => s.p);
+            const rest = scored.filter(s => s.score === 0).map(s => s.p);
+            return [...matched, ...rest].slice(0, 25);
+          })().map(p => ({
             name: p.name,
             price: p.price,
             category: p.category,

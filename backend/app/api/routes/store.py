@@ -106,6 +106,11 @@ async def get_store_by_slug(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Store not found",
         )
+    if getattr(store, "compliance_status", "active") == "suspended":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Store not found",
+        )
     return store
 
 # ── GET /api/store/me ─────────────────────────────────────────────
@@ -213,6 +218,16 @@ async def update_my_store(
         store.account_name = payload.account_name
     if payload.account_number is not None:
         store.account_number = payload.account_number
+    if payload.bank_iban is not None:
+        store.bank_iban = payload.bank_iban
+    if payload.bank_routing_number is not None:
+        store.bank_routing_number = payload.bank_routing_number
+    if payload.return_policy is not None:
+        store.return_policy = payload.return_policy
+    if payload.shipping_policy is not None:
+        store.shipping_policy = payload.shipping_policy
+    if payload.terms_of_service is not None:
+        store.terms_of_service = payload.terms_of_service
     if payload.show_trust_bar is not None:
         store.show_trust_bar = payload.show_trust_bar
     # Persist all store updates to the database.

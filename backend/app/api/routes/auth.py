@@ -247,9 +247,11 @@ async def update_me(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update the logged-in user's name."""
+    """Update the logged-in user's name and/or avatar."""
     if payload.get("name"):
         current_user.name = payload["name"].strip()
+    if "avatar_url" in payload:
+        current_user.avatar_url = payload["avatar_url"] or None
     await db.flush()
     await db.refresh(current_user)
     return UserOut.model_validate(current_user)

@@ -27,7 +27,8 @@ const DashboardContext = createContext<{
   store: StoreData;
   user: UserData;
   loading: boolean;
-}>({ store: null, user: null, loading: true });
+  setUser: (user: UserData) => void;
+}>({ store: null, user: null, loading: true, setUser: () => {} });
 
 export const useDashboard = () => useContext(DashboardContext);
 
@@ -491,11 +492,11 @@ function Topbar({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <ThemeToggle />
         {/* Avatar */}
-        <div style={{
+        <Link href="/settings" style={{
           width: 30, height: 30, borderRadius: '50%',
           background: C.purple,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          overflow: 'hidden', position: 'relative',
+          overflow: 'hidden', position: 'relative', cursor: 'pointer',
         }}>
           {user?.avatar_url ? (
             <img src={user.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -509,7 +510,7 @@ function Topbar({
             width: 8, height: 8, borderRadius: '50%',
             background: C.success, border: '1.5px solid ' + C.topbar,
           }} />
-        </div>
+        </Link>
       </div>
     </header>
   );
@@ -529,7 +530,7 @@ function DesktopTopbar({ user, store }: { user: UserData; store: StoreData }) {
       <ThemeToggle />
 
       {/* Avatar */}
-      <div style={{
+      <Link href="/settings" style={{
         width: 34, height: 34, borderRadius: '50%',
         background: C.purple,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -547,7 +548,7 @@ function DesktopTopbar({ user, store }: { user: UserData; store: StoreData }) {
           width: 9, height: 9, borderRadius: '50%',
           background: C.success, border: '1.5px solid ' + C.topbar,
         }} />
-      </div>
+      </Link>
     </header>
   );
 }
@@ -584,9 +585,11 @@ export default function DashboardLayout({
         const [userRes, storeRes] = await Promise.all([
           fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/auth/me', {
             headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
           }),
           fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/store/me', {
             headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
           }),
         ]);
 
@@ -657,7 +660,7 @@ export default function DashboardLayout({
         a:hover { opacity: 0.85; }
       `}</style>
 
-      <DashboardContext.Provider value={{ store, user, loading }}>
+      <DashboardContext.Provider value={{ store, user, loading, setUser }}>
         {isMobile ? (
           // ── Mobile layout ──────────────────────────────────────
           <div style={{ minHeight: '100vh', background: C.bg }}>
@@ -704,7 +707,7 @@ export default function DashboardLayout({
                 padding: '12px 32px',
                 textAlign: 'center',
               }}>
-                <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Kormerce • Premium Seller Tools</p>
+                <p style={{ color: C.muted, fontSize: 12 }}>© 2026 Kormerce • Premium Seller Tools</p>
               </footer>
             </div>
           </div>

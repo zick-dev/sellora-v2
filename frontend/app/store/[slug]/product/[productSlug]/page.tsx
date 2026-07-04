@@ -19,8 +19,9 @@ async function getStoreAndProduct(storeSlug: string, productSlug: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string; productSlug: string } }): Promise<Metadata> {
-  const data = await getStoreAndProduct(params.slug, params.productSlug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string; productSlug: string }> }): Promise<Metadata> {
+  const { slug, productSlug } = await params;
+  const data = await getStoreAndProduct(slug, productSlug);
   if (!data) return { title: 'Product Not Found | Kormerce' };
 
   const { store, product } = data;
@@ -46,6 +47,7 @@ export async function generateMetadata({ params }: { params: { slug: string; pro
   };
 }
 
-export default async function ProductPage({ params }: { params: { slug: string; productSlug: string } }) {
-  return <ProductPageClient storeSlug={params.slug} productSlug={params.productSlug} />;
+export default async function ProductPage({ params }: { params: Promise<{ slug: string; productSlug: string }> }) {
+  const { slug, productSlug } = await params;
+  return <ProductPageClient storeSlug={slug} productSlug={productSlug} />;
 }

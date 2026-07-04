@@ -282,3 +282,78 @@ async def send_order_status_reminder(
     except Exception as e:
         print(f"❌ Order reminder email failed: {e}")
         return False
+
+
+async def send_compliance_email(
+    to_email: str,
+    merchant_name: str,
+    store_name: str,
+    reason: str,
+    grace_deadline,
+) -> bool:
+    """
+    Notify a merchant that their store has been suspended pending a
+    compliance review. Explains what was flagged, the grace period
+    deadline, and how to appeal or resolve the issue.
+    """
+    deadline_str = grace_deadline.strftime("%B %d, %Y") if grace_deadline else "7 days from now"
+    try:
+        resend.Emails.send({
+            "from": settings.FROM_EMAIL,
+            "to": to_email,
+            "subject": "Action required: Your Kormerce store has been suspended",
+            "html": f"""
+<!DOCTYPE html>
+<html>
+<head></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding:40px 0;">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#0a0a0f;border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="background:#0a0a0f;padding:32px;text-align:center;
+                       border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#4F46E5;font-size:28px;font-weight:900;">Kormerce</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;color:#fff;">
+              <h2 style="color:#f59e0b;margin-top:0;">Your store has been suspended</h2>
+              <p style="color:#d1d5db;line-height:1.6;">
+                Hi {merchant_name},
+              </p>
+              <p style="color:#d1d5db;line-height:1.6;">
+                Your store <strong>{store_name}</strong> has been temporarily suspended
+                and hidden from buyers because our automated compliance system detected
+                a possible violation of Kormerce's Acceptable Use Policy:
+              </p>
+              <p style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);
+                        border-radius:8px;padding:14px 16px;color:#f59e0b;font-size:14px;">
+                {reason}
+              </p>
+              <p style="color:#d1d5db;line-height:1.6;">
+                <strong>What to do next:</strong> log in to your Kormerce dashboard, review
+                and remove or correct the flagged item, then contact support to request a
+                review. You have until <strong style="color:#fff;">{deadline_str}</strong>
+                to resolve this before further action is taken.
+              </p>
+              <p style="color:#9ca3af;line-height:1.6;font-size:13px;">
+                If you believe this was flagged in error, please reply to this email or
+                contact support — a member of our team will review your case.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+""",
+        })
+        return True
+    except Exception as e:
+        print(f"⚠️ Failed to send compliance email: {e}")
+        return False

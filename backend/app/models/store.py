@@ -114,6 +114,19 @@ class Store(Base):
     bank_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     account_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
     account_number: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    bank_iban: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    bank_routing_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+    # ── Store Policies ─────────────────────────────
+    return_policy: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shipping_policy: Mapped[str | None] = mapped_column(Text, nullable=True)
+    terms_of_service: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # ── Compliance ─────────────────────────────────────────────────
+    compliance_status: Mapped[str] = mapped_column(String(20), default="active")
+    compliance_flagged_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    compliance_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    compliance_grace_deadline: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     base_currency: Mapped[str] = mapped_column(
         String(10),

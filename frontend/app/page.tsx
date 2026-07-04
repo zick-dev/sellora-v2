@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import MobileDemoPhone from '@/components/MobileDemoPhone';
+import { detectProPricing, ProPricing } from '@/lib/proPricing';
 
 
 const INDIGO = '#4F46E5';
@@ -11,10 +13,13 @@ const SLIDE_DURATION = 6000;
 
 export default function LandingPage() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [pricing, setPricing] = useState<ProPricing>({ amount: 15, currency: 'USD', display: '$15/month', region: 'global' });
+
+  useEffect(() => { detectProPricing().then(setPricing); }, []);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const slides = ['hero', 'preview', 'features', 'pricing'];
+  const slides = ['hero', 'preview', 'mobile', 'features', 'pricing'];
 
   useEffect(() => {
     if (paused) return;
@@ -167,10 +172,10 @@ export default function LandingPage() {
                 <div style={{ background: '#fafafa', padding: '20px 20px 24px' }}>
                   <div className="hero-product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 11 }}>
                     {[
-                      { name: 'Ankara Wrap Dress', price: '₦15,000', img: 'https://images.unsplash.com/photo-1612722432474-b971cdcea546?w=400&q=70' },
-                      { name: 'Denim Jacket', price: '₦22,000', img: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=70' },
-                      { name: 'Kente Blouse', price: '₦9,500', img: 'https://images.unsplash.com/photo-1485231183945-fffde7cc051e?w=400&q=70' },
-                      { name: 'Beaded Necklace', price: '₦6,500', img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&q=70' },
+                      { name: 'Ankara Wrap Dress', price: '$10', img: 'https://images.unsplash.com/photo-1612722432474-b971cdcea546?w=400&q=70' },
+                      { name: 'Denim Jacket', price: '$15', img: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=70' },
+                      { name: 'Kente Blouse', price: '$6', img: 'https://images.unsplash.com/photo-1485231183945-fffde7cc051e?w=400&q=70' },
+                      { name: 'Beaded Necklace', price: '$4', img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&q=70' },
                     ].map(p => (
                       <div key={p.name} style={{ background: '#fff', borderRadius: 10, border: '1px solid #f0f0f0', overflow: 'hidden' }}>
                         <div style={{ aspectRatio: '1', overflow: 'hidden' }}>
@@ -188,8 +193,14 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* SLIDE 2 — Features */}
+          {/* SLIDE 2 — Mobile Demo */}
           {activeSlide === 2 && (
+            <div key="mobile" className="slide-fade" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <MobileDemoPhone />
+            </div>
+          )}
+          {/* SLIDE 3 — Features */}
+          {activeSlide === 3 && (
             <div key="features" className="slide-fade" style={{ width: '100%' }}>
               <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px', color: '#111' }}>
                 Everything you need. <span style={{ color: INDIGO }}>Nothing you don't.</span>
@@ -207,7 +218,7 @@ export default function LandingPage() {
           )}
 
           {/* SLIDE 3 — Pricing */}
-          {activeSlide === 3 && (
+          {activeSlide === 4 && (
             <div key="pricing" className="slide-fade" style={{ width: '100%' }}>
               <h2 style={{ fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800, textAlign: 'center', marginBottom: 'clamp(24px, 4vh, 40px)', letterSpacing: '-0.5px', color: '#111' }}>
                 Start free. <span style={{ color: INDIGO }}>Pay only if you grow.</span>
@@ -215,7 +226,7 @@ export default function LandingPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, maxWidth: 600, margin: '0 auto' }}>
                 <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 18, padding: '22px 20px' }}>
                   <p style={{ fontSize: 12.5, fontWeight: 700, color: '#71717a', marginBottom: 5 }}>Free</p>
-                  <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 14, color: '#111' }}>₦0</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 14, color: '#111' }}>$0</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
                     {['15 products', 'Basic storefront', 'Manual tracking'].map(f => (
                       <div key={f} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
@@ -232,11 +243,11 @@ export default function LandingPage() {
                   <div style={{ position: 'absolute', top: -10, right: 16, background: EMERALD, color: '#fff', fontSize: 9.5, fontWeight: 800, padding: '3px 10px', borderRadius: 20, letterSpacing: '0.04em' }}>POPULAR</div>
                   <p style={{ fontSize: 12.5, fontWeight: 700, color: '#a5b4fc', marginBottom: 5 }}>Pro</p>
                   <p style={{ fontSize: 28, fontWeight: 800, marginBottom: 1, color: '#fff' }}>
-                    ₦5,000<span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>/mo</span>
+                    {pricing.currency === 'NGN' ? '₦' + pricing.amount.toLocaleString() : '$' + pricing.amount}<span style={{ fontSize: 12, fontWeight: 500, color: '#9ca3af' }}>/mo</span>
                   </p>
                   <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>Billed monthly</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
-                    {['Unlimited products', 'AI tools included', 'Custom domain'].map(f => (
+                    {['Unlimited products', 'AI tools & catalog generation', 'Custom domain', 'Abandoned order recovery', 'Facebook share & QR codes', 'Priority support'].map(f => (
                       <div key={f} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                         <span style={{ color: EMERALD, fontWeight: 700, fontSize: 11 }}>+</span>
                         <span style={{ color: '#e4e4e7', fontSize: 12.5 }}>{f}</span>
@@ -271,10 +282,10 @@ export default function LandingPage() {
       </div>
 
       <style>{`
-        html, body { height: 100%; margin: 0; overflow-y: hidden; overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; }
+        html, body { height: 100%; margin: 0; }
         @media (max-width: 640px) {
           .hero-product-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .carousel-arrow { display: none !important; }
+          .carousel-arrow { width: 32px !important; height: 32px !important; }
         }
         @media (max-height: 700px) {
           .slide-fade h1 { font-size: clamp(22px, 6vw, 34px) !important; }

@@ -521,7 +521,7 @@ function ResetPasswordContent() {
         )}
 
         <footer style={{ textAlign: 'center', paddingBottom: 32, marginTop: 24 }}>
-          <p style={{ color: C.muted, fontSize: 12 }}>© 2024 Kormerce • Premium Seller Tools</p>
+          <p style={{ color: C.muted, fontSize: 12 }}>© 2026 Kormerce • Premium Seller Tools</p>
         </footer>
       </main>
     </>

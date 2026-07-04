@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import StorefrontChat from '@/components/StorefrontChat';
+import { getStoredCart, saveStoredCart, StoredCartItem } from '@/lib/storefrontCart';
 
 interface Store {
   id: string; store_name: string; slug: string; description: string | null;
@@ -68,6 +69,7 @@ function convertPrice(price: number, fromCurrency: string | null | undefined, to
 
 export default function StorefrontPage() {
   const { slug } = useParams();
+  const router = useRouter();
   const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,6 +107,9 @@ export default function StorefrontPage() {
   const [popupSubmitting, setPopupSubmitting] = useState(false);
   const [discountUnlocked, setDiscountUnlocked] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
+  const [connectionIssue, setConnectionIssue] = useState(false);
+  const [activePolicy, setActivePolicy] = useState<'return_policy' | 'shipping_policy' | 'terms_of_service' | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -113,6 +118,21 @@ export default function StorefrontPage() {
         setStore(sr.data);
         const pr = await api.get('/api/products/public/' + sr.data.id);
         setProducts(pr.data);
+
+        // Sync cart from localStorage (items may have been added from a standalone product page)
+        try {
+          const stored = getStoredCart(String(slug));
+          if (stored.length > 0) {
+            const restored: CartItem[] = [];
+            for (const s of stored) {
+              const matchedProduct = pr.data.find((p: Product) => p.id === s.productId);
+              if (!matchedProduct) continue;
+              const matchedVariant = s.variantId ? matchedProduct.variants?.find((v: Variant) => v.id === s.variantId) : null;
+              restored.push({ product: matchedProduct, quantity: s.quantity, variant: matchedVariant || null, cartKey: s.cartKey });
+            }
+            if (restored.length > 0) setCart(restored);
+          }
+        } catch {}
         // Detect buyer's local currency via IP geolocation
         try {
           const geoRes = await fetch('https://ipapi.co/json/');
@@ -129,11 +149,32 @@ export default function StorefrontPage() {
             if (fxRes.data?.rates) setFxRates(fxRes.data.rates);
           } catch { /* FX rates unavailable */ }
         }
-      } catch { setNotFound(true); }
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 404) {
+          setNotFound(true);
+        } else {
+          // Network/connection error, not a real 404 — retry a couple times before giving up
+          setConnectionIssue(true);
+          if (retryCount < 3) {
+            setTimeout(() => setRetryCount(c => c + 1), 2000);
+            return; // don't set loading false yet, we're retrying
+          }
+        }
+      }
       finally { setLoading(false); }
     };
     load();
-  }, [slug]);
+  }, [slug, retryCount]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('cart') === '1') {
+      setShowCart(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -177,13 +218,30 @@ export default function StorefrontPage() {
   const cartSubtotal  = cart.reduce((s, i) => s + dp(Number(i.variant?.price != null ? i.variant.price : i.product.price), i.product.price_currency) * i.quantity, 0);
   const discountAmt   = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
   const discountedSub = cartSubtotal - discountAmt;
-  const deliveryFee   = store && (store.delivery_fee||0) > 0 && discountedSub < (store.free_delivery_above||0) ? (store.delivery_fee||0) : 0;
+  const deliveryFee   = store && (store.delivery_fee||0) > 0 && discountedSub < dp(store.free_delivery_above||0, store.base_currency) ? dp(store.delivery_fee||0, store.base_currency) : 0;
   const cartTotal     = discountedSub + deliveryFee;
   const cartCount     = cart.reduce((s, i) => s + i.quantity, 0);
 
   function effectivePrice(p: Product, v?: Variant | null) { return v?.price != null ? v.price : p.price; }
   function effectiveStock(p: Product, v?: Variant | null) { return v ? v.stock : p.stock; }
   function makeCartKey(productId: string, variantId?: string | null) { return variantId ? productId + ':' + variantId : productId; }
+
+  useEffect(() => {
+    if (!slug || cart.length === 0) return;
+    const toStore: StoredCartItem[] = cart.map(c => ({
+      productId: c.product.id,
+      productName: c.product.name,
+      productImageUrl: c.product.image_url,
+      productPrice: c.product.price,
+      productPriceCurrency: c.product.price_currency || null,
+      variantId: c.variant?.id || null,
+      variantLabel: c.variant ? [c.variant.variant_value_1, c.variant.variant_value_2].filter(Boolean).join(' / ') : null,
+      variantPrice: c.variant?.price ?? null,
+      quantity: c.quantity,
+      cartKey: c.cartKey,
+    }));
+    saveStoredCart(String(slug), toStore);
+  }, [cart, slug]);
 
   function addToCart(p: Product, v?: Variant | null) {
     const key = makeCartKey(p.id, v?.id);
@@ -214,7 +272,12 @@ export default function StorefrontPage() {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', 'sellora-storage');
-      const res = await fetch('https://api.cloudinary.com/v1_1/dkun9hvkf/image/upload', { method: 'POST', body: fd });
+      // PDFs must go through Cloudinary's /raw/upload endpoint, images through /image/upload
+      const isPdf = file.type === 'application/pdf';
+      const endpoint = isPdf
+        ? 'https://api.cloudinary.com/v1_1/dkun9hvkf/raw/upload'
+        : 'https://api.cloudinary.com/v1_1/dkun9hvkf/image/upload';
+      const res = await fetch(endpoint, { method: 'POST', body: fd });
       const data = await res.json();
       if (data.secure_url) setReceiptUrl(data.secure_url);
     } catch {}
@@ -235,6 +298,15 @@ export default function StorefrontPage() {
         nums.push(res.data.order_number || res.data.id.slice(0,8).toUpperCase());
       }
       setOrderNums(nums); setCart([]); setSuccess(true); setShowCheckout(false); setShowCart(false);
+
+      // Notify merchant on WhatsApp for bank transfer orders, including the receipt link
+      if (paymentMethod === 'bank_transfer' && store?.whatsapp && receiptUrl) {
+        const orderList = nums.map(n => '#' + n).join(', ');
+        const msg = encodeURIComponent(
+          `New order from ${checkoutForm.name} (${checkoutForm.phone})\nOrder: ${orderList}\nTotal: ${sym}${cartTotal.toLocaleString()}\nPayment: Bank Transfer\nReceipt: ${receiptUrl}`
+        );
+        window.open('https://wa.me/' + store.whatsapp.replace(/[^0-9]/g, '') + '?text=' + msg, '_blank');
+      }
     } catch (err: any) { setFormError(err.response?.data?.detail || 'Failed to place order. Please try again.'); }
     finally { setPlacing(false); }
   }
@@ -243,15 +315,16 @@ export default function StorefrontPage() {
     <div style={{ minHeight:'100vh', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ textAlign:'center' }}>
         <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #f0f0f0', borderTopColor:'#111', animation:'spin 0.8s linear infinite', margin:'0 auto 10px' }} />
-        <p style={{ color:'#999', fontSize:13 }}>Loading store...</p>
+        <p style={{ color:'#999', fontSize:13 }}>{connectionIssue ? "Hang tight, reconnecting..." : "Loading store..."}</p>
       </div>
       {store && (
         <StorefrontChat
+          storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
           products={products}
-          deliveryFee={(store as any).delivery_fee || 0}
-          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
+          freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
           currencySymbol={sym}
         />
@@ -268,6 +341,16 @@ export default function StorefrontPage() {
       <p style={{ color:'#999', fontSize:14 }}>This link may have changed or been removed.</p>
     </div>
   );
+  if (connectionIssue && !store) return (
+    <div style={{ minHeight:'100vh', background:'#fff', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:14, padding:'24px 20px', textAlign:'center' }}>
+      <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #f0f0f0', borderTopColor:'#111', animation:'spin 0.8s linear infinite' }} />
+      <h1 style={{ color:'#111', fontSize:18, fontWeight:700 }}>Just a moment...</h1>
+      <p style={{ color:'#999', fontSize:14, maxWidth:280 }}>We're having trouble connecting. This usually clears up in a few seconds.</p>
+      <button onClick={() => { setConnectionIssue(false); setRetryCount(c => c + 1); }} style={{ padding:'10px 20px', borderRadius:8, background:'#f5f5f5', border:'1px solid #e5e5e5', color:'#444', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+        Try Again
+      </button>
+    </div>
+  );
 
   if (success) return (
     <div style={{ minHeight:'100vh', background:'#fff', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px 20px', textAlign:'center' }}>
@@ -281,11 +364,12 @@ export default function StorefrontPage() {
       <button onClick={() => setSuccess(false)} style={{ padding:'12px 28px', borderRadius:8, background:accent, border:'none', color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Continue Shopping</button>
       {store && (
         <StorefrontChat
+          storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
           products={products}
-          deliveryFee={(store as any).delivery_fee || 0}
-          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
+          freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
           currencySymbol={sym}
         />
@@ -483,7 +567,7 @@ export default function StorefrontPage() {
                 <div key={product.id} style={{ background:'#fff', border:'1px solid #f0f0f0', borderRadius:12, overflow:'hidden', transition:'box-shadow 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.08)')}
                   onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-                  <div onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); setSelectedImageIndex(0); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
+                  <div onClick={() => { if (!oos && product.slug) { router.push(`/store/${slug}/product/${product.slug}`); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
                     {product.image_url
                       ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'contain', transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
                       : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, color:'#ddd' }}>🛍️</div>}
@@ -495,7 +579,7 @@ export default function StorefrontPage() {
                     {oos && <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.75)', display:'flex', alignItems:'center', justifyContent:'center' }}><span style={{ background:'#111', color:'#fff', fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:6 }}>Sold Out</span></div>}
                   </div>
                   <div style={{ padding:'12px 14px' }}>
-                    <p onClick={() => { if (!oos) { setSelectedVariant(null); setSelectedProduct(product); setSelectedImageIndex(0); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
+                    <p onClick={() => { if (!oos && product.slug) { router.push(`/store/${slug}/product/${product.slug}`); } }} style={{ color:'#111', fontSize:14, fontWeight:600, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', cursor: oos ? 'default' : 'pointer' }}>{product.name}</p>
                     {product.category && <p style={{ color:'#bbb', fontSize:11, marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>{product.category}</p>}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6 }}>
                       <p style={{ color:accent, fontSize:16, fontWeight:800 }}>{sym + dp(product.price, product.price_currency).toLocaleString()}</p>
@@ -573,7 +657,15 @@ export default function StorefrontPage() {
             </div>
           </div>
           {/* Bottom row */}
-          <div style={{ borderTop:'1px solid #222', paddingTop:20, display:'flex', flexWrap:'wrap', gap:12, alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ borderTop:'1px solid #222', paddingTop:20, display:'flex', flexDirection:'column', gap:12 }}>
+            {((store as any)?.return_policy || (store as any)?.shipping_policy || (store as any)?.terms_of_service) && (
+              <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                {(store as any)?.return_policy && <button onClick={() => setActivePolicy('return_policy')} style={{ background:'none', border:'none', color:'#888', fontSize:12, cursor:'pointer', padding:0, textDecoration:'underline' }}>Return Policy</button>}
+                {(store as any)?.shipping_policy && <button onClick={() => setActivePolicy('shipping_policy')} style={{ background:'none', border:'none', color:'#888', fontSize:12, cursor:'pointer', padding:0, textDecoration:'underline' }}>Shipping Policy</button>}
+                {(store as any)?.terms_of_service && <button onClick={() => setActivePolicy('terms_of_service')} style={{ background:'none', border:'none', color:'#888', fontSize:12, cursor:'pointer', padding:0, textDecoration:'underline' }}>Terms of Service</button>}
+              </div>
+            )}
+          <div style={{ display:'flex', flexWrap:'wrap', gap:12, alignItems:'center', justifyContent:'space-between' }}>
             <p style={{ color:'#555', fontSize:12 }}>© {new Date().getFullYear()} {store?.store_name}. All rights reserved.</p>
             <div style={{ display:'flex', gap:16 }}>
               <span style={{ color:'#444', fontSize:12 }}>🚚 Pay on Delivery</span>
@@ -581,8 +673,28 @@ export default function StorefrontPage() {
               <span style={{ color:'#444', fontSize:12 }}>💬 WhatsApp Support</span>
             </div>
           </div>
+          </div>
         </div>
       </footer>
+
+      {/* POLICY MODAL */}
+      {activePolicy && (() => {
+        const policyLabels: Record<string, string> = { return_policy: 'Return & Refund Policy', shipping_policy: 'Shipping & Delivery Policy', terms_of_service: 'Terms of Service' };
+        const content = (store as any)?.[activePolicy] || '';
+        return (
+          <div onClick={() => setActivePolicy(null)} style={{ position:'fixed', inset:0, zIndex:400, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', maxWidth:560, maxHeight:'80vh', overflowY:'auto', boxShadow:'0 -8px 40px rgba(0,0,0,0.15)' }}>
+              <div style={{ position:'sticky', top:0, background:'#fff', borderBottom:'1px solid #f0f0f0', padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <p style={{ color:'#111', fontSize:16, fontWeight:800 }}>{policyLabels[activePolicy]}</p>
+                <button onClick={() => setActivePolicy(null)} style={{ width:30, height:30, borderRadius:'50%', background:'#f5f5f5', border:'none', cursor:'pointer', fontSize:16, color:'#666' }}>×</button>
+              </div>
+              <div style={{ padding:'20px 24px 32px' }}>
+                <p style={{ color:'#333', fontSize:14, lineHeight:1.8, whiteSpace:'pre-wrap' }}>{content}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* WHATSAPP FLOAT BUTTON — visible when cart is empty */}
       {store?.whatsapp && cartCount === 0 && !showCart && !showCheckout && (
@@ -715,7 +827,7 @@ export default function StorefrontPage() {
                   <p style={{ fontSize:18, marginBottom:4 }}>🚚</p>
                   <p style={{ color:'#111', fontSize:12, fontWeight:700 }}>Pay on Delivery</p>
                 </button>
-                {(store as any)?.bank_name && (store as any)?.account_number && (
+                {(store as any)?.bank_name && ((store as any)?.account_number || (store as any)?.bank_iban || (store as any)?.bank_routing_number) && (
                   <button onClick={() => setPaymentMethod('bank_transfer')} style={{
                     flex:1, padding:'12px 10px', borderRadius:10, cursor:'pointer', textAlign:'center',
                     border: paymentMethod === 'bank_transfer' ? '2px solid '+accent : '1px solid #e5e5e5',
@@ -741,10 +853,28 @@ export default function StorefrontPage() {
                     <span style={{ color:'#555', fontSize:13 }}>Account Name</span>
                     <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_name}</span>
                   </div>
-                  <div style={{ display:'flex', justifyContent:'space-between' }}>
-                    <span style={{ color:'#555', fontSize:13 }}>Account Number</span>
-                    <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_number}</span>
-                  </div>
+                  {(store as any)?.bank_iban ? (
+                    <div style={{ display:'flex', justifyContent:'space-between' }}>
+                      <span style={{ color:'#555', fontSize:13 }}>IBAN</span>
+                      <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.bank_iban}</span>
+                    </div>
+                  ) : (store as any)?.bank_routing_number ? (
+                    <>
+                      <div style={{ display:'flex', justifyContent:'space-between' }}>
+                        <span style={{ color:'#555', fontSize:13 }}>Routing Number</span>
+                        <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.bank_routing_number}</span>
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between' }}>
+                        <span style={{ color:'#555', fontSize:13 }}>Account Number</span>
+                        <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_number}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ display:'flex', justifyContent:'space-between' }}>
+                      <span style={{ color:'#555', fontSize:13 }}>Account Number</span>
+                      <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{(store as any)?.account_number}</span>
+                    </div>
+                  )}
                   <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid #bbf7d0', paddingTop:6, marginTop:2 }}>
                     <span style={{ color:'#555', fontSize:13 }}>Amount</span>
                     <span style={{ color:'#166534', fontSize:15, fontWeight:800 }}>{sym+cartTotal.toLocaleString()}</span>
@@ -762,8 +892,8 @@ export default function StorefrontPage() {
                     </div>
                   ) : (
                     <label style={{ display:'block', padding:'14px 0', borderRadius:8, border:'2px dashed #bbf7d0', textAlign:'center', cursor:'pointer', background:'#f0fdf4' }}>
-                      <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => { if (e.target.files?.[0]) handleReceiptUpload(e.target.files[0]); }} />
-                      <p style={{ color:'#166534', fontSize:13, fontWeight:600 }}>{uploadingReceipt ? '⏳ Uploading...' : '📎 Tap to upload receipt'}</p>
+                      <input type="file" accept="image/*,application/pdf" style={{ display:'none' }} onChange={e => { if (e.target.files?.[0]) handleReceiptUpload(e.target.files[0]); }} />
+                      <p style={{ color:'#166534', fontSize:13, fontWeight:600 }}>{uploadingReceipt ? '⏳ Uploading...' : '📎 Tap to upload receipt (image or PDF)'}</p>
                     </label>
                   )}
                 </div>
@@ -970,11 +1100,12 @@ export default function StorefrontPage() {
 
       {store && (
         <StorefrontChat
+          storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
           products={products}
-          deliveryFee={(store as any).delivery_fee || 0}
-          freeDeliveryAbove={(store as any).free_delivery_above || 0}
+          deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
+          freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
           currencySymbol={sym}
         />

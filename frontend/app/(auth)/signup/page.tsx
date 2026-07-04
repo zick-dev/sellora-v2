@@ -387,7 +387,9 @@ export default function SignupPage() {
           <p style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.6, marginBottom: 20 }}>
             By creating an account, you agree to our{" "}
             <Link href="/terms" style={{ color: "#4F46E5" }}>Terms of Service</Link>
-            {" "}and{" "}
+            {", "}
+            <Link href="/acceptable-use" style={{ color: "#4F46E5" }}>Acceptable Use Policy</Link>
+            {", "}and{" "}
             <Link href="/privacy" style={{ color: "#4F46E5" }}>Privacy Policy</Link>.
           </p>
 
@@ -442,7 +444,7 @@ export default function SignupPage() {
         </Link>
       </p>
       <p style={{ color: "#1f2937", fontSize: 11, marginTop: 12 }}>
-        © 2024 Kormerce • Premium Seller Tools
+        © 2026 Kormerce • Premium Seller Tools
       </p>
 
       <style>{`

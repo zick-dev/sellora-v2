@@ -1,33 +1,210 @@
 """
 backend/app/api/routes/ai.py
 ──────────────────────────────
-AI Tools powered by Claude — Pro plan required.
+AI Tools with a two-tier provider system:
+
+  - Pro plan / Pro store owners → Gemini (higher quality)
+  - Free tier / fallback on Gemini failure → OpenRouter (free models)
 
 Endpoints:
-    POST /api/ai/generate — generate AI content (reply, FAQ, promo)
+    POST /api/ai/generate              — legacy Pro-only generic generation
+    POST /api/ai/product-description   — free for all, tries Gemini if Pro
+    POST /api/ai/catalog-from-image    — free for all, tries Gemini if Pro
+    POST /api/ai/storefront-chat       — public, tries Gemini if store owner is Pro
 """
 
+import base64
+import json as jsonlib
 from datetime import datetime, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
+from app.models.store import Store
 
 router = APIRouter(prefix="/ai", tags=["AI Tools"])
 
+OPENROUTER_TEXT_MODELS = [
+    "openrouter/free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen3-next-80b-a3b-instruct:free",
+    "nousresearch/hermes-3-llama-3.1-405b:free",
+]
+OPENROUTER_VISION_MODELS = [
+    "openrouter/free",
+    "google/gemma-4-26b-a4b:free",
+]
 
-def user_is_pro(user: User) -> bool:
+
+def user_is_pro(user: User | None) -> bool:
     """Check if user has an active Pro subscription."""
+    if user is None:
+        return False
     return (
         user.plan == "pro" and
         user.plan_expires_at is not None and
         user.plan_expires_at > datetime.now(timezone.utc)
     )
+
+
+async def call_gemini_text(prompt: str) -> str | None:
+    """Try Gemini for a text-only prompt. Returns None on any failure."""
+    if not settings.GEMINI_API_KEY:
+        return None
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
+        body = {"contents": [{"parts": [{"text": prompt}]}]}
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.post(url, json=body)
+        if res.status_code != 200:
+            return None
+        data = res.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except Exception:
+        return None
+
+
+async def call_openrouter_text(prompt: str) -> str | None:
+    """Try OpenRouter for a text-only prompt, cycling through fallback models. Returns None if all fail."""
+    if not settings.OPENROUTER_API_KEY:
+        return None
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    for model in OPENROUTER_TEXT_MODELS:
+        try:
+            body = {
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            async with httpx.AsyncClient(timeout=20) as client:
+                res = await client.post(url, headers=headers, json=body)
+            if res.status_code != 200:
+                print(f"⚠️ OpenRouter text error ({model}) {res.status_code}: {res.text[:200]}")
+                continue
+            data = res.json()
+            return data["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"⚠️ OpenRouter text exception ({model}): {e}")
+            continue
+    return None
+
+
+async def call_ai_text(prompt: str, prefer_gemini: bool) -> str:
+    """
+    Two-tier text generation: Gemini for Pro (with OpenRouter fallback on
+    failure), OpenRouter directly for free tier. Raises HTTPException if
+    both providers fail or are unconfigured.
+    """
+    text = None
+    if prefer_gemini:
+        text = await call_gemini_text(prompt)
+    if text is None:
+        text = await call_openrouter_text(prompt)
+    if text is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service temporarily unavailable. Please try again shortly.",
+        )
+    return text
+
+
+async def call_gemini_vision(prompt: str, image_bytes: bytes, content_type: str) -> str | None:
+    """Try Gemini vision. Returns None on any failure."""
+    if not settings.GEMINI_API_KEY:
+        return None
+    try:
+        b64 = base64.b64encode(image_bytes).decode("utf-8")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
+        body = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inline_data": {"mime_type": content_type, "data": b64}},
+                ]
+            }]
+        }
+        async with httpx.AsyncClient(timeout=20) as client:
+            res = await client.post(url, json=body)
+        if res.status_code != 200:
+            return None
+        data = res.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except Exception:
+        return None
+
+
+async def call_openrouter_vision(prompt: str, image_bytes: bytes, content_type: str) -> str | None:
+    """Try OpenRouter vision models, cycling through fallback list. Returns None if all fail."""
+    if not settings.OPENROUTER_API_KEY:
+        return None
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    for model in OPENROUTER_VISION_MODELS:
+        try:
+            body = {
+                "model": model,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:{content_type};base64,{b64}"}},
+                    ],
+                }],
+            }
+            async with httpx.AsyncClient(timeout=25) as client:
+                res = await client.post(url, headers=headers, json=body)
+            if res.status_code != 200:
+                print(f"⚠️ OpenRouter vision error ({model}) {res.status_code}: {res.text[:200]}")
+                continue
+            data = res.json()
+            return data["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"⚠️ OpenRouter vision exception ({model}): {e}")
+            continue
+    return None
+
+
+async def call_ai_vision(prompt: str, image_bytes: bytes, content_type: str, prefer_gemini: bool) -> str:
+    """Two-tier vision generation, same fallback pattern as call_ai_text."""
+    text = None
+    if prefer_gemini:
+        text = await call_gemini_vision(prompt, image_bytes, content_type)
+    if text is None:
+        text = await call_openrouter_vision(prompt, image_bytes, content_type)
+    if text is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service temporarily unavailable. Please try again shortly.",
+        )
+    return text
+
+
+def clean_json_response(text: str) -> str:
+    """
+    Extract a JSON object from a model's raw text response. Smaller/free
+    models often wrap JSON in markdown fences or add preamble text despite
+    instructions not to — this pulls out just the {...} block.
+    """
+    text = text.strip()
+    text = text.replace("```json", "").replace("```", "").strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return text[start:end + 1]
+    return text
 
 
 @router.post(
@@ -38,30 +215,12 @@ async def generate_ai_content(
     payload: dict,
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Generate AI content using Claude.
-    Pro plan required. API key stays on the server — never exposed.
-    """
-    # ── Pro plan enforcement ──────────────────────────────────────
+    """Legacy general-purpose endpoint. Pro plan required."""
     if not user_is_pro(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="AI Tools are a Pro feature. Upgrade to unlock Claude-powered tools.",
+            detail="AI Tools are a Pro feature. Upgrade to unlock more powerful tools.",
         )
-
-    # ── Check API key is configured ───────────────────────────────
-    if not settings.GEMINI_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI Tools are coming soon! We're putting the finishing touches on this feature.",
-        )
-
-    # Temporarily disabled while Gemini billing/quota is being set up.
-    # Remove this block once GEMINI_API_KEY has active quota.
-    raise HTTPException(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail="AI Tools are coming soon! We're putting the finishing touches on this feature.",
-    )
 
     prompt = payload.get("prompt", "")
     if not prompt or len(prompt) > 4000:
@@ -70,36 +229,13 @@ async def generate_ai_content(
             detail="Prompt is required and must be under 4000 characters.",
         )
 
-    # ── Call Gemini API from the backend ──────────────────────────
-    async with httpx.AsyncClient(timeout=60) as client:
-        res = await client.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}",
-            headers={"content-type": "application/json"},
-            json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"maxOutputTokens": 1024, "temperature": 0.7},
-            },
-        )
-
-    if res.status_code != 200:
-        print(f"❌ Gemini API error {res.status_code}: {res.text}")
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="AI generation failed. Please try again.",
-        )
-
-    data = res.json()
-    text = ""
-    try:
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError):
-        text = "No response generated."
+    text = await call_ai_text(prompt, prefer_gemini=True)
     return {"text": text}
 
 
 @router.post(
     "/product-description",
-    summary="Generate product description (free for all users)",
+    summary="Generate product description (free for all, Gemini for Pro)",
 )
 async def generate_product_description(
     payload: dict,
@@ -107,15 +243,9 @@ async def generate_product_description(
 ):
     """
     Generate a short, compelling product description from the product name
-    and optional category. FREE for all users — no Pro plan required.
-    This is the entry-point to AI value for free-tier merchants.
+    and optional category. FREE for all users. Pro users get Gemini quality;
+    free tier uses OpenRouter.
     """
-    if not settings.GEMINI_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI description generator is coming soon!",
-        )
-
     product_name = payload.get("name", "").strip()
     category = payload.get("category", "").strip()
 
@@ -137,40 +267,15 @@ Requirements:
 - Do NOT use quotes around the description
 - Write in English"""
 
-    try:
-        import httpx
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
-        body = {"contents": [{"parts": [{"text": prompt}]}]}
-
-        async with httpx.AsyncClient(timeout=15) as client:
-            res = await client.post(url, json=body)
-
-        if res.status_code != 200:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="AI service temporarily unavailable. Try again later.",
-            )
-
-        data = res.json()
-        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        # Clean up any quotes the model might wrap it in
-        if text.startswith('"') and text.endswith('"'):
-            text = text[1:-1]
-
-        return {"description": text}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service temporarily unavailable. Try again later.",
-        )
+    text = await call_ai_text(prompt, prefer_gemini=user_is_pro(current_user))
+    if text.startswith('"') and text.endswith('"'):
+        text = text[1:-1]
+    return {"description": text}
 
 
 @router.post(
     "/catalog-from-image",
-    summary="Generate product details from a photo (free for all users)",
+    summary="Generate product details from a photo (free for all, Gemini for Pro)",
 )
 async def catalog_from_image(
     payload: dict,
@@ -178,14 +283,9 @@ async def catalog_from_image(
 ):
     """
     Analyze a product photo and generate title, description, and category.
-    FREE for all users. Uses Gemini vision model.
+    FREE for all users. Pro users get Gemini vision; free tier uses
+    OpenRouter's free vision model.
     """
-    if not settings.GEMINI_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI catalog generation is coming soon!",
-        )
-
     image_url = payload.get("image_url", "").strip()
     if not image_url:
         raise HTTPException(
@@ -202,92 +302,52 @@ Analyze this product image and return ONLY a JSON object with these fields:
 Return ONLY the JSON object, no markdown, no backticks, no explanation."""
 
     try:
-        import httpx
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
-        body = {
-            "contents": [{
-                "parts": [
-                    {"text": prompt},
-                    {"inline_data": {"mime_type": "image/jpeg", "data": ""}} if image_url.startswith("data:") else
-                    {"file_data": {"mime_type": "image/jpeg", "file_uri": image_url}} if image_url.startswith("gs://") else
-                    {"text": f"Image URL: {image_url}"}
-                ]
-            }]
-        }
-
-        # For HTTP URLs, download the image first and send as base64
-        if image_url.startswith("http"):
-            async with httpx.AsyncClient(timeout=10) as client:
-                img_res = await client.get(image_url)
-            if img_res.status_code == 200:
-                import base64
-                b64 = base64.b64encode(img_res.content).decode("utf-8")
-                content_type = img_res.headers.get("content-type", "image/jpeg")
-                body = {
-                    "contents": [{
-                        "parts": [
-                            {"text": prompt},
-                            {"inline_data": {"mime_type": content_type, "data": b64}}
-                        ]
-                    }]
-                }
-
-        async with httpx.AsyncClient(timeout=20) as client:
-            res = await client.post(url, json=body)
-
-        if res.status_code != 200:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="AI service temporarily unavailable.",
-            )
-
-        data = res.json()
-        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-
-        # Clean up response
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.replace("```json", "").replace("```", "").strip()
-
-        import json
-        result = json.loads(text)
-        return {
-            "name": result.get("name", ""),
-            "description": result.get("description", ""),
-            "category": result.get("category", "Other"),
-        }
-
+        async with httpx.AsyncClient(timeout=10) as client:
+            img_res = await client.get(image_url)
+        if img_res.status_code != 200:
+            raise HTTPException(status_code=400, detail="Could not fetch product image.")
+        image_bytes = img_res.content
+        content_type = img_res.headers.get("content-type", "image/jpeg")
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not fetch product image.")
+
+    text = await call_ai_vision(prompt, image_bytes, content_type, prefer_gemini=user_is_pro(current_user))
+    text = clean_json_response(text)
+
+    try:
+        result = jsonlib.loads(text)
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service temporarily unavailable.",
+            detail="AI could not analyze this image. Try a different photo.",
         )
+
+    return {
+        "name": result.get("name", ""),
+        "description": result.get("description", ""),
+        "category": result.get("category", "Other"),
+    }
 
 
 @router.post(
     "/storefront-chat",
-    summary="AI chat for storefront buyers (public, no auth)",
+    summary="AI chat for storefront buyers (public, Gemini if store owner is Pro)",
 )
 async def storefront_chat(
     payload: dict,
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Public chatbot for buyers browsing a storefront. Answers product
     questions, pricing, delivery, and availability based on the store's
-    actual catalog data. No authentication required.
+    actual catalog data. Uses Gemini if the store owner has an active Pro
+    subscription, otherwise OpenRouter.
     """
-    if not settings.GEMINI_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Chat is temporarily unavailable.",
-        )
-
     message = payload.get("message", "").strip()
     store_name = payload.get("store_name", "this store")
+    store_id = payload.get("store_id", "")
     products = payload.get("products", [])
     delivery_fee = payload.get("delivery_fee", 0)
     free_delivery_above = payload.get("free_delivery_above", 0)
@@ -297,9 +357,25 @@ async def storefront_chat(
     if not message:
         raise HTTPException(status_code=400, detail="Message is required.")
 
-    # Build product catalog context
+    # Determine if the store owner has Pro — public endpoint, so look up via store_id
+    prefer_gemini = False
+    if store_id:
+        try:
+            result = await db.execute(
+                select(Store).where(Store.id == store_id)
+            )
+            store = result.scalar_one_or_none()
+            if store:
+                user_result = await db.execute(
+                    select(User).where(User.id == store.user_id)
+                )
+                owner = user_result.scalar_one_or_none()
+                prefer_gemini = user_is_pro(owner)
+        except Exception:
+            prefer_gemini = False
+
     catalog = ""
-    for p in products[:20]:
+    for p in products[:25]:
         status_txt = "In stock" if p.get("in_stock") else "Out of stock"
         catalog += f"- {p['name']}: {currency}{p['price']:,.0f} ({p.get('category', 'General')}) [{status_txt}]\n"
 
@@ -326,22 +402,49 @@ RULES:
 - Never make up products, prices, or policies not listed above
 - Reply in the same language the customer used"""
 
-    try:
-        import httpx
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}"
-        body = {"contents": [{"parts": [{"text": prompt}]}]}
+    reply = await call_ai_text(prompt, prefer_gemini=prefer_gemini)
+    return {"reply": reply}
 
-        async with httpx.AsyncClient(timeout=15) as client:
-            res = await client.post(url, json=body)
 
-        if res.status_code != 200:
-            raise HTTPException(status_code=503, detail="Chat temporarily unavailable.")
+@router.post(
+    "/generate-policy",
+    summary="Generate a store policy document (free for all, Gemini for Pro)",
+)
+async def generate_policy(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Auto-generate a Return Policy, Shipping Policy, or Terms of Service
+    tailored to the merchant's store. FREE for all users. Pro users get
+    Gemini quality; free tier uses OpenRouter.
+    """
+    policy_type = payload.get("policy_type", "").strip()
+    store_name = payload.get("store_name", "the store").strip()
+    delivery_fee_info = payload.get("delivery_info", "").strip()
 
-        data = res.json()
-        reply = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        return {"reply": reply}
+    valid_types = {"return_policy": "Return &amp; Refund Policy", "shipping_policy": "Shipping &amp; Delivery Policy", "terms_of_service": "Terms of Service"}
+    if policy_type not in valid_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="policy_type must be one of: return_policy, shipping_policy, terms_of_service",
+        )
 
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=503, detail="Chat temporarily unavailable.")
+    label = valid_types[policy_type]
+
+    prompts = {
+        "return_policy": f"""Write a clear, fair Return & Refund Policy for an online store called "{store_name}".
+This store sells on a pay-on-delivery / social commerce basis (WhatsApp/Instagram orders, delivered locally).
+Include: return window (7 days is standard), condition items must be in, how to request a return, refund method and timeline, and any exceptions (e.g. final sale items).
+Write in plain, friendly language a small business would use. Format as short paragraphs with clear headers. Keep it under 300 words.""",
+        "shipping_policy": f"""Write a clear Shipping & Delivery Policy for an online store called "{store_name}".
+This store delivers locally and may offer pay-on-delivery. Include: delivery timeframes, delivery fee explanation, what happens if delivery fails, and how customers can track their order (via WhatsApp).
+Write in plain, friendly language a small business would use. Format as short paragraphs with clear headers. Keep it under 250 words.""",
+        "terms_of_service": f"""Write simple, fair Terms of Service for an online store called "{store_name}" operating on a social commerce platform (orders via WhatsApp/Instagram, pay on delivery or bank transfer).
+Include: acceptance of terms, order process, pricing and payment, delivery, returns (reference a separate return policy), limitation of liability, and contact method.
+Write in plain, accessible language, not dense legal jargon. Format as short numbered sections. Keep it under 400 words.""",
+    }
+
+    prompt = prompts[policy_type]
+    text = await call_ai_text(prompt, prefer_gemini=user_is_pro(current_user))
+    return {"policy_type": policy_type, "label": label, "content": text}
