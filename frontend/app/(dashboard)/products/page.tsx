@@ -38,6 +38,10 @@ export default function ProductsPage() {
   const [variants, setVariants] = useState<any[]>([]);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ created_count: number; skipped_count: number; skipped: any[] } | null>(null);
   const [editing, setEditing]     = useState<Product | null>(null);
   const [form, setForm]           = useState(emptyForm);
   const [generatingDesc, setGeneratingDesc] = useState(false);
@@ -194,18 +198,31 @@ export default function ProductsPage() {
             {products.length} product{products.length !== 1 ? 's' : ''} in your store
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          style={{
-            background: C.purple, border: 'none',
-            borderRadius: 10, padding: '10px 18px',
-            color: C.text, fontSize: 14, fontWeight: 700,
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', gap: 6,
-          }}
-        >
-          + Add Product
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => { setShowImportModal(true); setImportResult(null); setImportFile(null); }}
+            style={{
+              background: C.card, border: '1px solid ' + C.cardBorder,
+              borderRadius: 10, padding: '10px 16px',
+              color: C.text, fontSize: 14, fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Import CSV
+          </button>
+          <button
+            onClick={openAdd}
+            style={{
+              background: C.purple, border: 'none',
+              borderRadius: 10, padding: '10px 18px',
+              color: C.text, fontSize: 14, fontWeight: 700,
+              cursor: 'pointer', display: 'flex',
+              alignItems: 'center', gap: 6,
+            }}
+          >
+            + Add Product
+          </button>
+        </div>
       </div>
 
       {/* Empty state */}
@@ -375,7 +392,98 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* ── Share Modal ────────────────────────────────────────── */}
+            {/* Import CSV Modal */}
+      {showImportModal && (
+        <div onClick={() => setShowImportModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: C.card, borderRadius: 20, padding: 26, maxWidth: 440, width: '100%', border: '1px solid ' + C.cardBorder, maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <p style={{ color: C.text, fontSize: 16, fontWeight: 800 }}>Import Products from CSV</p>
+              <button onClick={() => setShowImportModal(false)} style={{ width: 28, height: 28, borderRadius: '50%', background: C.input, border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16 }}>x</button>
+            </div>
+
+            {!importResult ? (
+              <>
+                <p style={{ color: C.subtext, fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>
+                  Upload a CSV file with columns: <strong>name</strong> (required), <strong>price</strong>, stock, category, description, image_url.
+                </p>
+                <a
+                  href={`data:text/csv;charset=utf-8,${encodeURIComponent('name,price,stock,category,description,image_url\nSample Product,10.00,5,Category,A short description,https://example.com/image.jpg')}`}
+                  download="kormerce-product-template.csv"
+                  style={{ display: 'inline-block', marginBottom: 16, color: C.purple, fontSize: 12.5, fontWeight: 600, textDecoration: 'underline' }}
+                >
+                  Download CSV template
+                </a>
+                <label style={{
+                  display: 'block', border: '1.5px dashed ' + C.inputBorder, borderRadius: 12,
+                  padding: '24px 16px', textAlign: 'center', cursor: 'pointer', background: C.input, marginBottom: 16,
+                }}>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    style={{ display: 'none' }}
+                    onChange={e => setImportFile(e.target.files?.[0] || null)}
+                  />
+                  <p style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>
+                    {importFile ? importFile.name : 'Click to choose a CSV file'}
+                  </p>
+                </label>
+                <button
+                  onClick={async () => {
+                    if (!importFile || !storeId) return;
+                    setImporting(true);
+                    try {
+                      const fd = new FormData();
+                      fd.append('file', importFile);
+                      const res = await api.post(`/api/products/store/${storeId}/bulk-import`, fd, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                      });
+                      setImportResult(res.data);
+                      const productsRes = await api.get(`/api/products/store/${storeId}`);
+                      setProducts(productsRes.data);
+                    } catch (err: any) {
+                      setImportResult({ created_count: 0, skipped_count: 0, skipped: [{ row: '-', reason: err.response?.data?.detail || 'Import failed' }] });
+                    }
+                    setImporting(false);
+                  }}
+                  disabled={!importFile || importing}
+                  style={{
+                    width: '100%', padding: '12px 0', borderRadius: 10,
+                    background: !importFile || importing ? C.inputBorder : C.purple,
+                    border: 'none', color: '#fff', fontWeight: 700, fontSize: 14,
+                    cursor: !importFile || importing ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {importing ? 'Importing...' : 'Import Products'}
+                </button>
+              </>
+            ) : (
+              <div>
+                <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                  <p style={{ color: C.success, fontSize: 14, fontWeight: 700 }}>{importResult.created_count} product{importResult.created_count !== 1 ? 's' : ''} imported</p>
+                </div>
+                {importResult.skipped_count > 0 && (
+                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                    <p style={{ color: '#f59e0b', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{importResult.skipped_count} row{importResult.skipped_count !== 1 ? 's' : ''} skipped</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 140, overflowY: 'auto' }}>
+                      {importResult.skipped.map((s: any, i: number) => (
+                        <p key={i} style={{ color: C.muted, fontSize: 12 }}>Row {s.row}: {s.reason}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={() => { setShowImportModal(false); setImportResult(null); setImportFile(null); }}
+                  style={{ width: '100%', padding: '12px 0', borderRadius: 10, background: C.purple, border: 'none', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+{/* ── Share Modal ────────────────────────────────────────── */}
       {shareProduct && (() => {
         const productUrl = typeof window !== 'undefined'
           ? `${window.location.origin}/store/${store?.slug}/product/${(shareProduct as any).slug}`
