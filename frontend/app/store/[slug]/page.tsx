@@ -81,6 +81,7 @@ export default function StorefrontPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
   const [buyerCurrency, setBuyerCurrency] = useState<string | null>(null);
+  const [priceFilter, setPriceFilter] = useState<'all' | 'low' | 'mid' | 'high'>('all');
   const [showLocal, setShowLocal] = useState(true);
   const [lang, setLang] = useState<Lang>('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -216,11 +217,20 @@ export default function StorefrontPage() {
   const storeCategories: string[] = (() => { try { return JSON.parse(store?.categories || '[]'); } catch { return []; } })();
   const productCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean) as string[]));
   const allCategories = ['All', ...new Set([...storeCategories, ...productCategories])];
+  const allPrices = products.map(p => dp(p.price, p.price_currency)).filter(p => p > 0);
+  const priceMax = allPrices.length ? Math.max(...allPrices) : 0;
+  const priceLowCutoff = priceMax / 3;
+  const priceMidCutoff = (priceMax / 3) * 2;
   const filtered = products.filter(p => {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q || p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
-    return matchesCategory && matchesSearch;
+    const productPrice = dp(p.price, p.price_currency);
+    const matchesPrice = priceFilter === 'all'
+      || (priceFilter === 'low' && productPrice <= priceLowCutoff)
+      || (priceFilter === 'mid' && productPrice > priceLowCutoff && productPrice <= priceMidCutoff)
+      || (priceFilter === 'high' && productPrice > priceMidCutoff);
+    return matchesCategory && matchesSearch && matchesPrice;
   });
   const cartSubtotal  = cart.reduce((s, i) => s + dp(Number(i.variant?.price != null ? i.variant.price : i.product.price), i.product.price_currency) * i.quantity, 0);
   const discountAmt   = discountUnlocked && store ? Math.round(cartSubtotal * (store.popup_discount || 0) / 100) : 0;
@@ -529,6 +539,28 @@ export default function StorefrontPage() {
             ))}
           </div>
         </nav>
+      )}
+      {priceMax > 0 && (
+        <div style={{ background:'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
+          <div style={{ maxWidth:1200, margin:'0 auto', padding:'8px 20px', display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none', alignItems:'center' }}>
+            <span style={{ fontSize:11, color:'#999', fontWeight:600, flexShrink:0, marginRight:2 }}>{sym}</span>
+            {[
+              { key: 'all', label: 'Any price' },
+              { key: 'low', label: 'Under ' + sym + Math.round(priceLowCutoff).toLocaleString() },
+              { key: 'mid', label: sym + Math.round(priceLowCutoff).toLocaleString() + '-' + sym + Math.round(priceMidCutoff).toLocaleString() },
+              { key: 'high', label: 'Over ' + sym + Math.round(priceMidCutoff).toLocaleString() },
+            ].map(f => (
+              <button key={f.key} onClick={() => setPriceFilter(f.key as any)} style={{
+                padding:'5px 12px', borderRadius:20, fontSize:11.5, fontWeight:600, whiteSpace:'nowrap', cursor:'pointer',
+                border: priceFilter===f.key ? 'none' : '1px solid #e0e0e0',
+                background: priceFilter===f.key ? accent : '#fff',
+                color: priceFilter===f.key ? '#fff' : '#666', flexShrink:0,
+              }}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* PRODUCTS */}
