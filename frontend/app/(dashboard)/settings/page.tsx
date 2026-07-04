@@ -306,6 +306,31 @@ export default function SettingsPage() {
               </a>
             </div>
           </div>
+
+          {/* Invite & Earn */}
+          {(user as any)?.referral_code && (
+            <div style={{ marginTop: 20, background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(79,70,229,0.05))', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 14, padding: '20px 18px' }}>
+              <p style={{ color: C.success, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Invite &amp; Earn</p>
+              <p style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Give a free month, get a free month</p>
+              <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>
+                Share your link with other sellers. When they sign up, you both get 30 days of Pro, free.
+              </p>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 200px', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 10, padding: '10px 14px', fontFamily: 'monospace', fontSize: 13, color: C.purple, wordBreak: 'break-all' }}>
+                  {typeof window !== 'undefined' ? `${window.location.origin}/signup?ref=${(user as any).referral_code}` : ''}
+                </div>
+                <button
+                  onClick={() => {
+                    const link = `${window.location.origin}/signup?ref=${(user as any).referral_code}`;
+                    navigator.clipboard.writeText(link);
+                  }}
+                  style={{ padding: '10px 18px', borderRadius: 10, background: C.success, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
