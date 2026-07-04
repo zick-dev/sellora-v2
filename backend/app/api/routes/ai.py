@@ -393,14 +393,15 @@ STORE POLICIES:
 CUSTOMER MESSAGE: "{message}"
 
 RULES:
+- Before answering, carefully scan the ENTIRE catalog above line by line. Do not assume an item is unavailable without checking every line first.
 - Answer based ONLY on the catalog and policies above
 - Be concise (2-3 sentences max)
-- If asked about a product not in the catalog, say you don't have it and suggest similar items from the catalog
+- If, after checking every line, a product genuinely is not in the catalog, say so clearly and suggest similar items from the catalog
 - If asked about sizes/colors not specified, suggest the customer contacts the store on WhatsApp
 - Use a warm, helpful tone like a real shop assistant
 - Include prices when mentioning products
-- Never make up products, prices, or policies not listed above
-- Reply in the same language the customer used"""
+- Never make up products, prices, or policies not listed above, and never claim an item is unavailable if it is actually listed in the catalog above
+- Reply in the same language as the CUSTOMER MESSAGE above. If the customer wrote in English, you must reply in English. Do not switch languages unless the customer's message is in a different language."""
 
     reply = await call_ai_text(prompt, prefer_gemini=prefer_gemini)
     return {"reply": reply}

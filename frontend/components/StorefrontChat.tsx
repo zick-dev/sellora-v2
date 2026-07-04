@@ -48,7 +48,7 @@ export default function StorefrontChat({ storeId, storeName, accentColor, produc
             // Prioritize products relevant to the buyer's message so large
             // catalogs (60+ products) don't silently hide items past a
             // blind slice. Falls back to the first 20 if nothing matches.
-            const msgWords = userMsg.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+            const msgWords = userMsg.toLowerCase().split(/\s+/).filter((w: string) => w.length >= 2);
             const scored = products.map(p => {
               const haystack = (p.name + ' ' + (p.category || '')).toLowerCase();
               const score = msgWords.filter((w: string) => haystack.includes(w)).length;
