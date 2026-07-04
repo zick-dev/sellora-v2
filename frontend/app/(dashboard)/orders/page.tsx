@@ -551,6 +551,28 @@ export default function OrdersPage() {
                           }
                         </button>
                       ))}
+                      {(order as any).is_demo && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await api.delete(`/api/orders/demo/${order.id}`);
+                              setOrders(prev => prev.filter(o => o.id !== order.id));
+                            } catch (err: any) {
+                              alert(err.response?.data?.detail || 'Failed to delete demo order.');
+                            }
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '8px 14px', borderRadius: 8,
+                            background: 'rgba(239,68,68,0.08)',
+                            border: '1px solid rgba(239,68,68,0.2)',
+                            color: C.red, fontSize: 13, fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Delete Demo
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
