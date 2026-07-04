@@ -21,8 +21,10 @@ storefront codepaths to maintain.
 
 Each of these ships and is pushed on its own; none depend on each other.
 
-- [ ] 1a. **Bulk/CSV product import** -- merchants migrating from Instagram/elsewhere
+- [x] 1a. **Bulk/CSV product import** -- merchants migrating from Instagram/elsewhere
       often have 50-200 products already. Lowers switching-cost friction significantly.
+      Shipped: POST /api/products/store/{id}/bulk-import (respects free-tier limit +
+      compliance scan per row) + Import CSV modal with template download on Products page.
 - [ ] 1b. **WhatsApp buyer order-status notifications** -- auto-message the *buyer*
       (not just the merchant) when order status changes (confirmed, out for delivery,
       delivered). Builds buyer trust/retention; competitors mostly don't do this.
