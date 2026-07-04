@@ -111,7 +111,12 @@ async def get_store_by_slug(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Store not found",
         )
-    return store
+    from app.api.routes.ai import user_is_pro
+    owner_result = await db.execute(select(User).where(User.id == store.user_id))
+    owner = owner_result.scalar_one_or_none()
+    store_out = StoreOut.model_validate(store)
+    store_out.is_owner_pro = user_is_pro(owner)
+    return store_out
 
 # ── GET /api/store/me ─────────────────────────────────────────────
 @router.get(

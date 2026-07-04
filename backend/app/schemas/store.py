@@ -201,6 +201,7 @@ class StoreOut(BaseModel):
     compliance_status: str | None = "active"
     compliance_reason: str | None = None
     compliance_grace_deadline: object | None = None
+    is_owner_pro: bool = False
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str
