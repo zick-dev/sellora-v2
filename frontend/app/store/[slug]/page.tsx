@@ -256,7 +256,7 @@ export default function StorefrontPage() {
   function makeCartKey(productId: string, variantId?: string | null) { return variantId ? productId + ':' + variantId : productId; }
 
   useEffect(() => {
-    if (!slug || cart.length === 0) return;
+    if (!slug) return;
     const toStore: StoredCartItem[] = cart.map(c => ({
       productId: c.product.id,
       productName: c.product.name,
