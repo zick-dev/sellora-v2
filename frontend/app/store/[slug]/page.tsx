@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import StorefrontChat from '@/components/StorefrontChat';
+import { Lang, LANGUAGES, detectLanguageFromCountry, t as translate } from '@/lib/i18n';
 import { getStoredCart, saveStoredCart, StoredCartItem } from '@/lib/storefrontCart';
 
 interface Store {
@@ -80,6 +81,9 @@ export default function StorefrontPage() {
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
   const [buyerCurrency, setBuyerCurrency] = useState<string | null>(null);
   const [showLocal, setShowLocal] = useState(true);
+  const [lang, setLang] = useState<Lang>('en');
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const tr = (key: any, params?: any) => translate(lang, key, params);
 
   // Convert a product price from its original currency to the store's display currency
   const displayCurrency = showLocal && buyerCurrency ? buyerCurrency : store?.base_currency;
@@ -139,6 +143,7 @@ export default function StorefrontPage() {
           const geoData = await geoRes.json();
           const detectedCurrency = geoData?.currency || sr.data.base_currency || 'USD';
           setBuyerCurrency(detectedCurrency);
+          setLang(detectLanguageFromCountry(geoData?.country_code));
           // Fetch FX rates with detected currency as base
           const fxRes = await api.get('/api/fx/rates/' + detectedCurrency);
           if (fxRes.data?.rates) setFxRates(fxRes.data.rates);
@@ -527,9 +532,31 @@ export default function StorefrontPage() {
       <div id="products" style={{ maxWidth:1200, margin:'0 auto', padding:'28px 20px 100px' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:8 }}>
           <h2 style={{ color:'#111', fontSize:17, fontWeight:700 }}>
-            {searchQuery ? 'Search results' : activeCategory === 'All' ? 'All Products' : activeCategory}
+            {searchQuery ? tr('searchResults') : activeCategory === 'All' ? tr('allProducts') : activeCategory}
             <span style={{ color:'#bbb', fontWeight:400, fontSize:14, marginLeft:8 }}>({filtered.length})</span>
           </h2>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowLangMenu(!showLangMenu)} style={{
+              fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:20,
+              border:'1px solid #e0e0e0', background:'#fff', color:'#555', cursor:'pointer',
+              display:'flex', alignItems:'center', gap:4,
+            }}>
+              {LANGUAGES.find(l => l.code === lang)?.flag} {lang.toUpperCase()}
+            </button>
+            {showLangMenu && (
+              <div style={{ position:'absolute', top:'110%', right:0, background:'#fff', border:'1px solid #e5e5e5', borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.1)', zIndex:50, overflow:'hidden', minWidth:130 }}>
+                {LANGUAGES.map(l => (
+                  <button key={l.code} onClick={() => { setLang(l.code); setShowLangMenu(false); }} style={{
+                    display:'flex', alignItems:'center', gap:8, width:'100%', padding:'9px 14px',
+                    background: lang === l.code ? '#f5f5f5' : '#fff', border:'none', cursor:'pointer',
+                    fontSize:13, color:'#333', textAlign:'left',
+                  }}>
+                    {l.flag} {l.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {buyerCurrency && buyerCurrency !== (store?.base_currency || 'USD') && (
             <button onClick={() => setShowLocal(!showLocal)} style={{
               fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:20,
@@ -771,7 +798,7 @@ export default function StorefrontPage() {
                 <span style={{ color:'#111', fontSize:17, fontWeight:800 }}>{sym+cartTotal.toLocaleString()}</span>
               </div>
             </div>
-            <button onClick={() => { setShowCart(false); setShowCheckout(true); }} style={{ width:'100%', padding:'14px 0', background:accent, border:'none', borderRadius:10, color:'#fff', fontSize:15, fontWeight:800, cursor:'pointer' }}>Checkout →</button>
+            <button onClick={() => { setShowCart(false); setShowCheckout(true); }} style={{ width:'100%', padding:'14px 0', background:accent, border:'none', borderRadius:10, color:'#fff', fontSize:15, fontWeight:800, cursor:'pointer' }}>{tr('checkout')} →</button>
           </div>
         </div>
       )}
