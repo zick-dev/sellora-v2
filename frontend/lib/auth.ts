@@ -35,7 +35,7 @@ interface AuthState {
   init: () => void;
 
   // Sign up with email and password
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, referralCode?: string) => Promise<void>;
 
   // Log in with email and password
   login: (email: string, password: string) => Promise<void>;
@@ -91,13 +91,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   // ── signup ──────────────────────────────────────────────────────
-  signup: async (name, email, password) => {
+  signup: async (name, email, password, referralCode) => {
     set({ isLoading: true });
     try {
       const res = await api.post<TokenResponse>("/api/auth/signup", {
         name,
         email,
         password,
+        referral_code: referralCode || undefined,
       });
       saveTokens(set, res.data);
    } catch (error) {
