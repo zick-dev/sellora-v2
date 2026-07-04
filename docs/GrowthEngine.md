@@ -79,11 +79,12 @@ Each of these ships and is pushed on its own; none depend on each other.
 - [x] Price range filter -- works for all verticals, auto-scales buckets (Under X,
       X-Y, Over Y) to each store's actual product price distribution. Shipped as
       pills below the category nav.
-- [ ] Size/color filter for clothing (derived from existing product variant data) --
-      deferred as its own focused change since it requires aggregating variant
-      values across products, a larger and riskier edit to the storefront file
-      than the price filter. Category filter (already existed) covers food's
-      meal-category needs adequately for now.
+- [x] Size filter for clothing (derived from existing product variant data) --
+      auto-aggregates size-type variants across all products, shown only for
+      clothing-vertical stores via template.showSizeFilter, only renders when
+      the catalog actually has size variants. Color filter deferred (lower
+      priority than size; same pattern can be reused when needed). Category
+      filter (already existed) covers food's meal-category needs adequately.
 
 **Phase 2.3 -- Vertical-specific product fields (only if actually needed)**
 - [ ] Evaluate whether food's "modifiers/add-ons" (spice level, extra cheese) can
