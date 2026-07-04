@@ -57,6 +57,7 @@ export default function OrdersPage() {
   const [view, setView] = useState<'orders' | 'customers'>('orders');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [creatingDemo, setCreatingDemo] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -117,6 +118,7 @@ export default function OrdersPage() {
 
   const ABANDONED_HOURS = 24;
   const isAbandoned = (o: any) => {
+    if (o.is_demo) return false;
     if (!['pending', 'awaiting_verification'].includes(o.status)) return false;
     const age = (Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60);
     return age >= ABANDONED_HOURS;
@@ -266,12 +268,35 @@ export default function OrdersPage() {
           }}>
             {filter === 'all' ? 'No orders yet' : `No ${filter} orders`}
           </h3>
-          <p style={{ color: C.muted, fontSize: 14 }}>
+          <p style={{ color: C.muted, fontSize: 14, marginBottom: filter === 'all' ? 16 : 0 }}>
             {filter === 'all'
               ? 'Share your store link to start receiving orders'
               : `No orders with ${filter} status`
             }
           </p>
+          {filter === 'all' && (
+            <button
+              onClick={async () => {
+                setCreatingDemo(true);
+                try {
+                  const storeRes = await api.get('/api/store/me');
+                  const res = await api.post(`/api/orders/demo/${storeRes.data.id}`);
+                  setOrders(prev => [res.data, ...prev]);
+                } catch (err: any) {
+                  alert(err.response?.data?.detail || 'Add a product first to preview a demo order.');
+                }
+                setCreatingDemo(false);
+              }}
+              disabled={creatingDemo}
+              style={{
+                padding: '10px 20px', borderRadius: 10, background: 'rgba(79,70,229,0.1)',
+                border: '1px solid rgba(79,70,229,0.2)', color: C.purple, fontSize: 13,
+                fontWeight: 700, cursor: creatingDemo ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {creatingDemo ? 'Creating...' : '✨ See a Demo Order'}
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -328,6 +353,15 @@ export default function OrdersPage() {
                           fontFamily: 'monospace',
                         }}>
                           #{order.order_number}
+                        </span>
+                      )}
+                      {(order as any).is_demo && (
+                        <span style={{
+                          background: 'rgba(79,70,229,0.12)', color: C.purple,
+                          fontSize: 10, fontWeight: 800, padding: '2px 8px',
+                          borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em',
+                        }}>
+                          Demo
                         </span>
                       )}
                     </div>
@@ -533,6 +567,7 @@ export default function OrdersPage() {
       {view === 'customers' && (() => {
         const customerMap: Record<string, { name: string; phone: string; orders: number; totalSpent: number; lastOrder: string; statuses: string[] }> = {};
         orders.forEach(o => {
+          if ((o as any).is_demo) return;
           const key = (o as any).customer_phone || 'unknown';
           if (!customerMap[key]) {
             customerMap[key] = { name: (o as any).customer_name || 'Unknown', phone: key, orders: 0, totalSpent: 0, lastOrder: o.created_at, statuses: [] };

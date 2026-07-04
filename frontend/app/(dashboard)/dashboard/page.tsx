@@ -74,8 +74,8 @@ export default function DashboardOverviewPage() {
 
   const CURRENCY_SYMBOLS: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£', GHS: 'GH₵', KES: 'KSh', ZAR: 'R', TRY: '₺' };
   const sym = CURRENCY_SYMBOLS[(store as any)?.base_currency || 'NGN'] || ((store as any)?.base_currency || 'NGN') + ' ';
-  const totalRevenue     = orders.filter((o: any) => o.status === 'delivered').reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
-  const pendingRevenue   = orders.filter((o: any) => ['pending','confirmed','processing'].includes(o.status)).reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
+  const totalRevenue     = orders.filter((o: any) => o.status === 'delivered' && !o.is_demo).reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
+  const pendingRevenue   = orders.filter((o: any) => ['pending','confirmed','processing'].includes(o.status) && !o.is_demo).reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
   const pendingCount   = orders.filter((o: any) => o.status === 'pending').length;
   const activeProducts = products.filter((p: any) => p.is_available).length;
   const newLeads       = leads.filter((l: any) => !l.follow_up_sent).length;
