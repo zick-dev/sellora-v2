@@ -42,8 +42,13 @@ Each of these ships and is pushed on its own; none depend on each other.
 - [ ] 1e. **Multi-language storefront detection** -- reuses the existing
       geolocation/currency-detection pattern to auto-adapt storefront language
       (French, Arabic, Turkish, etc.) for wider regional reach.
-- [ ] 1f. **"Demo Order" simulation for new merchants** -- reduces new-merchant anxiety
+- [x] 1f. **"Demo Order" simulation for new merchants** -- reduces new-merchant anxiety
       by showing what an order looks like before real traffic arrives.
+      Shipped: "See a Demo Order" button on empty Orders state creates a realistic
+      sample order using the merchant's own real product (requires at least one product
+      to exist). Tagged is_demo=True, shown with a DEMO badge, excluded from revenue
+      totals, abandoned-order detection, and Customers view. Deletable via
+      DELETE /api/orders/demo/{order_id}.
 
 ### Phase 2 -- Vertical Storefront Templates
 
