@@ -75,10 +75,15 @@ Each of these ships and is pushed on its own; none depend on each other.
       icon, and hero accent icon next to store name. No structural/business-logic
       changes -- purely additive visual styling.
 
-**Phase 2.2 -- Smart filters per vertical**
-- [ ] Surface vertical-appropriate filter UI (size/color for fashion, spec-range
-      for electronics, meal category for food) using data that already exists --
-      no new fields required yet.
+**Phase 2.2 -- Smart filters per vertical** (partial)
+- [x] Price range filter -- works for all verticals, auto-scales buckets (Under X,
+      X-Y, Over Y) to each store's actual product price distribution. Shipped as
+      pills below the category nav.
+- [ ] Size/color filter for clothing (derived from existing product variant data) --
+      deferred as its own focused change since it requires aggregating variant
+      values across products, a larger and riskier edit to the storefront file
+      than the price filter. Category filter (already existed) covers food's
+      meal-category needs adequately for now.
 
 **Phase 2.3 -- Vertical-specific product fields (only if actually needed)**
 - [ ] Evaluate whether food's "modifiers/add-ons" (spice level, extra cheese) can
