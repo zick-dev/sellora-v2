@@ -36,9 +36,10 @@ Each of these ships and is pushed on its own; none depend on each other.
 - [ ] 1c. **Referral loop between merchants** -- "Give credit, get credit" style
       referral, since merchant-to-merchant word of mouth is the natural acquisition
       channel for this audience.
-- [ ] 1d. **Optional "Made with Kormerce" badge on free-tier stores** -- off by
-      default consideration needed; toggleable, removed on Pro. Classic Wix/Carrd-style
-      growth loop. Needs a product decision on default state before building.
+- [x] 1d. **"Made with Kormerce" badge on free-tier stores** -- shown by default,
+      removed automatically on Pro. Classic Wix/Carrd-style growth loop.
+      Shipped: is_owner_pro computed field on public store lookup, badge rendered in
+      storefront footer, hidden automatically when the store owner has active Pro.
 - [ ] 1e. **Multi-language storefront detection** -- reuses the existing
       geolocation/currency-detection pattern to auto-adapt storefront language
       (French, Arabic, Turkish, etc.) for wider regional reach.
