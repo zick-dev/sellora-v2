@@ -92,6 +92,14 @@ async def signup(
             detail="An account with this email already exists",
         )
 
+    import random
+    import string
+
+    def generate_referral_code() -> str:
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+    new_referral_code = generate_referral_code()
+
     user = User(
         name=payload.name,
         email=payload.email,
@@ -100,9 +108,31 @@ async def signup(
         plan="pro",
         plan_expires_at=datetime.now(timezone.utc) + timedelta(days=21),
         is_verified=False,
-
+        referral_code=new_referral_code,
     )
     db.add(user)
+    await db.flush()
+
+    # ── Referral bonus: if a valid referral code was used, extend the
+    # referred user's Pro trial by 30 days, AND give the referrer 30 days
+    # of Pro (extending their current expiry, or starting fresh if none).
+    if payload.referral_code:
+        referrer_result = await db.execute(
+            select(User).where(User.referral_code == payload.referral_code.strip().upper())
+        )
+        referrer = referrer_result.scalar_one_or_none()
+        if referrer and referrer.id != user.id:
+            user.referred_by = referrer.id
+            user.plan = "pro"
+            user.plan_expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+
+            referrer_base = referrer.plan_expires_at if (
+                referrer.plan == "pro" and referrer.plan_expires_at and referrer.plan_expires_at > datetime.now(timezone.utc)
+            ) else datetime.now(timezone.utc)
+            referrer.plan = "pro"
+            referrer.plan_expires_at = referrer_base + timedelta(days=30)
+            db.add(referrer)
+
     await db.flush()
     await db.refresh(user)
     return make_token_response(user)

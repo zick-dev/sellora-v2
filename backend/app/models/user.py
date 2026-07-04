@@ -119,6 +119,8 @@ class User(Base):
     plan_expires_at:           Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     flutterwave_customer_id:   Mapped[str | None]      = mapped_column(String(100), nullable=True)
     flutterwave_tx_ref:        Mapped[str | None]      = mapped_column(String(100), nullable=True)
+    referral_code:             Mapped[str | None]      = mapped_column(String(20), unique=True, nullable=True)
+    referred_by:               Mapped[str | None]      = mapped_column(String(36), nullable=True)
 
     def __repr__(self) -> str:
         """Human-readable representation for debugging"""

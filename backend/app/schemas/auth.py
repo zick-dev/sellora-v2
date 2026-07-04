@@ -29,6 +29,7 @@ class SignupRequest(BaseModel):
     name: str        # Seller's full name
     email: EmailStr  # Validated email format (pydantic checks this)
     password: str    # Plain text — will be hashed before storage
+    referral_code: str | None = None  # Optional referrer's code
 
 
 class LoginRequest(BaseModel):
@@ -81,6 +82,7 @@ class UserOut(BaseModel):
     is_verified: bool         # Shows verification badge in UI
     plan:           str
     plan_expires_at: datetime | None
+    referral_code:  str | None = None
 
     # from_attributes=True allows creating this from a SQLAlchemy model
     # e.g. UserOut.model_validate(user_db_object)
