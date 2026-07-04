@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import StorefrontChat from '@/components/StorefrontChat';
 import { Lang, LANGUAGES, detectLanguageFromCountry, t as translate } from '@/lib/i18n';
+import { getStorefrontTemplate } from '@/lib/storefrontTemplates';
 import { getStoredCart, saveStoredCart, StoredCartItem } from '@/lib/storefrontCart';
 
 interface Store {
@@ -84,6 +85,7 @@ export default function StorefrontPage() {
   const [lang, setLang] = useState<Lang>('en');
   const [showLangMenu, setShowLangMenu] = useState(false);
   const tr = (key: any, params?: any) => translate(lang, key, params);
+  const template = getStorefrontTemplate((store as any)?.category_type);
 
   // Convert a product price from its original currency to the store's display currency
   const displayCurrency = showLocal && buyerCurrency ? buyerCurrency : store?.base_currency;
@@ -594,9 +596,9 @@ export default function StorefrontPage() {
                 <div key={product.id} style={{ background:'#fff', border:'1px solid #f0f0f0', borderRadius:12, overflow:'hidden', transition:'box-shadow 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 18px rgba(0,0,0,0.08)')}
                   onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-                  <div onClick={() => { if (!oos && product.slug) { router.push(`/store/${slug}/product/${product.slug}`); } }} style={{ aspectRatio:'1', background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
+                  <div onClick={() => { if (!oos && product.slug) { router.push(`/store/${slug}/product/${product.slug}`); } }} style={{ aspectRatio: template.productImageAspect, background:'#ffffff', position:'relative', overflow:'hidden', cursor: oos ? 'default' : 'pointer', border:'1px solid #f0f0f0' }}>
                     {product.image_url
-                      ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'contain', transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
+                      ? <img src={product.image_url} alt={product.name} style={{ width:'100%', height:'100%', objectFit: template.productImageFit, transition:'transform 0.3s' }} onMouseEnter={e => (e.currentTarget.style.transform='scale(1.04)')} onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />
                       : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, color:'#ddd' }}>🛍️</div>}
                     {product.stock <= 5 && product.stock > 0 && (
                       <div style={{ position:'absolute', top:8, left:8, background: product.stock<=2 ? '#ef4444' : '#f59e0b', color:'#fff', borderRadius:6, padding:'2px 8px', fontSize:10, fontWeight:700 }}>
