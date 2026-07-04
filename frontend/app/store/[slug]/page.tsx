@@ -667,6 +667,12 @@ export default function StorefrontPage() {
             )}
           <div style={{ display:'flex', flexWrap:'wrap', gap:12, alignItems:'center', justifyContent:'space-between' }}>
             <p style={{ color:'#555', fontSize:12 }}>© {new Date().getFullYear()} {store?.store_name}. All rights reserved.</p>
+            {!(store as any)?.is_owner_pro && (
+              <a href="https://kormerce.com" target="_blank" rel="noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:6, color:'#666', fontSize:11, textDecoration:'none' }}>
+                <span style={{ width:14, height:14, borderRadius:4, background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:9, fontWeight:800 }}>K</span>
+                Made with Kormerce
+              </a>
+            )}
             <div style={{ display:'flex', gap:16 }}>
               <span style={{ color:'#444', fontSize:12 }}>🚚 Pay on Delivery</span>
               <span style={{ color:'#444', fontSize:12 }}>🔒 Secure</span>
