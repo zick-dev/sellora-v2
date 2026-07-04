@@ -93,6 +93,7 @@ export default function StorefrontPage() {
   const displayCurrency = showLocal && buyerCurrency ? buyerCurrency : store?.base_currency;
   const dp = (price: number, priceCurrency?: string | null) =>
     convertPrice(price, priceCurrency, displayCurrency, fxRates);
+  const chatProducts = products.map(p => ({ ...p, price: dp(p.price, p.price_currency) }));
   const [searchFocused, setSearchFocused] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
@@ -351,7 +352,7 @@ export default function StorefrontPage() {
           storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
-          products={products}
+          products={chatProducts}
           deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
           freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
@@ -396,7 +397,7 @@ export default function StorefrontPage() {
           storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
-          products={products}
+          products={chatProducts}
           deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
           freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
@@ -1209,7 +1210,7 @@ export default function StorefrontPage() {
           storeId={store.id}
           storeName={store.store_name}
           accentColor={accent}
-          products={products}
+          products={chatProducts}
           deliveryFee={dp((store as any).delivery_fee || 0, store?.base_currency)}
           freeDeliveryAbove={dp((store as any).free_delivery_above || 0, store?.base_currency)}
           whatsapp={(store as any).whatsapp}
