@@ -44,6 +44,7 @@ const STORE_TYPE_PRESETS: Record<string, { type1: string; values1: string[]; typ
   },
   food: {
     type1: 'Size', values1: ['Small', 'Medium', 'Large', 'Family Pack'],
+    type2: 'Spice Level', values2: ['Mild', 'Medium', 'Hot', 'Extra Hot'],
   },
   general: {
     type1: 'Option', values1: [],
