@@ -44,6 +44,63 @@ def generate_order_number() -> str:
 
 
 @router.post(
+    "/demo/{store_id}",
+    response_model=OrderOut,
+    summary="Create a sample demo order for a new merchant to preview",
+)
+async def create_demo_order(
+    store_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Generates a realistic sample order using one of the merchant's own
+    real products, so brand-new sellers can see what an order looks like
+    before they have real traffic. Marked is_demo=True -- excluded from
+    revenue totals, abandoned-order detection, and customer records.
+    """
+    store_result = await db.execute(
+        select(Store).where(Store.id == store_id, Store.user_id == current_user.id)
+    )
+    store = store_result.scalar_one_or_none()
+    if not store:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    product_result = await db.execute(
+        select(Product).where(Product.store_id == store_id).order_by(Product.created_at.desc())
+    )
+    product = product_result.scalars().first()
+    if not product:
+        raise HTTPException(
+            status_code=400,
+            detail="Add at least one product before previewing a demo order.",
+        )
+
+    order_number = generate_order_number()
+    demo_order = Order(
+        store_id=store_id,
+        product_id=product.id,
+        customer_name="Chidinma A.",
+        customer_phone="2348012345678",
+        customer_note="This is what a real customer order will look like!",
+        quantity=1,
+        unit_price=product.price,
+        total_price=product.price,
+        discount_percent=0,
+        delivery_address=None,
+        delivery_fee_applied=0,
+        order_number=order_number,
+        status="pending",
+        payment_method="pay_on_delivery",
+        is_demo=True,
+    )
+    db.add(demo_order)
+    await db.flush()
+    await db.refresh(demo_order)
+    return OrderOut.model_validate(demo_order)
+
+
+@router.post(
     "/",
     response_model=OrderOut,
     status_code=201,
@@ -227,3 +284,32 @@ async def update_order_status(
     await db.flush()
     await db.refresh(order)
     return OrderOut.model_validate(order)
+
+
+@router.delete(
+    "/demo/{order_id}",
+    status_code=204,
+    summary="Delete a demo order (demo orders only)",
+)
+async def delete_demo_order(
+    order_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Removes a demo order once the merchant has seen it. Refuses to delete real orders."""
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if not order.is_demo:
+        raise HTTPException(status_code=400, detail="Only demo orders can be deleted this way.")
+
+    store_result = await db.execute(
+        select(Store).where(Store.id == order.store_id, Store.user_id == current_user.id)
+    )
+    if not store_result.scalar_one_or_none():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    await db.delete(order)
+    await db.flush()
+    return None

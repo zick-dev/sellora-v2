@@ -11,7 +11,7 @@ Flow:
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Integer, Numeric, String, ForeignKey, Text
+from sqlalchemy import DateTime, Integer, Numeric, String, ForeignKey, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -55,6 +55,7 @@ class Order(Base):
     )
     variant_description: Mapped[str | None] = mapped_column(String(200), nullable=True)
     delivery_fee_applied: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # ── Payment ────────────────────────────────────────────────────
     payment_method: Mapped[str] = mapped_column(String(20), default='pay_on_delivery')

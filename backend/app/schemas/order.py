@@ -49,6 +49,7 @@ class OrderOut(BaseModel):
     transfer_receipt_url: str | None
     order_number:         str | None
     status:               str
+    is_demo:              bool = False
     created_at:           datetime
     updated_at:           datetime
 
