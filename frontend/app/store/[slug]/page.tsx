@@ -399,6 +399,7 @@ export default function StorefrontPage() {
               ? <img src={store.logo_url} alt={store.store_name} style={{ width:34, height:34, borderRadius:8, objectFit:'cover' }} />
               : <div style={{ width:34, height:34, borderRadius:8, background:accent, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>🏪</div>}
             <span style={{ color:'#111', fontWeight:800, fontSize:16, letterSpacing:'-0.3px' }}>{store?.store_name}</span>
+            <span style={{ fontSize:14, marginLeft:2 }}>{template.heroAccentIcon}</span>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
             <button onClick={() => setShowCart(true)} style={{ position:'relative', padding:'8px 14px', borderRadius:8, background:accent, border:'none', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
@@ -534,6 +535,7 @@ export default function StorefrontPage() {
       <div id="products" style={{ maxWidth:1200, margin:'0 auto', padding:'28px 20px 100px' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:8 }}>
           <h2 style={{ color:'#111', fontSize:17, fontWeight:700 }}>
+            <span style={{ marginRight:6 }}>{template.categoryIcon}</span>
             {searchQuery ? tr('searchResults') : activeCategory === 'All' ? tr('allProducts') : activeCategory}
             <span style={{ color:'#bbb', fontWeight:400, fontSize:14, marginLeft:8 }}>({filtered.length})</span>
           </h2>
@@ -577,7 +579,7 @@ export default function StorefrontPage() {
         </div>
         {filtered.length === 0 ? (
           <div style={{ textAlign:'center', padding:'60px 0' }}>
-            <div style={{ fontSize:40, marginBottom:10 }}>{searchQuery ? '🔍' : '🛍️'}</div>
+            <div style={{ fontSize:40, marginBottom:10 }}>{searchQuery ? '🔍' : template.emptyStateIcon}</div>
             <p style={{ color:'#bbb', fontSize:14 }}>
               {searchQuery ? 'No products match "' + searchQuery + '"' : 'No products available yet'}
             </p>
@@ -588,7 +590,7 @@ export default function StorefrontPage() {
             )}
           </div>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: template.gridGapDesktop }}>
             {filtered.map(product => {
               const qty = getQty(product.id);
               const oos = product.stock === 0 || !product.is_available;
