@@ -71,6 +71,22 @@ export default function OrdersPage() {
     load();
   }, []);
 
+  const STATUS_MESSAGES: Record<string, string> = {
+    confirmed: "Hi {name}! \ud83d\udc4b Your order #{orderNum} has been confirmed and is being prepared. We'll update you again soon!",
+    processing: "Hi {name}! \ud83d\udce6 Your order #{orderNum} is being packed and will be on its way shortly.",
+    delivered: "Hi {name}! \u2705 Your order #{orderNum} has been delivered. Thank you for shopping with us \u2014 we'd love to hear your feedback!",
+    cancelled: "Hi {name}, your order #{orderNum} has been cancelled. If you have any questions, feel free to reach out to us here.",
+  };
+
+  function notifyBuyer(order: any, status: string) {
+    const template = STATUS_MESSAGES[status];
+    if (!template || !order.customer_phone) return;
+    const orderNum = order.order_number || order.id.slice(0, 8).toUpperCase();
+    const text = template.replace('{name}', order.customer_name).replace('{orderNum}', orderNum);
+    const clean = order.customer_phone.replace(/\s+/g, '').replace(/^0/, '234');
+    window.open(`https://wa.me/${clean}?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
   async function updateStatus(orderId: string, status: string) {
     setUpdating(orderId);
     try {
@@ -79,6 +95,9 @@ export default function OrdersPage() {
         prev.map(o => o.id === orderId ? res.data : o)
       );
       setExpanded(null);
+      if (STATUS_MESSAGES[status]) {
+        notifyBuyer(res.data, status);
+      }
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to update status.');
     } finally {
