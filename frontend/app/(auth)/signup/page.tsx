@@ -11,7 +11,7 @@
  */
 
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -20,7 +20,7 @@ import { Eye, EyeOff, Zap } from "lucide-react";
 import IconBackground from "@/components/IconBackground";
 import toast from "react-hot-toast";
 
-export default function SignupPage() {
+function SignupPageInner() {
   const router = useRouter();
   const { signup, googleAuth } = useAuthStore();
 
@@ -455,5 +455,12 @@ export default function SignupPage() {
         }
       `}</style>
     </div>
+  );
+}
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPageInner />
+    </Suspense>
   );
 }
