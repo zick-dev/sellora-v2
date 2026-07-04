@@ -16,7 +16,7 @@ Seller routes (JWT required):
 import re
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -204,6 +204,116 @@ async def get_catalog_feed(
         media_type="text/csv",
         headers={"Content-Disposition": f'inline; filename="{store.slug}-catalog.csv"'},
     )
+
+
+@router.post(
+    "/store/{store_id}/bulk-import",
+    summary="Bulk import products from a CSV file",
+)
+async def bulk_import_products(
+    store_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Import multiple products at once from a CSV file. Expected columns
+    (header row required): name, price, stock, category, description,
+    image_url. Only name and price are required per row -- everything
+    else is optional. Respects the same free-tier product limit and
+    compliance scanning as single product creation. Rows that fail
+    validation are skipped and reported back, not silently dropped.
+    """
+    import csv
+    import io
+
+    store = await get_store_or_403(store_id, current_user.id, db)
+
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a .csv file.")
+
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Could not read file. Please save as UTF-8 CSV.")
+
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames or "name" not in [f.strip().lower() for f in reader.fieldnames]:
+        raise HTTPException(status_code=400, detail="CSV must include a 'name' column header.")
+
+    normalized_rows = []
+    for row in reader:
+        normalized_rows.append({k.strip().lower(): (v.strip() if v else "") for k, v in row.items()})
+
+    created = []
+    skipped = []
+
+    is_pro = user_is_pro(current_user)
+    existing_count = 0
+    if not is_pro:
+        count_result = await db.execute(select(func.count()).where(Product.store_id == store_id))
+        existing_count = count_result.scalar()
+
+    for i, row in enumerate(normalized_rows, start=2):
+        name = row.get("name", "").strip()
+        if not name:
+            skipped.append({"row": i, "reason": "Missing product name"})
+            continue
+
+        price_raw = row.get("price", "").strip()
+        try:
+            price = float(price_raw) if price_raw else 0.0
+        except ValueError:
+            skipped.append({"row": i, "reason": f"Invalid price '{price_raw}'"})
+            continue
+
+        if not is_pro and existing_count >= FREE_PRODUCT_LIMIT:
+            skipped.append({"row": i, "reason": f"Free plan limit of {FREE_PRODUCT_LIMIT} products reached"})
+            continue
+
+        stock_raw = row.get("stock", "").strip()
+        try:
+            stock = int(float(stock_raw)) if stock_raw else 0
+        except ValueError:
+            stock = 0
+
+        base_slug = generate_slug(name)
+        slug = base_slug
+        counter = 2
+        while True:
+            existing = await db.execute(
+                select(Product).where(Product.store_id == store_id, Product.slug == slug)
+            )
+            if not existing.scalar_one_or_none():
+                break
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        product = Product(
+            store_id=store_id,
+            name=name,
+            slug=slug,
+            description=row.get("description") or None,
+            price=price,
+            stock=stock,
+            image_url=row.get("image_url") or None,
+            category=row.get("category") or None,
+            price_currency=store.base_currency or "USD",
+        )
+        db.add(product)
+        await db.flush()
+        await scan_product(db, product)
+        created.append({"row": i, "name": name, "id": product.id})
+        if not is_pro:
+            existing_count += 1
+
+    return {
+        "created_count": len(created),
+        "skipped_count": len(skipped),
+        "created": created,
+        "skipped": skipped,
+    }
 
 
 # ── Seller Routes ─────────────────────────────────────────────────
