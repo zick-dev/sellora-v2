@@ -64,13 +64,16 @@ Each of these ships and is pushed on its own; none depend on each other.
 
 ### Phase 2 -- Vertical Storefront Templates
 
-**Phase 2.1 -- Visual templates only (no data model changes)**
-- [ ] Define template config schema: hero style, product card layout, accent
+**Phase 2.1 -- Visual templates only (no data model changes)** ✅ SHIPPED
+- [x] Define template config schema: hero style, product card layout, accent
       icon set, per `category_type` value already stored on Store.
-- [ ] Build 3 initial presets: Fashion, Electronics, Food (the most structurally
-      distinct verticals -- good test of whether the config approach holds up).
-- [ ] Wire StorefrontPage to select template config based on `store.category_type`,
+- [x] Build initial presets: Clothing, Electronics, Food, Beauty, General fallback.
+- [x] Wire StorefrontPage to select template config based on `store.category_type`,
       falling back to the current general/default layout for anything unmatched.
+      Shipped: lib/storefrontTemplates.ts config, wired to product image aspect
+      ratio + fit, product grid gap, category icon on products heading, empty-state
+      icon, and hero accent icon next to store name. No structural/business-logic
+      changes -- purely additive visual styling.
 
 **Phase 2.2 -- Smart filters per vertical**
 - [ ] Surface vertical-appropriate filter UI (size/color for fashion, spec-range
