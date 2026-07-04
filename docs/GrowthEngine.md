@@ -25,9 +25,14 @@ Each of these ships and is pushed on its own; none depend on each other.
       often have 50-200 products already. Lowers switching-cost friction significantly.
       Shipped: POST /api/products/store/{id}/bulk-import (respects free-tier limit +
       compliance scan per row) + Import CSV modal with template download on Products page.
-- [ ] 1b. **WhatsApp buyer order-status notifications** -- auto-message the *buyer*
+- [x] 1b. **WhatsApp buyer order-status notifications** -- auto-message the *buyer*
       (not just the merchant) when order status changes (confirmed, out for delivery,
       delivered). Builds buyer trust/retention; competitors mostly don't do this.
+      Shipped: no Meta WhatsApp Business API approval available yet, so implemented as
+      a one-tap pre-filled wa.me message that opens automatically after a merchant
+      changes order status (confirmed/processing/delivered/cancelled), tailored per
+      status. Real automatic (no-tap) sending is a future upgrade once WhatsApp Cloud
+      API access is in place.
 - [ ] 1c. **Referral loop between merchants** -- "Give credit, get credit" style
       referral, since merchant-to-merchant word of mouth is the natural acquisition
       channel for this audience.
