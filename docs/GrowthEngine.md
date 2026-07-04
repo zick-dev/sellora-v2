@@ -86,12 +86,14 @@ Each of these ships and is pushed on its own; none depend on each other.
       priority than size; same pattern can be reused when needed). Category
       filter (already existed) covers food's meal-category needs adequately.
 
-**Phase 2.3 -- Vertical-specific product fields (only if actually needed)**
-- [ ] Evaluate whether food's "modifiers/add-ons" (spice level, extra cheese) can
+**Phase 2.3 -- Vertical-specific product fields** ✅ SHIPPED (no new schema needed)
+- [x] Evaluated whether food's "modifiers/add-ons" (spice level, extra cheese) can
       be fully covered by the existing generic variant system (`variant_type_1/2`,
-      `variant_value_1/2`) with relabeled UI, before adding any new table/fields.
-      This is the outlier case most likely to need real schema work -- everything
-      else should reuse what exists.
+      `variant_value_1/2`) -- confirmed yes. The food preset in VariantBuilder.tsx
+      already existed for portion sizes; expanded it with a second dimension
+      (Spice Level: Mild/Medium/Hot/Extra Hot) using the exact same mechanism as
+      clothing sizes and jewelry materials. No new database fields, tables, or
+      schema changes were required -- this closes out Phase 2 entirely.
 
 ---
 
