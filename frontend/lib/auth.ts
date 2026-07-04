@@ -41,7 +41,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
 
   // Log in or sign up with Google ID token
-  googleAuth: (token: string) => Promise<{ is_new_user: boolean; has_store: boolean }>;
+  googleAuth: (token: string, referralCode?: string) => Promise<{ is_new_user: boolean; has_store: boolean }>;
 
   // Fetch current user profile from backend
   loadUser: () => Promise<void>;
@@ -123,7 +123,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   // ── googleAuth ──────────────────────────────────────────────────
-  googleAuth: async (token) => {
+  googleAuth: async (token, referralCode) => {
     /**
      * Authenticate with a Google ID token from @react-oauth/google.
      * The token is verified server-side — we never trust it blindly.
@@ -131,7 +131,7 @@ export const useAuthStore = create<AuthState>((set) => ({
      */
     set({ isLoading: true });
   try {
-    const res = await api.post('/api/auth/google', { token });
+    const res = await api.post('/api/auth/google', { token, referral_code: referralCode || undefined });
     
     // Save tokens
     localStorage.setItem('access_token', res.data.access_token);

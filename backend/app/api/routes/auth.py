@@ -228,6 +228,13 @@ async def google_auth(
         else:
             # Brand new user
             is_new_user = True
+
+            import random
+            import string
+
+            def generate_referral_code() -> str:
+                return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
             user = User(
                 name=google_user["name"],
                 email=google_user["email"],
@@ -237,8 +244,29 @@ async def google_auth(
                 plan="pro",
                 plan_expires_at=datetime.now(timezone.utc) + timedelta(days=21),
                 is_verified=google_user.get("email_verified", False),
+                referral_code=generate_referral_code(),
             )
             db.add(user)
+            await db.flush()
+
+            # Referral bonus: same logic as email signup
+            if payload.referral_code:
+                referrer_result = await db.execute(
+                    select(User).where(User.referral_code == payload.referral_code.strip().upper())
+                )
+                referrer = referrer_result.scalar_one_or_none()
+                if referrer and referrer.id != user.id:
+                    user.referred_by = referrer.id
+                    user.plan = "pro"
+                    user.plan_expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+
+                    referrer_base = referrer.plan_expires_at if (
+                        referrer.plan == "pro" and referrer.plan_expires_at and referrer.plan_expires_at > datetime.now(timezone.utc)
+                    ) else datetime.now(timezone.utc)
+                    referrer.plan = "pro"
+                    referrer.plan_expires_at = referrer_base + timedelta(days=30)
+                    db.add(referrer)
+
             await db.flush()
             await db.refresh(user)
 

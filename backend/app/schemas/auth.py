@@ -47,6 +47,7 @@ class GoogleAuthRequest(BaseModel):
     then sends it here for backend verification.
     """
     token: str  # Google ID token from the frontend OAuth flow
+    referral_code: str | None = None  # Optional referrer's code
 
 
 class ForgotPasswordRequest(BaseModel):

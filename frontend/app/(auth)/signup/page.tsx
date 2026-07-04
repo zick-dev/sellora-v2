@@ -62,7 +62,7 @@ function SignupPageInner() {
   setGoogleLoading(true);
   setError('');
   try {
-    const result = await googleAuth(response.access_token);
+    const result = await googleAuth(response.access_token, referralCode);
     toast.success('Welcome to Kormerce!');
      // Small delay to ensure token is saved to localStorage
     window.location.href = '/dashboard';
