@@ -33,9 +33,12 @@ Each of these ships and is pushed on its own; none depend on each other.
       changes order status (confirmed/processing/delivered/cancelled), tailored per
       status. Real automatic (no-tap) sending is a future upgrade once WhatsApp Cloud
       API access is in place.
-- [ ] 1c. **Referral loop between merchants** -- "Give credit, get credit" style
-      referral, since merchant-to-merchant word of mouth is the natural acquisition
+- [x] 1c. **Referral loop between merchants** -- free month of Pro for both referrer
+      and referred, since merchant-to-merchant word of mouth is the natural acquisition
       channel for this audience.
+      Shipped: unique referral_code per user (backfilled for existing users), signup
+      accepts ?ref=CODE, valid code grants both parties 30 days of Pro, Invite & Earn
+      card in Settings with shareable link + copy button.
 - [x] 1d. **"Made with Kormerce" badge on free-tier stores** -- shown by default,
       removed automatically on Pro. Classic Wix/Carrd-style growth loop.
       Shipped: is_owner_pro computed field on public store lookup, badge rendered in
