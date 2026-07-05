@@ -46,8 +46,49 @@ export default function StorefrontPage() {
   const [copied, setCopied]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [error, setError]         = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup' | 'delivery' | 'policies'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'contact' | 'categories' | 'popup' | 'delivery' | 'policies' | 'crypto'>('general');
   const [catInput, setCatInput]   = useState('');
+  const [wallets, setWallets] = useState<any[]>([]);
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [editingWallet, setEditingWallet] = useState<any | null>(null);
+  const [walletForm, setWalletForm] = useState({ coin: '', network: '', wallet_address: '', label: '' });
+  const [savingWallet, setSavingWallet] = useState(false);
+
+  async function fetchWallets(storeId: string) {
+    try {
+      const res = await api.get(`/api/crypto-wallets/store/${storeId}`);
+      setWallets(res.data);
+    } catch {}
+  }
+
+  async function saveWallet() {
+    if (!store || !walletForm.coin || !walletForm.network || !walletForm.wallet_address) return;
+    setSavingWallet(true);
+    try {
+      if (editingWallet) {
+        await api.put(`/api/crypto-wallets/${editingWallet.id}`, walletForm);
+      } else {
+        await api.post(`/api/crypto-wallets/store/${store.id}`, walletForm);
+      }
+      await fetchWallets(store.id);
+      setShowWalletModal(false);
+      setEditingWallet(null);
+      setWalletForm({ coin: '', network: '', wallet_address: '', label: '' });
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to save wallet.');
+    }
+    setSavingWallet(false);
+  }
+
+  async function deleteWallet(walletId: string) {
+    if (!store) return;
+    try {
+      await api.delete(`/api/crypto-wallets/${walletId}`);
+      await fetchWallets(store.id);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete wallet.');
+    }
+  }
 
   const [form, setForm] = useState({
     store_name:     '',
@@ -76,6 +117,7 @@ export default function StorefrontPage() {
     return_policy:          '',
     shipping_policy:        '',
     terms_of_service:       '',
+    crypto_payment_enabled: false,
   });
 
   const categories: string[] = (() => {
@@ -94,6 +136,7 @@ export default function StorefrontPage() {
         if (storeResult.status !== 'fulfilled') return;
         const res = storeResult.value;
         setStore(res.data);
+        fetchWallets(res.data.id);
         setForm({
           store_name:     res.data.store_name || '',
           description:    res.data.description || '',
@@ -121,6 +164,7 @@ export default function StorefrontPage() {
           return_policy:        res.data.return_policy ?? '',
           shipping_policy:      res.data.shipping_policy ?? '',
           terms_of_service:     res.data.terms_of_service ?? '',
+          crypto_payment_enabled: res.data.crypto_payment_enabled ?? false,
         });
       } finally {
         setLoading(false);
@@ -160,6 +204,7 @@ export default function StorefrontPage() {
         return_policy:        form.return_policy || null,
         shipping_policy:      form.shipping_policy || null,
         terms_of_service:     form.terms_of_service || null,
+        crypto_payment_enabled: form.crypto_payment_enabled,
       });
       setStore(res.data);
       setSaved(true);
@@ -215,6 +260,7 @@ export default function StorefrontPage() {
     { key: 'popup',      label: 'Popup',      icon: '🎁' },
     { key: 'delivery', label: 'Delivery', icon: '🚚' },
     { key: 'policies', label: 'Policies', icon: '📜' },
+    { key: 'crypto', label: 'Crypto', icon: '🪙' },
   ];
 
   if (loading) return (
@@ -905,6 +951,101 @@ export default function StorefrontPage() {
         </div>
       )}
 
+      {activeTab === 'crypto' && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+          <h2 style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Crypto Payments</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 20 }}>
+            Accept crypto directly to your own wallet. Kormerce never sees, holds, or touches the funds -- buyers send straight to your address, same as bank transfer.
+          </p>
+
+          <div
+            onClick={() => setForm({ ...form, crypto_payment_enabled: !form.crypto_payment_enabled })}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 12,
+              padding: '14px 16px', marginBottom: 20, cursor: 'pointer',
+            }}
+          >
+            <div>
+              <p style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>Accept Crypto Payments</p>
+              <p style={{ color: C.muted, fontSize: 12 }}>Show "Pay with Crypto" at checkout</p>
+            </div>
+            <div style={{
+              width: 44, height: 26, borderRadius: 20, position: 'relative', flexShrink: 0,
+              background: form.crypto_payment_enabled ? C.purple : C.inputBorder, transition: 'background 0.2s',
+            }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3,
+                left: form.crypto_payment_enabled ? 21 : 3, transition: 'left 0.2s',
+              }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <p style={{ color: C.text, fontSize: 13, fontWeight: 700 }}>Your Wallets</p>
+            <button
+              onClick={() => { setEditingWallet(null); setWalletForm({ coin: '', network: '', wallet_address: '', label: '' }); setShowWalletModal(true); }}
+              style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.2)', color: C.purple, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              + Add Wallet
+            </button>
+          </div>
+
+          {wallets.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '30px 0', color: C.muted, fontSize: 13 }}>
+              No wallets added yet. Add one to start accepting crypto.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {wallets.map(w => (
+                <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ color: C.text, fontSize: 13, fontWeight: 700 }}>{w.coin} <span style={{ color: C.muted, fontWeight: 500 }}>({w.network})</span></p>
+                    <p style={{ color: C.muted, fontSize: 11.5, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.wallet_address}</p>
+                    {w.label && <p style={{ color: C.muted, fontSize: 11 }}>{w.label}</p>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <button onClick={() => { setEditingWallet(w); setWalletForm({ coin: w.coin, network: w.network, wallet_address: w.wallet_address, label: w.label || '' }); setShowWalletModal(true); }} style={{ padding: '6px 10px', borderRadius: 7, background: 'rgba(79,70,229,0.1)', border: 'none', color: C.purple, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => deleteWallet(w.id)} style={{ padding: '6px 10px', borderRadius: 7, background: 'rgba(239,68,68,0.1)', border: 'none', color: '#ef4444', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {showWalletModal && (
+        <div onClick={() => setShowWalletModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: C.card, borderRadius: 20, padding: 26, maxWidth: 420, width: '100%', border: '1px solid ' + C.cardBorder }}>
+            <p style={{ color: C.text, fontSize: 16, fontWeight: 800, marginBottom: 18 }}>{editingWallet ? 'Edit Wallet' : 'Add Wallet'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={labelStyle}>Coin</label>
+                <input type="text" value={walletForm.coin} onChange={e => setWalletForm({ ...walletForm, coin: e.target.value })} placeholder="e.g. USDT, BTC, ETH" style={inputBase} />
+              </div>
+              <div>
+                <label style={labelStyle}>Network</label>
+                <input type="text" value={walletForm.network} onChange={e => setWalletForm({ ...walletForm, network: e.target.value })} placeholder="e.g. TRC20, ERC20, BEP20, Bitcoin" style={inputBase} />
+              </div>
+              <div>
+                <label style={labelStyle}>Wallet Address</label>
+                <input type="text" value={walletForm.wallet_address} onChange={e => setWalletForm({ ...walletForm, wallet_address: e.target.value })} placeholder="Paste your wallet address" style={{ ...inputBase, fontFamily: 'monospace', fontSize: 12.5 }} />
+              </div>
+              <div>
+                <label style={labelStyle}>Label (optional)</label>
+                <input type="text" value={walletForm.label} onChange={e => setWalletForm({ ...walletForm, label: e.target.value })} placeholder="e.g. Main USDT wallet" style={inputBase} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button onClick={() => setShowWalletModal(false)} style={{ flex: 1, padding: '12px 0', borderRadius: 10, background: C.input, border: '1px solid ' + C.inputBorder, color: C.muted, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={saveWallet} disabled={savingWallet} style={{ flex: 1, padding: '12px 0', borderRadius: 10, background: C.purple, border: 'none', color: '#fff', fontWeight: 700, fontSize: 13, cursor: savingWallet ? 'not-allowed' : 'pointer' }}>
+                {savingWallet ? 'Saving...' : editingWallet ? 'Save Changes' : 'Add Wallet'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '15px 0', marginTop: 20, background: saving ? 'rgba(79,70,229,0.4)' : C.purple, border: 'none', borderRadius: 12, color: C.text, fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         {saving ? (
