@@ -127,6 +127,7 @@ class Store(Base):
     compliance_flagged_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
     compliance_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     compliance_grace_deadline: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    crypto_payment_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     base_currency: Mapped[str] = mapped_column(
         String(10),

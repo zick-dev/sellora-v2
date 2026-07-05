@@ -21,6 +21,8 @@ class OrderCreate(BaseModel):
     delivery_address:  str | None = None
     payment_method:    str = 'pay_on_delivery'
     transfer_receipt_url: str | None = None
+    crypto_wallet_id: str | None = None
+    crypto_tx_reference: str | None = None
 
 
 class OrderStatusUpdate(BaseModel):
@@ -47,6 +49,8 @@ class OrderOut(BaseModel):
     delivery_fee_applied: float
     payment_method: str | None
     transfer_receipt_url: str | None
+    crypto_wallet_id: str | None = None
+    crypto_tx_reference: str | None = None
     order_number:         str | None
     status:               str
     is_demo:              bool = False

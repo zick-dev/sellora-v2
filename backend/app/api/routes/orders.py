@@ -182,7 +182,7 @@ async def create_order(
         product.stock -= payload.quantity
 
     # Set initial status based on payment method
-    initial_status = "awaiting_verification" if payload.payment_method == "bank_transfer" else "pending"
+    initial_status = "awaiting_verification" if payload.payment_method in ("bank_transfer", "crypto") else "pending"
 
     order = Order(
         store_id=product.store_id,
@@ -203,6 +203,8 @@ async def create_order(
         status=initial_status,
         payment_method=payload.payment_method or 'pay_on_delivery',
         transfer_receipt_url=payload.transfer_receipt_url,
+        crypto_wallet_id=payload.crypto_wallet_id,
+        crypto_tx_reference=payload.crypto_tx_reference,
     )
     db.add(order)
     await db.flush()

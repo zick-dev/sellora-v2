@@ -233,6 +233,8 @@ async def update_my_store(
         store.shipping_policy = payload.shipping_policy
     if payload.terms_of_service is not None:
         store.terms_of_service = payload.terms_of_service
+    if payload.crypto_payment_enabled is not None:
+        store.crypto_payment_enabled = payload.crypto_payment_enabled
     if payload.show_trust_bar is not None:
         store.show_trust_bar = payload.show_trust_bar
     # Persist all store updates to the database.

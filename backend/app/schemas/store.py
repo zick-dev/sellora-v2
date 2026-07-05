@@ -83,6 +83,7 @@ class StoreUpdateRequest(BaseModel):
     return_policy: str | None = None
     shipping_policy: str | None = None
     terms_of_service: str | None = None
+    crypto_payment_enabled: bool | None = None
     whatsapp:    str | None = Field(None, max_length=30)
     instagram:   str | None = Field(None, max_length=100)
     categories:  str | None = None
@@ -202,6 +203,7 @@ class StoreOut(BaseModel):
     compliance_reason: str | None = None
     compliance_grace_deadline: object | None = None
     is_owner_pro: bool = False
+    crypto_payment_enabled: bool = False
     # ── Store Branding ──────────────────────────────────────────────
 
     primary_color: str

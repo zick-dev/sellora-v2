@@ -56,6 +56,8 @@ class Order(Base):
     variant_description: Mapped[str | None] = mapped_column(String(200), nullable=True)
     delivery_fee_applied: Mapped[float] = mapped_column(Numeric(12, 2), default=0, nullable=False)
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+    crypto_wallet_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("crypto_wallets.id", ondelete="SET NULL"), nullable=True)
+    crypto_tx_reference: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     # ── Payment ────────────────────────────────────────────────────
     payment_method: Mapped[str] = mapped_column(String(20), default='pay_on_delivery')

@@ -34,10 +34,11 @@ from app.models.product_variant import ProductVariant         # noqa: F401
 from app.models.product_image import ProductImage             # noqa: F401
 from app.models.link_click import LinkClick                    # noqa: F401
 from app.models.compliance_flag import ComplianceFlag          # noqa: F401
+from app.models.crypto_wallet import CryptoWallet               # noqa: F401
 from app.models.deleted_account_record import DeletedAccountRecord  # noqa: F401
 
 # Import routers
-from app.api.routes import auth, store, products, orders, abandoned, subscription, ai, fx
+from app.api.routes import auth, store, products, orders, abandoned, subscription, ai, fx, crypto_wallets
 
 # ── Rate limiter ──────────────────────────────────────────────────
 # Limits requests per IP address to prevent brute force attacks
@@ -134,6 +135,7 @@ app.include_router(abandoned.router, prefix=API_PREFIX)
 app.include_router(subscription.router, prefix=API_PREFIX)
 app.include_router(ai.router, prefix=API_PREFIX)
 app.include_router(fx.router, prefix="/api")
+app.include_router(crypto_wallets.router, prefix=API_PREFIX)
 
 
 # ── Health check ──────────────────────────────────────────────────
