@@ -100,7 +100,10 @@ export default function StorefrontPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutForm, setCheckoutForm] = useState({ name: '', phone: '', note: '' });
   const [placing, setPlacing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'pay_on_delivery' | 'bank_transfer'>('pay_on_delivery');
+  const [paymentMethod, setPaymentMethod] = useState<'pay_on_delivery' | 'bank_transfer' | 'crypto'>('pay_on_delivery');
+  const [cryptoWallets, setCryptoWallets] = useState<any[]>([]);
+  const [selectedWallet, setSelectedWallet] = useState<any | null>(null);
+  const [cryptoTxRef, setCryptoTxRef] = useState('');
   const [receiptUrl, setReceiptUrl] = useState('');
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [formError, setFormError] = useState('');
@@ -127,6 +130,14 @@ export default function StorefrontPage() {
         setStore(sr.data);
         const pr = await api.get('/api/products/public/' + sr.data.id);
         setProducts(pr.data);
+
+        if (sr.data.crypto_payment_enabled) {
+          try {
+            const walletsRes = await api.get('/api/crypto-wallets/public/' + sr.data.id);
+            setCryptoWallets(walletsRes.data);
+            if (walletsRes.data.length > 0) setSelectedWallet(walletsRes.data[0]);
+          } catch {}
+        }
 
         // Sync cart from localStorage (items may have been added from a standalone product page)
         try {
@@ -324,7 +335,7 @@ export default function StorefrontPage() {
         const variantDesc = item.variant
           ? [item.variant.variant_value_1, item.variant.variant_value_2].filter(Boolean).join(' / ')
           : null;
-        const res = await api.post('/api/orders/', { product_id: item.product.id, variant_id: item.variant?.id || null, variant_description: variantDesc, customer_name: checkoutForm.name, customer_phone: checkoutForm.phone, customer_note: checkoutForm.note || undefined, quantity: item.quantity, discount_percent: discountUnlocked && store ? (store.popup_discount||0) : 0, discount_code: discountUnlocked ? discountCode : undefined, delivery_address: provideAddress ? deliveryAddress : null, payment_method: paymentMethod, transfer_receipt_url: paymentMethod === 'bank_transfer' ? receiptUrl : null });
+        const res = await api.post('/api/orders/', { product_id: item.product.id, variant_id: item.variant?.id || null, variant_description: variantDesc, customer_name: checkoutForm.name, customer_phone: checkoutForm.phone, customer_note: checkoutForm.note || undefined, quantity: item.quantity, discount_percent: discountUnlocked && store ? (store.popup_discount||0) : 0, discount_code: discountUnlocked ? discountCode : undefined, delivery_address: provideAddress ? deliveryAddress : null, payment_method: paymentMethod, transfer_receipt_url: (paymentMethod === 'bank_transfer' || paymentMethod === 'crypto') ? receiptUrl : null, crypto_wallet_id: paymentMethod === 'crypto' ? selectedWallet?.id : null, crypto_tx_reference: paymentMethod === 'crypto' ? (cryptoTxRef || null) : null });
         nums.push(res.data.order_number || res.data.id.slice(0,8).toUpperCase());
       }
       setOrderNums(nums); setCart([]); setSuccess(true); setShowCheckout(false); setShowCart(false);
@@ -944,6 +955,16 @@ export default function StorefrontPage() {
                     <p style={{ color:'#111', fontSize:12, fontWeight:700 }}>Bank Transfer</p>
                   </button>
                 )}
+                {(store as any)?.crypto_payment_enabled && cryptoWallets.length > 0 && (
+                  <button onClick={() => setPaymentMethod('crypto')} style={{
+                    flex:1, padding:'12px 10px', borderRadius:10, cursor:'pointer', textAlign:'center',
+                    border: paymentMethod === 'crypto' ? '2px solid '+accent : '1px solid #e5e5e5',
+                    background: paymentMethod === 'crypto' ? accent+'10' : '#fff',
+                  }}>
+                    <p style={{ fontSize:18, marginBottom:4 }}>🪙</p>
+                    <p style={{ color:'#111', fontSize:12, fontWeight:700 }}>Crypto</p>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1007,11 +1028,89 @@ export default function StorefrontPage() {
               </div>
             )}
 
+
+            {/* Crypto Payment Details */}
+            {paymentMethod === 'crypto' && selectedWallet && (
+              <div style={{ background:'#fef9f0', border:'1px solid #fde68a', borderRadius:10, padding:'14px 16px', marginBottom:12 }}>
+                {cryptoWallets.length > 1 && (
+                  <div style={{ display:'flex', gap:6, marginBottom:12, flexWrap:'wrap' }}>
+                    {cryptoWallets.map((w: any) => (
+                      <button key={w.id} onClick={() => setSelectedWallet(w)} style={{
+                        padding:'6px 12px', borderRadius:20, fontSize:11.5, fontWeight:700, cursor:'pointer',
+                        border: selectedWallet.id === w.id ? 'none' : '1px solid #e5e5e5',
+                        background: selectedWallet.id === w.id ? accent : '#fff',
+                        color: selectedWallet.id === w.id ? '#fff' : '#666',
+                      }}>
+                        {w.coin} ({w.network})
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div style={{ background:'#fffbeb', border:'1px solid #f59e0b', borderRadius:8, padding:'10px 12px', marginBottom:12, display:'flex', gap:8, alignItems:'flex-start' }}>
+                  <span style={{ fontSize:16 }}>⚠️</span>
+                  <p style={{ color:'#92400e', fontSize:12, fontWeight:600, lineHeight:1.5 }}>
+                    Send only via the <strong>{selectedWallet.network}</strong> network. Sending via a different network will result in permanent loss of funds.
+                  </p>
+                </div>
+                <div style={{ textAlign:'center', marginBottom:12 }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(selectedWallet.wallet_address)}`}
+                    alt="Wallet QR Code"
+                    style={{ width:140, height:140, borderRadius:10, border:'1px solid #eee', margin:'0 auto' }}
+                  />
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:12 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span style={{ color:'#555', fontSize:12 }}>Coin</span>
+                    <span style={{ color:'#111', fontSize:13, fontWeight:700 }}>{selectedWallet.coin} ({selectedWallet.network})</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                    <span style={{ color:'#555', fontSize:12, flexShrink:0 }}>Address</span>
+                    <span
+                      onClick={() => { navigator.clipboard.writeText(selectedWallet.wallet_address); alert('Address copied!'); }}
+                      style={{ color:'#111', fontSize:11.5, fontFamily:'monospace', wordBreak:'break-all', textAlign:'right', cursor:'pointer', textDecoration:'underline' }}
+                    >
+                      {selectedWallet.wallet_address}
+                    </span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', borderTop:'1px solid #fde68a', paddingTop:6, marginTop:2 }}>
+                    <span style={{ color:'#555', fontSize:13 }}>Amount</span>
+                    <span style={{ color:'#92400e', fontSize:15, fontWeight:800 }}>{sym+cartTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+                <p style={{ color:'#999', fontSize:11, marginBottom:10 }}>Crypto amount may vary slightly based on the current market rate at time of sending.</p>
+                <div>
+                  <label style={{ color:'#555', fontSize:12, fontWeight:600, display:'block', marginBottom:6 }}>Transaction hash (optional)</label>
+                  <input
+                    type="text"
+                    value={cryptoTxRef}
+                    onChange={e => setCryptoTxRef(e.target.value)}
+                    placeholder="Paste your transaction hash"
+                    style={{ width:'100%', padding:'9px 12px', borderRadius:8, border:'1px solid #e5e5e5', fontSize:12.5, fontFamily:'monospace', boxSizing:'border-box' }}
+                  />
+                </div>
+                <div style={{ marginTop:12 }}>
+                  <p style={{ color:'#92400e', fontSize:12, fontWeight:600, marginBottom:6 }}>Upload payment screenshot *</p>
+                  {receiptUrl ? (
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <img src={receiptUrl} alt="Receipt" style={{ width:60, height:60, borderRadius:8, objectFit:'cover', border:'1px solid #fde68a' }} />
+                      <button onClick={() => setReceiptUrl('')} style={{ color:'#ef4444', fontSize:12, background:'none', border:'none', cursor:'pointer' }}>Remove</button>
+                    </div>
+                  ) : (
+                    <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', padding:'10px 12px', border:'1.5px dashed #f59e0b', borderRadius:8 }}>
+                      <input type="file" accept="image/*,application/pdf" style={{ display:'none' }} onChange={e => { if (e.target.files?.[0]) handleReceiptUpload(e.target.files[0]); }} />
+                      <p style={{ color:'#92400e', fontSize:13, fontWeight:600 }}>{uploadingReceipt ? '⏳ Uploading...' : '📎 Tap to upload proof (image or PDF)'}</p>
+                    </label>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div style={{ display:'flex', gap:6, alignItems:'flex-start', background:'#f9f9f9', borderRadius:8, padding:'9px 12px', marginBottom:12 }}>
               <span style={{ flexShrink:0 }}>🔒</span>
               <p style={{ color:'#888', fontSize:12, lineHeight:1.5 }}>Order sent directly to seller. {paymentMethod === 'bank_transfer' ? 'Your receipt will be verified by the seller.' : 'Pay on delivery.'}</p>
             </div>
-            <button onClick={handleCheckout} disabled={placing || !checkoutForm.name || !checkoutForm.phone || (paymentMethod === 'bank_transfer' && !receiptUrl)}
+            <button onClick={handleCheckout} disabled={placing || !checkoutForm.name || !checkoutForm.phone || ((paymentMethod === 'bank_transfer' || paymentMethod === 'crypto') && !receiptUrl)}
               style={{ width:'100%', padding:'14px 0', background: placing||!checkoutForm.name||!checkoutForm.phone ? '#ccc' : accent, border:'none', borderRadius:10, color:'#fff', fontSize:15, fontWeight:800, cursor: placing||!checkoutForm.name||!checkoutForm.phone ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
               {placing ? <span style={{ display:'flex', alignItems:'center', gap:8 }}><span style={{ width:15, height:15, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', animation:'spin 0.8s linear infinite', display:'inline-block' }} />Placing order...</span> : `Place Order · ${sym+cartTotal.toLocaleString()}`}
             </button>
