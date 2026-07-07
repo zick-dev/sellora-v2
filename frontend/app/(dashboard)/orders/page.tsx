@@ -474,6 +474,31 @@ export default function OrdersPage() {
                         )}
                       </div>
                     )}
+                    {(order as any).payment_method === 'crypto' && (
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '3px 10px', borderRadius: 20 }}>
+                            🪙 Crypto
+                          </span>
+                          {order.status === 'awaiting_verification' && (
+                            <span style={{ fontSize: 11, color: C.muted }}>Awaiting payment verification</span>
+                          )}
+                        </div>
+                        {(order as any).crypto_tx_reference && (
+                          <p style={{ color: C.muted, fontSize: 11, marginBottom: 6 }}>
+                            Tx reference: <span style={{ fontFamily: 'monospace', color: C.text }}>{(order as any).crypto_tx_reference}</span>
+                          </p>
+                        )}
+                        {(order as any).transfer_receipt_url && (
+                          <div style={{ marginBottom: 4 }}>
+                            <p style={{ color: C.muted, fontSize: 11, marginBottom: 6 }}>Payment Proof:</p>
+                            <a href={(order as any).transfer_receipt_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block' }}>
+                              <img src={(order as any).transfer_receipt_url} alt="Crypto payment proof" style={{ maxWidth: 200, maxHeight: 160, borderRadius: 10, border: '1px solid ' + C.cardBorder, objectFit: 'cover', cursor: 'pointer' }} />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Action buttons */}
                     <div style={{
