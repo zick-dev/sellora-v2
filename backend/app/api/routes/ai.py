@@ -27,6 +27,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.store import Store
+from app.models.chat_faq import ChatFaq
 
 router = APIRouter(prefix="/ai", tags=["AI Tools"])
 
@@ -375,6 +376,18 @@ async def storefront_chat(
         except Exception:
             prefer_gemini = False
 
+    faq_text = ""
+    if store_id:
+        try:
+            faq_result = await db.execute(
+                select(ChatFaq).where(ChatFaq.store_id == store_id).order_by(ChatFaq.created_at.asc())
+            )
+            faqs = faq_result.scalars().all()
+            if faqs:
+                faq_text = "\n".join([f"Q: {f.question}\nA: {f.answer}" for f in faqs])
+        except Exception:
+            faq_text = ""
+
     catalog = ""
     for p in products[:30]:
         status_txt = "In stock" if p.get("in_stock") else "Out of stock"
@@ -391,6 +404,7 @@ STORE POLICIES:
 - Payment: Pay on delivery or bank transfer
 {f"- WhatsApp: {whatsapp}" if whatsapp else ""}
 
+{f"STORE FAQ (use these exact answers when relevant):{chr(10)}{faq_text}" if faq_text else ""}
 {"CONVERSATION SO FAR:" if history else ""}
 {chr(10).join([("Customer: " + h.get("text","")) if h.get("role") == "user" else ("You: " + h.get("text","")) for h in history[:-1]]) if history else ""}
 
