@@ -1,9 +1,9 @@
 'use client';
 import { useTheme } from '@/lib/theme';
 import api from '@/lib/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-type Tool = 'reply' | 'faq' | 'promo';
+type Tool = 'reply' | 'faq' | 'promo' | 'knowledge';
 
 export default function AIToolsPage() {
   const { C } = useTheme();
@@ -25,6 +25,58 @@ export default function AIToolsPage() {
 
   const [copied, setCopied]             = useState('');
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+
+  const [storeId, setStoreId] = useState('');
+  const [chatFaqs, setChatFaqs] = useState<any[]>([]);
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newAnswer, setNewAnswer] = useState('');
+  const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
+  const [savingFaq, setSavingFaq] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await api.get('/api/store/me');
+        setStoreId(res.data.id);
+        const faqRes = await api.get('/api/chat-faqs/store/' + res.data.id);
+        setChatFaqs(faqRes.data);
+      } catch {}
+    };
+    load();
+  }, []);
+
+  async function saveFaq() {
+    if (!storeId || !newQuestion.trim() || !newAnswer.trim()) return;
+    setSavingFaq(true);
+    try {
+      if (editingFaqId) {
+        const res = await api.put('/api/chat-faqs/' + editingFaqId, { question: newQuestion, answer: newAnswer });
+        setChatFaqs(prev => prev.map(f => f.id === editingFaqId ? res.data : f));
+      } else {
+        const res = await api.post('/api/chat-faqs/store/' + storeId, { question: newQuestion, answer: newAnswer });
+        setChatFaqs(prev => [...prev, res.data]);
+      }
+      setNewQuestion(''); setNewAnswer(''); setEditingFaqId(null);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to save.');
+    }
+    setSavingFaq(false);
+  }
+
+  async function deleteFaq(id: string) {
+    try {
+      await api.delete('/api/chat-faqs/' + id);
+      setChatFaqs(prev => prev.filter(f => f.id !== id));
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete.');
+    }
+  }
+
+  function startEditFaq(faq: any) {
+    setEditingFaqId(faq.id);
+    setNewQuestion(faq.question);
+    setNewAnswer(faq.answer);
+  }
 
   async function callAI(prompt: string): Promise<string> {
     try {
@@ -94,6 +146,7 @@ export default function AIToolsPage() {
     { id: 'reply' as Tool, icon: '💬', label: 'Reply Suggester', desc: 'Generate smart replies to customer messages' },
     { id: 'faq'   as Tool, icon: '❓', label: 'FAQ Generator',   desc: 'Create FAQs for your store' },
     { id: 'promo' as Tool, icon: '📣', label: 'Promo Writer',    desc: 'Write promotional messages for products' },
+    { id: 'knowledge' as Tool, icon: '🧠', label: 'Chat Knowledge', desc: 'Teach your storefront AI chatbot' },
   ];
 
   const inputStyle = {
@@ -179,7 +232,7 @@ export default function AIToolsPage() {
       </div>
 
       {/* Tool selector */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 24 }}>
         {tools.map(tool => (
           <button key={tool.id} onClick={() => setActiveTool(tool.id)}
             style={{ padding: '14px 10px', borderRadius: 14, border: activeTool === tool.id ? '2px solid rgba(124,58,237,0.5)' : '1px solid ' + C.cardBorder, background: activeTool === tool.id ? 'rgba(124,58,237,0.08)' : C.card, cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
@@ -253,6 +306,58 @@ export default function AIToolsPage() {
             <GenBtn onClick={generatePromo} disabled={promoLoading || !productName.trim()} loading={promoLoading} label="✨ Write Promo Message" gradient />
             <ResultBox result={promoResult} loading={promoLoading} copyKey="promo" />
           </div>
+        </div>
+      )}
+
+      {/* Chat Knowledge */}
+      {activeTool === 'knowledge' && (
+        <div style={{ background: C.card, border: '1px solid ' + C.cardBorder, borderRadius: 16, padding: 24 }}>
+          <h2 style={{ color: C.text, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>🧠 Chat Knowledge</h2>
+          <p style={{ color: C.muted, fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
+            Teach your storefront chatbot answers to questions it can't figure out from your catalog alone -- delivery areas, bulk discounts, your brand story, sizing notes, and more. These are always used exactly as written, alongside your live product data.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+            <div>
+              <label style={labelStyle}>Question</label>
+              <input type="text" value={newQuestion} onChange={e => setNewQuestion(e.target.value)} placeholder="e.g. Do you deliver outside Istanbul?" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Answer</label>
+              <textarea value={newAnswer} onChange={e => setNewAnswer(e.target.value)} placeholder="e.g. Yes, we deliver nationwide via courier, 2-4 business days outside major cities." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={saveFaq}
+                disabled={savingFaq || !newQuestion.trim() || !newAnswer.trim()}
+                style={{ flex: 1, padding: '11px 0', borderRadius: 10, background: (savingFaq || !newQuestion.trim() || !newAnswer.trim()) ? 'rgba(124,58,237,0.3)' : C.purple, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: (savingFaq || !newQuestion.trim() || !newAnswer.trim()) ? 'not-allowed' : 'pointer' }}
+              >
+                {savingFaq ? 'Saving...' : editingFaqId ? 'Save Changes' : '+ Add to Chat Knowledge'}
+              </button>
+              {editingFaqId && (
+                <button onClick={() => { setEditingFaqId(null); setNewQuestion(''); setNewAnswer(''); }} style={{ padding: '11px 16px', borderRadius: 10, background: C.input, border: '1px solid ' + C.inputBorder, color: C.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+
+          {chatFaqs.length === 0 ? (
+            <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '20px 0' }}>No chat knowledge added yet.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {chatFaqs.map(faq => (
+                <div key={faq.id} style={{ background: C.input, border: '1px solid ' + C.inputBorder, borderRadius: 10, padding: '12px 14px' }}>
+                  <p style={{ color: C.text, fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{faq.question}</p>
+                  <p style={{ color: C.subtext, fontSize: 12.5, lineHeight: 1.5, marginBottom: 8 }}>{faq.answer}</p>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => startEditFaq(faq)} style={{ padding: '5px 10px', borderRadius: 7, background: 'rgba(124,58,237,0.1)', border: 'none', color: C.purple, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => deleteFaq(faq.id)} style={{ padding: '5px 10px', borderRadius: 7, background: 'rgba(239,68,68,0.1)', border: 'none', color: '#ef4444', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
