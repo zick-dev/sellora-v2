@@ -11,7 +11,7 @@ interface Props {
   storeId: string;
   storeName: string;
   accentColor: string;
-  products: { name: string; price: number; category: string | null; description: string | null; stock: number; is_available: boolean }[];
+  products: { id: string; name: string; price: number; category: string | null; description: string | null; stock: number; is_available: boolean }[];
   deliveryFee?: number;
   freeDeliveryAbove?: number;
   whatsapp?: string | null;
@@ -46,10 +46,25 @@ export default function StorefrontChat({ storeId, storeName, accentColor, produc
           store_id: storeId,
           store_name: storeName,
           products: (() => {
+            // Category-lock: if the buyer's message references a category the
+            // store actually sells (e.g. "tv" matching category "Tvs"), include
+            // EVERY product in that category -- not subject to relevance
+            // scoring or the slice cap. This makes it structurally impossible
+            // for the AI to miss/deny an entire product category, which prompt
+            // wording alone could not reliably guarantee.
+            const lowerMsg = userMsg.toLowerCase();
+            const allCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
+            const matchedCategories = allCategories.filter(cat => {
+              const catLower = cat.toLowerCase();
+              const catSingular = catLower.endsWith('s') ? catLower.slice(0, -1) : catLower;
+              return lowerMsg.includes(catLower) || (catSingular.length > 2 && lowerMsg.includes(catSingular));
+            });
+            const categoryLocked = products.filter(p => p.category && matchedCategories.includes(p.category));
+
             // Prioritize products relevant to the buyer's message so large
             // catalogs (60+ products) don't silently hide items past a
             // blind slice. Falls back to the first 20 if nothing matches.
-            const msgWords = userMsg.toLowerCase().split(/\s+/).filter((w: string) => w.length >= 2);
+            const msgWords = lowerMsg.split(/\s+/).filter((w: string) => w.length >= 2);
             const scored = products.map(p => {
               const haystack = (p.name + ' ' + (p.category || '')).toLowerCase();
               const score = msgWords.filter((w: string) => haystack.includes(w)).length;
@@ -57,7 +72,14 @@ export default function StorefrontChat({ storeId, storeName, accentColor, produc
             });
             const matched = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score).map(s => s.p);
             const rest = scored.filter(s => s.score === 0).map(s => s.p);
-            return [...matched, ...rest].slice(0, 25);
+            const relevanceRanked = [...matched, ...rest];
+
+            // Category-locked products go first and are never cut, then fill
+            // remaining slots with relevance-ranked products (deduplicated).
+            const lockedIds = new Set(categoryLocked.map(p => p.id));
+            const fillerSlots = Math.max(25 - categoryLocked.length, 5);
+            const filler = relevanceRanked.filter(p => !lockedIds.has(p.id)).slice(0, fillerSlots);
+            return [...categoryLocked, ...filler];
           })().map(p => ({
             name: p.name,
             price: p.price,

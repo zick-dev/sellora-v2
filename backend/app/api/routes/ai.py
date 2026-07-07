@@ -376,7 +376,7 @@ async def storefront_chat(
             prefer_gemini = False
 
     catalog = ""
-    for p in products[:25]:
+    for p in products[:30]:
         status_txt = "In stock" if p.get("in_stock") else "Out of stock"
         catalog += f"- {p['name']}: {currency}{p['price']:,.0f} ({p.get('category', 'General')}) [{status_txt}]\n"
 
