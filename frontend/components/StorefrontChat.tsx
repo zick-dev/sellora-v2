@@ -54,12 +54,47 @@ export default function StorefrontChat({ storeId, storeName, accentColor, produc
             // wording alone could not reliably guarantee.
             const lowerMsg = userMsg.toLowerCase();
             const allCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
+
+            // Intent/synonym expansion: buyers often describe a need rather
+            // than naming a category outright (e.g. "keep my room cool"
+            // instead of "fan" or "air conditioner"). Map common intent
+            // phrases to the category substrings they should match.
+            const INTENT_SYNONYMS: Record<string, string[]> = {
+              cool: ['fan', 'air condition', 'ac'], cooling: ['fan', 'air condition'],
+              hot: ['fan', 'air condition'], heat: ['fan', 'air condition'],
+              temperature: ['fan', 'air condition'], climate: ['air condition'],
+              breeze: ['fan'], ventilat: ['fan'],
+              watch: ['tv'], movie: ['tv'], movies: ['tv'], entertainment: ['tv'],
+              stream: ['tv'], screen: ['tv', 'laptop'],
+              internet: ['router', 'wifi'], wifi: ['router'], network: ['router'], connection: ['router'],
+              work: ['laptop'], study: ['laptop'], computer: ['laptop'],
+              clean: ['vacuum'], vacuum: ['vacuum'],
+              music: ['speaker'], sound: ['speaker'], audio: ['speaker'],
+              call: ['phone accessor'], charge: ['charger'], charging: ['charger'],
+            };
+            const expandedTerms: string[] = [lowerMsg];
+            Object.entries(INTENT_SYNONYMS).forEach(([trigger, targets]) => {
+              if (lowerMsg.includes(trigger)) expandedTerms.push(...targets);
+            });
+
             const matchedCategories = allCategories.filter(cat => {
               const catLower = cat.toLowerCase();
               const catSingular = catLower.endsWith('s') ? catLower.slice(0, -1) : catLower;
-              return lowerMsg.includes(catLower) || (catSingular.length > 2 && lowerMsg.includes(catSingular));
+              return expandedTerms.some(term =>
+                lowerMsg.includes(catLower) ||
+                (catSingular.length > 2 && lowerMsg.includes(catSingular)) ||
+                catLower.includes(term) || term.includes(catLower)
+              );
             });
-            const categoryLocked = products.filter(p => p.category && matchedCategories.includes(p.category));
+            // Also match directly on product names, since a store's
+            // category naming may not match the synonym target (e.g. fans
+            // filed under "Home Electronics" rather than a "Fans" category).
+            const nameMatchTerms = expandedTerms.filter(t => t !== lowerMsg);
+            const categoryLocked = products.filter(p => {
+              const inMatchedCategory = p.category && matchedCategories.includes(p.category);
+              const nameMatches = nameMatchTerms.some(t => p.name.toLowerCase().includes(t));
+              return inMatchedCategory || nameMatches;
+            });
 
             // Prioritize products relevant to the buyer's message so large
             // catalogs (60+ products) don't silently hide items past a
