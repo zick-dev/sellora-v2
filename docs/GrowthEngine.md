@@ -105,3 +105,31 @@ Each of these ships and is pushed on its own; none depend on each other.
   explicitly deferred back to this doc.
 - Update this file's checkboxes as items ship -- this is the live tracking doc for
   the sequence, not just a planning artifact.
+
+---
+
+## Crypto Payments (added July 2026, outside original Phase 1/2 scope)
+
+Manual wallet-address model -- no processor integration, no custody. Buyers send
+crypto directly to the merchant's own wallet, mirroring the Bank Transfer flow.
+Chosen deliberately over a master-account/processor model (e.g. NOWPayments) for
+two reasons: (1) merchants and crypto-native buyers generally prefer no
+middleman touching or seeing the transaction, and (2) it avoids money
+transmitter licensing and custody risk for Kormerce entirely.
+
+- [x] Backend: CryptoWallet model + /api/crypto-wallets routes (CRUD for
+      merchants, public endpoint for checkout). Store.crypto_payment_enabled
+      toggle. Order.crypto_wallet_id + crypto_tx_reference fields, payment_method
+      'crypto' starts orders in awaiting_verification (same as bank transfer).
+- [x] Merchant dashboard: Crypto tab in My Store settings -- enable toggle,
+      add/edit/delete multiple wallets across any coin/network.
+- [x] Storefront checkout: Pay with Crypto option (shown only when enabled +
+      wallets exist), coin/network selector for multiple wallets, wallet address
+      + QR code + exact amount, explicit wrong-network warning, required proof
+      upload (screenshot/PDF) + optional tx hash before order can be placed.
+- [x] Merchant order review: Orders dashboard shows a Crypto badge, tx
+      reference, and uploaded payment proof for manual verification.
+
+Future upgrade path (not built): a processor-backed auto-confirmation option
+(e.g. NOWPayments) could be added later as an alternative to the manual model,
+but was deliberately not pursued now given the custody/comfort tradeoffs above.
