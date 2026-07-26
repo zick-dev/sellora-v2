@@ -10,6 +10,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ThemeProvider } from "@/lib/theme";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,6 +27,22 @@ export const metadata: Metadata = {
   title: "Kormerce — Social Commerce for African Sellers",
   description:
     "AI-powered platform for WhatsApp and Instagram sellers in Africa",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Kormerce",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: [
+    { rel: "apple-touch-icon", url: "/icons/icon-192x192.png" },
+    { rel: "icon", url: "/icons/icon-192x192.png", sizes: "192x192" },
+    { rel: "icon", url: "/icons/icon-512x512.png", sizes: "512x512" },
+  ],
+  themeColor: "#4F46E5",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -69,6 +86,9 @@ export default function RootLayout({
               },
             }}
           />
+          
+          {/* PWA Install Prompt — suggests adding app to home screen */}
+          <PWAInstallPrompt />
           </ThemeProvider>
         </GoogleOAuthProvider>
       </body>
