@@ -80,6 +80,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "https://kormmerce.com",
         "https://www.kormmerce.com",
+        "https://api.kormmerce.com",
     ]
 
     # Controls debug mode and logging verbosity

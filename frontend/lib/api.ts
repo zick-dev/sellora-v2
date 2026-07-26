@@ -14,7 +14,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://kormerce-v2-production.up.railway.app",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.kormmerce.com",
   headers: {
     "Content-Type": "application/json",
   },
