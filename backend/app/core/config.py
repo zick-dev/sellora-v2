@@ -76,7 +76,11 @@ class Settings(BaseSettings):
     # ── App Configuration ────────────────────────────────────────
     # List of frontend URLs allowed to make requests to this API
     # Add production URL here when deploying
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "https://kormmerce.com",
+        "https://www.kormmerce.com",
+    ]
 
     # Controls debug mode and logging verbosity
     APP_ENV: str = "development"
