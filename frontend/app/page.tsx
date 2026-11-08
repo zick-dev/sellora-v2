@@ -88,89 +88,75 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((f, i) => (
-                <div key={i} style={{ padding: '32px 24px', background: DARK_CARD, borderRadius: 12, textAlign: 'center', width: '250px', transition: 'transform 0.2s, box-shadow 0.2s' }}>
-                  <div style={{ width: 48, height: 48, margin: '0 auto 24px', background: 'linear-gradient(135deg, ' + INDIGO + ', #6366F1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>}
-                    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" color="#fff" style={{ width: '100%', height: '100%' }}>}
-                      <path d="M12 19l9 2L9 3l11 8-11 8z"/>
-                    </svg>
+                <div key={i} className="p-8 bg-gray-900 rounded-lg text-center w-64 mb-8 transition-transform hover:scale-105">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" color="#fff" className="w-full h-full" d="M12 19l9 2L9 3l11 8-11 8z" />
                   </div>
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: '8px', letterSpacing: '-0.3px' }}>{f.title}</h3>
-                  <p style={{ fontSize: 14, color: TEXT_SECONDARY, lineHeight: '1.5' }}>{f.desc}</p>
+                  <h3 className="text-xl font-bold mb-2">{f.title}</h3>
+                  <p className="text-sm text-gray-400 line-height-6">{f.desc}</p>
                 </div>
-              ))}}
+              ))}
             </div>
           </div>
         </section>
 
         {/* SOCIAL PROOF */}
-        <section style={{ marginBottom: '64px' }}>}
-          <div style={{ maxWidth: 1120, margin: '0 auto', textAlign: 'center' }}>}
-            <p style={{ fontSize: 16, color: TEXT_SECONDARY, marginBottom: '16px' }}>Trusted by thousands of sellers worldwide</p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>}
-              <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</div>
-              <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>2</div>
-              <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>3</div>
-              <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>4</div>
-              <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>5</div>
+        <section className="py-12 border-t border-gray-700">
+          <div className="max-w-7xl mx-auto px-6">
+            <p className="text-center text-gray-400 mb-8">Trusted by thousands of sellers worldwide</p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mx-1">1</div>
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mx-1">2</div>
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mx-1">3</div>
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mx-1">4</div>
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mx-1">5</div>
             </div>
             <p style={{ fontSize: 13, marginTop: '12px', color: TEXT_SECONDARY }}>★★★★★</p>
           </div>
         </section>
 
         {/* PRICING CALL TO ACTION */}
-        <section style={{ background: linear-gradient(135deg, #1e293b, #0f172a), borderTop: '1px solid rgba(255,255,255,0.05)', padding: '64px 24px', textAlign: 'center', maxWidth: 880, marginLeft: 'auto', marginRight: 'auto' }}>}
-          <h2 style={{ fontSize: 40px, fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.3px' }}>Start your free trial</h2>
-          <p style={{ fontSize: 18px, color: TEXT_SECONDARY, marginBottom: '32px', maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>14-day free trial • No credit card required • Cancel anytime</p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>}
-            <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 32px', borderRadius: 8, background: 'linear-gradient(135deg, ' + INDIGO + ', #6366F1)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }}>Get Your Free Trial</Link>
-            <Link href="/pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 32px', borderRadius: 8, border: '1px solid ' + BORDER, color: '#fff', fontWeight: 600, fontSize: 16, textDecoration: 'none' }}>View Pricing</Link>
+        <section className="py-24 bg-gray-900 border-t border-gray-700 max-w-2xl mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-4">Start your free trial</h2>
+          <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">14-day free trial • No credit card required • Cancel anytime</p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Link href="/signup" className="px-8 py-4 bg-indigo-600 rounded-lg text-white font-bold text-base">Get Your Free Trial</Link>
+            <Link href="/pricing" className="px-8 py-4 border-2 border-white rounded-lg text-white font-semibold text-base">View Pricing</Link>
           </div>
         </section>
       </main>
 
       {/* FOOTER */}
-      <footer style={{ flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.05)', padding: '40px 24px', background: DARK, marginTop: 'auto', fontSize: 13 }}>}
-        <div style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit', gap: '24px', justifyItems: 'center', alignItems: 'start', width: '100%' }}>}
-          <div style={{ textAlign: 'center' }}>}
-            <span style={{ fontSize: 16, fontWeight: 700, color: '#818cf8', marginBottom: '12x' }}>Kormerce</span>
-            <p style={{ color: TEXT_SECONDARY, lineHeight: '1.6' }}>Operating system for modern sellers. Build, sell, and scale your business.</p>
+      <footer className="border-t border-gray-700 py-12 bg-gray-900">        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <span className="text-2xl font-bold text-indigo-600 mb-4">Kormerce</span>
+            <p className="text-gray-400 leading-relaxed">Operating system for modern sellers. Build, sell, and scale your business.</p>
           </div>
-          <div>}
-            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: '16x' }}>Product</h4>
-            <ul style={{ listStyle: 'none', padding: 0 }}>}
-              <li style={{ marginBottom: '8x', color: TEXT_SECONDARY, cursor: 'pointer' }} onMouseOver={{{ e: any => e.target.style.color = '#fff' }} onMouseOut={{{ e: any => e.target.style.color = TEXT_SECONDARY }}>
-                <a href="/features" style={{ color: TEXT_SECONDARY, textDecoration: 'none' }}>Features</a>
-              </li>
-              <li style={{ marginBottom: '8x', color: TEXT_SECONDARY, cursor: 'pointer' }} onMouseOver={{{ e: any => e.target.style.color = '#fff' }} onMouseOut={{{ e: any => e.target.style.color = TEXT_SECONDARY }}>
-                <a href="/pricing" style={{ color: TEXT_SECONDARY, textDecoration: 'none' }}>Pricing</a>
-              </li>
-              <li style={{ marginBottom: '8x', color: TEXT_SECONDARY, cursor: 'pointer' }} onMouseOver={{{ e: any => e.target.style.color = '#fff' }} onMouseOut={{{ e: any => e.target.style.color = TEXT_SECONDARY }}>
-                <a href="/signup" style={{ color: TEXT_SECONDARY, textDecoration: 'none' }}>Sign up</a>
-              </li>
+            <h4 className="text-sm font-bold mb-4">Product</h4>
+            <ul className="list-disc pl-6">
+              <li className="mb-4 hover:text-white cursor-pointer"><a href="/features" className="text-gray-400 hover:text-white text-decoration-none">Features</a></li>
+              <li className="mb-4 hover:text-white cursor-pointer"><a href="/pricing" className="text-gray-400 hover:text-white text-decoration-none">Pricing</a></li>
+              <li className="mb-4 hover:text-white cursor-pointer"><a href="/signup" className="text-gray-400 hover:text-white text-decoration-none">Sign up</a></li>
             </ul>
-          </div>
-          <div>}
-            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: '16x' }}>Company</h4>
-            <ul style={{ listStyle: 'none', padding: 0 }}>}
-              <li style={{ marginBottom: '8x', color: TEXT_SECONDARY, cursor: 'pointer' }} onMouseOver={{{ e: any => e.target.style.color = '#fff' }} onMouseOut={{{ e: any => e.target.style.color = TEXT_SECONDARY }}>
-                <a href="#" style={{ color: TEXT_SECONDARY, textDecoration: 'none' }}>About</a>
+        </div>
+            <h4 className="text-sm font-bold mb-4">Company</h4>
+            <ul className="list-disc pl-6">
+              <li>
+                <a href="#" >About</a>
               </li>
-              <li style={{ marginBottom: '8x', color: TEXT_SECONDARY, cursor: 'pointer' }} onMouseOver={{{ e: any => e.target.style.color = '#fff' }} onMouseOut={{{ e: any => e.target.style.color = TEXT_SECONDARY }}>
-                <a href="#" style={{ color: TEXT_SECONDARY, textDecoration: 'none' }}>Blog</a>
-              </li>
+              <li>
+                <a href="#" >Blog</a>
             </ul>
-          </div>
-          <div>}
-            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: '16x' }}>Legal</h4>
-            <ul style={{ listStyle: 'none', padding: 0 }}>}
-              <li style={{ marginBottom: '8x', color: TEXT_SECONDARY, cursor: 'pointer' }} onMouseOver={{{ e: any => e.target.style.color = '#fff' }} onMouseOut={{{ e: any => e.target.style.color = TEXT_SECONDARY }}>
-                <a href="/terms" style={{ color: TEXT_SECONDARY, textDecoration: 'none' }}>Terms</a>
+        </div>
+            <h4 className="text-sm font-bold mb-4">Legal</h4>
+            <ul className="list-disc pl-6">
+              <li>
+                <a href="/terms" >Terms</a>
               </li>
-              <li style={{ marginBottom: '8x', color: TEXT_SECONDARY, cursor: 'pointer' }} onMouseOver={{{ e: any => e.target.style.color = '#fff' }} onMouseOut={{{ e: any => e.target.style.color = TEXT_SECONDARY }}>
-                <a href="/privacy" style={{ color: TEXT_SECONDARY, textDecoration: 'none' }}>Privacy</a>
-              </li>
+              <li>
+                <a href="/privacy" >Privacy</a>
             </ul>
-          </div>
+        </div>
         </div>
         <div style={{ maxWidth: 1120, margin: '24px auto 0', textAlign: 'center', color: TEXT_SECONDARY }}>}
           &copy; {new Date().getFullYear()} Kormerce. All rights reserved.
