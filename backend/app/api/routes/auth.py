@@ -276,6 +276,12 @@ async def google_auth(
             await db.flush()
             await db.refresh(user)
 
+    # ✅ Fix: Reset plan to "free" if Pro trial expired
+    if user.plan == "pro" and user.plan_expires_at and user.plan_expires_at < datetime.now(timezone.utc):
+        user.plan = "free"
+        user.plan_expires_at = None
+        await db.flush()
+
     # Check if user has a store
     from app.models.store import Store
     store_result = await db.execute(
