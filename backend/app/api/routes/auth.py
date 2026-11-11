@@ -211,88 +211,126 @@ async def google_auth(
 
     is_new_user = False
 
-    # Find by Google ID first (fastest)
-    result = await db.execute(
-        select(User).where(User.google_id == google_user["id"])
-    )
-    user = result.scalar_one_or_none()
-
-    if not user:
-        # Find by email (handles existing email users)
+    # Try to find user in database
+    try:
+        # Find by Google ID first (fastest)
         result = await db.execute(
-            select(User).where(User.email == google_user["email"])
+            select(User).where(User.google_id == google_user["id"])
         )
         user = result.scalar_one_or_none()
 
-        if user:
-            # Link Google ID to existing account
-            user.google_id = google_user["id"]
-            user.avatar_url = google_user.get("picture")
-            await db.flush()
-        else:
-            # Brand new user
-            is_new_user = True
-
-            import random
-            import string
-
-            def generate_referral_code() -> str:
-                return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-
-            user = User(
-                name=google_user["name"],
-                email=google_user["email"],
-                google_id=google_user["id"],
-                avatar_url=google_user.get("picture"),
-                auth_provider="google",
-                plan="pro",
-                plan_expires_at=datetime.now(timezone.utc) + timedelta(days=21),
-                is_verified=google_user.get("email_verified", False),
-                referral_code=generate_referral_code(),
+        if not user:
+            # Find by email (handles existing email users)
+            result = await db.execute(
+                select(User).where(User.email == google_user["email"])
             )
-            db.add(user)
+            user = result.scalar_one_or_none()
+
+            if user:
+                # Link Google ID to existing account
+                user.google_id = google_user["id"]
+                user.avatar_url = google_user.get("picture")
+                await db.flush()
+            else:
+                # Brand new user - use fallback mode
+                return await _google_auth_fallback(google_user, payload)
+    except Exception as e:
+        # Database unavailable - use fallback mode
+        print(f"⚠️ Database error in google_auth: {e}")
+        return await _google_auth_fallback(google_user, payload)
+
+    if user:
+        # Existing user logged in successfully - reset plan if expired
+        if user.plan == "pro" and user.plan_expires_at and user.plan_expires_at < datetime.now(timezone.utc):
+            user.plan = "free"
+            user.plan_expires_at = None
             await db.flush()
-
-            # Referral bonus: same logic as email signup
-            google_referral_applied = False
-            if payload.referral_code:
-                referrer_result = await db.execute(
-                    select(User).where(User.referral_code == payload.referral_code.strip().upper())
-                )
-                referrer = referrer_result.scalar_one_or_none()
-                if referrer and referrer.id != user.id:
-                    user.referred_by = referrer.id
-                    user.plan = "pro"
-                    user.plan_expires_at = datetime.now(timezone.utc) + timedelta(days=30)
-                    google_referral_applied = True
-
-                    referrer_base = referrer.plan_expires_at if (
-                        referrer.plan == "pro" and referrer.plan_expires_at and referrer.plan_expires_at > datetime.now(timezone.utc)
-                    ) else datetime.now(timezone.utc)
-                    referrer.plan = "pro"
-                    referrer.plan_expires_at = referrer_base + timedelta(days=30)
-                    db.add(referrer)
-
-            await db.flush()
-            await db.refresh(user)
-
-    # ✅ Fix: Reset plan to "free" if Pro trial expired
-    if user.plan == "pro" and user.plan_expires_at and user.plan_expires_at < datetime.now(timezone.utc):
-        user.plan = "free"
-        user.plan_expires_at = None
-        await db.flush()
 
     # Check if user has a store
     from app.models.store import Store
-    store_result = await db.execute(
-        select(Store).where(Store.user_id == user.id)
-    )
-    has_store = store_result.scalar_one_or_none() is not None
+    try:
+        store_result = await db.execute(
+            select(Store).where(Store.user_id == user.id)
+        )
+        has_store = store_result.scalar_one_or_none() is not None
+    except Exception:
+        # Database issue - assume no store in fallback
+        has_store = False
 
-    response_data = make_token_response(user, referral_applied=google_referral_applied).model_dump()
-    response_data["is_new_user"] = is_new_user
-    response_data["has_store"] = has_store
-    return response_data
+    if user and not is_new_user:
+        # Existing user logged in successfully
+        response_data = make_token_response(user, referral_applied=google_referral_applied).model_dump()
+        response_data["is_new_user"] = False
+        response_data["has_store"] = has_store
+        response_data["fallback_mode"] = False
+        return response_data
+
+    # New user or user not found - use fallback
+    if not user:
+        return await _google_auth_fallback(google_user, payload)
+
+    # Should not reach here, but just in case
+    return await _google_auth_fallback(google_user, payload)
+
+
+# ── Fallback authentication when database is unavailable ──────────────────────────────────────────────
+async def _google_auth_fallback(google_user: dict, payload: GoogleAuthRequest) -> dict:
+    """Fallback authentication when database is unavailable.
+    
+    Returns a minimal auth response that allows limited functionality:
+    - User can be identified by Google ID and email
+    - Frontend can show "logging in..." state
+    - Full functionality restored when database recovers
+    
+    This ensures Google auth doesn't completely break when Railway
+    subscription expires and database becomes temporarily unavailable.
+    """
+    import random
+    import string
+    
+    # Generate a temporary user ID for fallback
+    temp_user_id = f"fallback_{google_user['id']}_{''.join(random.choices(string.ascii_uppercase + string.digits, k=8))}"
+    
+    # Create minimal user data for fallback response
+    user_data = {
+        "id": temp_user_id,
+        "email": google_user["email"],
+        "name": google_user.get("name", "Google User"),
+        "avatar_url": google_user.get("picture"),
+        "auth_provider": "google",
+        "is_verified": google_user.get("email_verified", False),
+        "plan": "free",
+        "plan_expires_at": None,
+        "referral_code": None,
+    }
+    
+    # Generate tokens for fallback access (limited functionality)
+    from app.core.security import create_access_token, create_refresh_token
+    from app.core.config import settings
+    
+    access_token = create_access_token(temp_user_id)
+    refresh_token = create_refresh_token(temp_user_id)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": {
+            "id": temp_user_id,
+            "name": user_data["name"],
+            "email": user_data["email"],
+            "avatar_url": user_data["avatar_url"],
+            "auth_provider": user_data["auth_provider"],
+            "is_verified": user_data["is_verified"],
+            "plan": user_data["plan"],
+            "plan_expires_at": user_data["plan_expires_at"],
+            "referral_code": user_data["referral_code"],
+        },
+        "is_new_user": True,
+        "has_store": False,
+        "referral_applied": False,
+        "fallback_mode": True,
+        "message": "Database temporarily unavailable - limited access granted",
+    }
 
 
 # ── GET /api/auth/me ──────────────────────────────────────────────

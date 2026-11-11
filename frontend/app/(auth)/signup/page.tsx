@@ -72,11 +72,13 @@ function SignupPageInner() {
     } else {
       toast.success('Welcome to Kormerce!');
     }
-     // Small delay to ensure token is saved to localStorage
-    window.location.href = '/dashboard';
+     window.location.href = '/dashboard';
     
     // Smart redirect based on user state
-    if (result.has_store) {
+    // fallback_mode means database is temporarily unavailable but user is authenticated
+    if (result.fallback_mode) {
+      router.push('/dashboard');
+    } else if (result.has_store) {
       router.push('/dashboard');
     } else {
       router.push('/onboarding');
