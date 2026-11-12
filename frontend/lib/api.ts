@@ -1,63 +1,116 @@
 /**
- * lib/api.ts
- * ──────────
- * Central Axios instance for all API calls to the Kormerce backend.
- *
- * Features:
- * - Base URL from environment variable
- * - Automatically attaches JWT token to every request
- * - Silently refreshes the access token using the refresh token
- *   when it expires, so merchants stay logged in during active use
- * - Logs requests and responses in development
- * - Only logs out if the refresh token itself is invalid/expired
+ * Central Axios instance for the Kormmerce backend.
+ * Preserves merchant sessions during temporary backend outages.
  */
 import axios from "axios";
 
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "https://api.kormmerce.com"
+).replace(/\/+$/, "");
+const OFFLINE_WRITE_MESSAGE =
+  "This dashboard is in read-only mode. Reconnect and retry before making changes.";
+
+let dashboardOfflineMode = false;
+let dashboardIsActive = false;
+
+export class OfflineWriteError extends Error {
+  readonly response = { data: { detail: OFFLINE_WRITE_MESSAGE } };
+
+  constructor() {
+    super(OFFLINE_WRITE_MESSAGE);
+    this.name = "OfflineWriteError";
+  }
+}
+
+export function getApiErrorDetail(error: unknown): string | undefined {
+  if (error instanceof OfflineWriteError) return error.message;
+  if (!axios.isAxiosError(error)) return undefined;
+
+  const detail = error.response?.data?.detail;
+  return typeof detail === "string" ? detail : undefined;
+}
+
+export function setDashboardOfflineMode(isOffline: boolean) {
+  dashboardOfflineMode = isOffline;
+}
+
+export function setDashboardActive(isActive: boolean) {
+  dashboardIsActive = isActive;
+  if (!isActive) dashboardOfflineMode = false;
+}
+
+export function isDashboardOfflineMode() {
+  return dashboardOfflineMode;
+}
+
+function reportDashboardOutage() {
+  if (typeof window === "undefined" || !dashboardIsActive) return;
+  dashboardOfflineMode = true;
+  window.dispatchEvent(new Event("kormmerce:dashboard-offline"));
+}
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.kormmerce.com",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// ── Request Interceptor ───────────────────────────────────────────
+// Attach the existing access token to requests.
 api.interceptors.request.use((config) => {
+  const method = config.method?.toUpperCase() ?? "GET";
+  if (
+    dashboardOfflineMode &&
+    !["GET", "HEAD", "OPTIONS"].includes(method)
+  ) {
+    return Promise.reject(new OfflineWriteError());
+  }
+
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("access_token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+
   if (process.env.NODE_ENV === "development") {
-    console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`, config.data || "");
+    console.log(
+      `🚀 ${config.method?.toUpperCase()} ${config.url}`,
+      config.data || ""
+    );
   }
+
   return config;
 });
 
-// Track in-flight refresh so concurrent 401s don't trigger multiple refresh calls
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string | null) => void> = [];
+type RefreshResult = { token: string } | { error: unknown };
+let refreshSubscribers: Array<(result: RefreshResult) => void> = [];
 
-function onRefreshed(token: string | null) {
-  refreshSubscribers.forEach((cb) => cb(token));
+function onRefreshFinished(result: RefreshResult) {
+  refreshSubscribers.forEach((callback) => callback(result));
   refreshSubscribers = [];
 }
 
 function logout() {
   if (typeof window === "undefined") return;
+
+  setDashboardOfflineMode(false);
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
   window.location.href = "/";
 }
 
-// ── Response Interceptor ──────────────────────────────────────────
 api.interceptors.response.use(
   (response) => {
     if (process.env.NODE_ENV === "development") {
       console.log(`✅ ${response.status} ${response.config.url}`, response.data);
     }
+
     return response;
   },
+
   async (error) => {
     const originalRequest = error.config;
 
@@ -66,13 +119,16 @@ api.interceptors.response.use(
       error.response?.status !== 403 &&
       error.response?.status !== 401
     ) {
-      console.error(`❌ ${error.response?.status} ${error.config?.url}`, error.response?.data);
+      console.error(
+        `❌ ${error.response?.status} ${originalRequest?.url}`,
+        error.response?.data
+      );
     }
 
-    // Only attempt refresh on 401, and only once per request
     if (
       error.response?.status === 401 &&
       typeof window !== "undefined" &&
+      originalRequest &&
       !originalRequest._retry &&
       !originalRequest.url?.includes("/api/auth/refresh") &&
       !originalRequest.url?.includes("/api/auth/login") &&
@@ -88,14 +144,13 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // Wait for the in-flight refresh to finish, then retry this request
         return new Promise((resolve, reject) => {
-          refreshSubscribers.push((newToken) => {
-            if (newToken) {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          refreshSubscribers.push((result) => {
+            if ("token" in result) {
+              originalRequest.headers.Authorization = `Bearer ${result.token}`;
               resolve(api(originalRequest));
             } else {
-              reject(error);
+              reject(result.error);
             }
           });
         });
@@ -104,29 +159,56 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post(
-          (process.env.NEXT_PUBLIC_API_URL || "https://kormerce-v2-production.up.railway.app") +
-            "/api/auth/refresh",
-          { refresh_token: refreshToken }
+        const response = await axios.post(
+          `${API_BASE_URL}/api/auth/refresh`,
+          { refresh_token: refreshToken },
+          { timeout: 10000 }
         );
-        const newAccessToken = res.data.access_token;
+
+        const newAccessToken = response.data.access_token;
+
         localStorage.setItem("access_token", newAccessToken);
+
         isRefreshing = false;
-        onRefreshed(newAccessToken);
+        onRefreshFinished({ token: newAccessToken });
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
         return api(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
-        onRefreshed(null);
-        logout();
+        onRefreshFinished({ error: refreshError });
+
+        const status = axios.isAxiosError(refreshError)
+          ? refreshError.response?.status
+          : undefined;
+
+        if (status === 401) {
+          logout();
+        } else if (status === undefined || status >= 500) {
+          reportDashboardOutage();
+        }
+
         return Promise.reject(refreshError);
       }
     }
 
-    // 401 on the refresh/login endpoint itself, or refresh already retried — log out
-    if (error.response?.status === 401 && typeof window !== "undefined" && originalRequest?._retry) {
+    // A request that still returns 401 after a successful refresh
+    // indicates that the session is no longer accepted.
+    if (
+      error.response?.status === 401 &&
+      typeof window !== "undefined" &&
+      originalRequest?._retry
+    ) {
       logout();
+    }
+
+    if (
+      axios.isAxiosError(error) &&
+      error.code !== "ERR_CANCELED" &&
+      (!error.response || error.response.status >= 500)
+    ) {
+      reportDashboardOutage();
     }
 
     return Promise.reject(error);

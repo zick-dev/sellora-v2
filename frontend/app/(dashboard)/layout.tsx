@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import { useTheme, DARK } from '@/lib/theme';
+import api, { setDashboardActive, setDashboardOfflineMode } from '@/lib/api';
 
 // ─── Store context (shared across dashboard pages) ────────────────────────────
 type StoreData = {
   id: string;
+  user_id: string;
   store_name: string;
   slug: string;
   description: string | null;
@@ -23,6 +27,200 @@ type UserData = {
   is_verified: boolean;
 } | null;
 
+type DashboardSnapshot = {
+  user: NonNullable<UserData>;
+  store: NonNullable<StoreData>;
+  lastSyncedAt: string;
+};
+
+type DashboardCacheRecord = DashboardSnapshot & {
+  version: 1;
+  userId: string;
+};
+
+type DashboardTokenClaims = {
+  sub?: unknown;
+};
+
+const DASHBOARD_CACHE_KEY = 'kormmerce_dashboard_cache_v1';
+const DASHBOARD_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, keys: string[]) {
+  return Object.keys(value).every(key => keys.includes(key));
+}
+
+function getTokenSubject(token: string): string | null {
+  try {
+    const subject = jwtDecode<DashboardTokenClaims>(token).sub;
+    return typeof subject === 'string' && subject.length > 0 ? subject : null;
+  } catch {
+    return null;
+  }
+}
+
+function isSnapshotForSubject(
+  snapshot: DashboardSnapshot | null,
+  subject: string | null,
+): snapshot is DashboardSnapshot {
+  return !!subject &&
+    snapshot?.user.id === subject &&
+    snapshot.store.user_id === subject;
+}
+
+function normalizeDashboardUser(value: unknown): NonNullable<UserData> | null {
+  if (
+    !isObject(value) ||
+    typeof value.id !== 'string' ||
+    value.id.length === 0 ||
+    typeof value.name !== 'string' ||
+    value.name.length === 0 ||
+    typeof value.email !== 'string' ||
+    value.email.length === 0 ||
+    !(value.avatar_url === null || typeof value.avatar_url === 'string') ||
+    typeof value.auth_provider !== 'string' ||
+    typeof value.is_verified !== 'boolean'
+  ) {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    name: value.name,
+    email: value.email,
+    avatar_url: value.avatar_url,
+    auth_provider: value.auth_provider,
+    is_verified: value.is_verified,
+  };
+}
+
+function normalizeDashboardStore(value: unknown): NonNullable<StoreData> | null {
+  if (
+    !isObject(value) ||
+    typeof value.id !== 'string' ||
+    value.id.length === 0 ||
+    typeof value.user_id !== 'string' ||
+    value.user_id.length === 0 ||
+    typeof value.store_name !== 'string' ||
+    value.store_name.length === 0 ||
+    typeof value.slug !== 'string' ||
+    value.slug.length === 0 ||
+    !(value.description === null || typeof value.description === 'string') ||
+    !(value.logo_url === null || typeof value.logo_url === 'string')
+  ) {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    user_id: value.user_id,
+    store_name: value.store_name,
+    slug: value.slug,
+    description: value.description,
+    logo_url: value.logo_url,
+  };
+}
+
+function removeDashboardCache() {
+  try {
+    localStorage.removeItem(DASHBOARD_CACHE_KEY);
+  } catch (error) {
+    console.error('Unable to remove the dashboard cache.', error);
+  }
+}
+
+function readDashboardCache(subject: string | null): DashboardSnapshot | null {
+  if (!subject) return null;
+
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
+  } catch (error) {
+    console.error('Unable to read the dashboard cache.', error);
+    return null;
+  }
+  if (!raw) return null;
+
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    console.warn('Discarding malformed dashboard cache.');
+    removeDashboardCache();
+    return null;
+  }
+
+  if (!isObject(value)) {
+    removeDashboardCache();
+    return null;
+  }
+  if (value.userId !== subject) return null;
+
+  const expectedRecordKeys = ['version', 'userId', 'user', 'store', 'lastSyncedAt'];
+  const expectedUserKeys = ['id', 'name', 'email', 'avatar_url', 'auth_provider', 'is_verified'];
+  const expectedStoreKeys = ['id', 'user_id', 'store_name', 'slug', 'description', 'logo_url'];
+  const user = normalizeDashboardUser(value.user);
+  const store = normalizeDashboardStore(value.store);
+  const lastSyncedAt = typeof value.lastSyncedAt === 'string'
+    ? value.lastSyncedAt
+    : null;
+  const syncedAt = lastSyncedAt
+    ? Date.parse(lastSyncedAt)
+    : Number.NaN;
+
+  if (
+    value.version !== 1 ||
+    !hasOnlyKeys(value, expectedRecordKeys) ||
+    !isObject(value.user) ||
+    !hasOnlyKeys(value.user, expectedUserKeys) ||
+    !isObject(value.store) ||
+    !hasOnlyKeys(value.store, expectedStoreKeys) ||
+    !user ||
+    !store ||
+    user.id !== subject ||
+    store.user_id !== subject ||
+    !Number.isFinite(syncedAt) ||
+    new Date(syncedAt).toISOString() !== lastSyncedAt ||
+    syncedAt > Date.now() ||
+    Date.now() - syncedAt > DASHBOARD_CACHE_MAX_AGE_MS
+  ) {
+    removeDashboardCache();
+    return null;
+  }
+
+  return {
+    user,
+    store,
+    lastSyncedAt: new Date(syncedAt).toISOString(),
+  };
+}
+
+function writeDashboardCache(snapshot: DashboardSnapshot) {
+  const record: DashboardCacheRecord = {
+    version: 1,
+    userId: snapshot.user.id,
+    user: snapshot.user,
+    store: snapshot.store,
+    lastSyncedAt: snapshot.lastSyncedAt,
+  };
+
+  try {
+    localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify(record));
+  } catch (error) {
+    console.error('Unable to save the dashboard cache.', error);
+  }
+}
+
+function isFreshDashboardSnapshot(snapshot: DashboardSnapshot) {
+  const syncedAt = Date.parse(snapshot.lastSyncedAt);
+  return Number.isFinite(syncedAt) &&
+    syncedAt <= Date.now() &&
+    Date.now() - syncedAt <= DASHBOARD_CACHE_MAX_AGE_MS;
+}
+
 const DashboardContext = createContext<{
   store: StoreData;
   user: UserData;
@@ -31,6 +229,94 @@ const DashboardContext = createContext<{
 }>({ store: null, user: null, loading: true, setUser: () => {} });
 
 export const useDashboard = () => useContext(DashboardContext);
+
+function DashboardStatus({
+  mode,
+  lastSyncedAt,
+  retrying,
+  onRetry,
+}: {
+  mode: 'online' | 'offline' | 'unavailable';
+  lastSyncedAt: string | null;
+  retrying: boolean;
+  onRetry: () => void;
+}) {
+  const { C } = useTheme();
+  if (mode === 'online') return null;
+
+  const message = mode === 'offline'
+    ? lastSyncedAt
+      ? "Connection temporarily unavailable. You're viewing your last synchronized dashboard information. Changes cannot currently be saved."
+      : 'Connection temporarily unavailable. No verified dashboard snapshot is available for this account.'
+    : 'Dashboard information could not be verified. Changes are disabled until the backend can confirm your account.';
+
+  return (
+    <div role="status" style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      flexWrap: 'wrap',
+      padding: '12px 16px',
+      marginBottom: 20,
+      borderRadius: 10,
+      border: `1px solid ${mode === 'offline' ? 'rgba(245,158,11,0.35)' : 'rgba(239,68,68,0.35)'}`,
+      background: mode === 'offline' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+    }}>
+      <div>
+        <p style={{ color: C.text, fontSize: 13, lineHeight: 1.5 }}>{message}</p>
+        {mode === 'offline' && lastSyncedAt && (
+          <p style={{ color: C.muted, fontSize: 11, marginTop: 4 }}>
+            Offline · read-only · Last synchronized {new Date(lastSyncedAt).toLocaleString()}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onRetry}
+        disabled={retrying}
+        style={{
+          flexShrink: 0,
+          border: 'none',
+          borderRadius: 8,
+          padding: '8px 12px',
+          background: C.purple,
+          color: '#fff',
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: retrying ? 'wait' : 'pointer',
+          opacity: retrying ? 0.7 : 1,
+        }}
+      >
+        {retrying ? 'Retrying…' : 'Retry'}
+      </button>
+    </div>
+  );
+}
+
+function DashboardUnavailable({ mode }: { mode: 'offline' | 'unavailable' }) {
+  const { C } = useTheme();
+  return (
+    <section style={{
+      maxWidth: 560,
+      margin: '48px auto',
+      padding: 24,
+      borderRadius: 14,
+      border: `1px solid ${C.sidebarBorder}`,
+      background: C.sidebar,
+      textAlign: 'center',
+    }}>
+      <h1 style={{ color: C.text, fontSize: 20, marginBottom: 8 }}>
+        {mode === 'offline' ? 'Dashboard snapshot unavailable' : 'Dashboard could not be verified'}
+      </h1>
+      <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6 }}>
+        {mode === 'offline'
+          ? 'There is no recent verified dashboard information saved for this account. Retry when your connection is available.'
+          : 'Your dashboard data is hidden until the backend can confirm your account. No changes are enabled.'}
+      </p>
+    </section>
+  );
+}
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -564,8 +850,13 @@ export default function DashboardLayout({
   const [user, setUser]       = useState<UserData>(null);
   const [store, setStore]     = useState<StoreData>(null);
   const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<'loading' | 'online' | 'offline' | 'unavailable'>('loading');
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobile, setIsMobile]     = useState(false);
+  const lastVerifiedSnapshot = useRef<DashboardSnapshot | null>(null);
+  const dashboardLoadGeneration = useRef(0);
 
   // Detect mobile
   useEffect(() => {
@@ -575,47 +866,268 @@ export default function DashboardLayout({
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Load user + store on mount
   useEffect(() => {
-    async function load() {
-      const token = localStorage.getItem('access_token');
-      if (!token) { router.push('/'); return; }
-
+    setDashboardActive(true);
+    const handleConnectionLoss = () => {
+      let subject: string | null = null;
       try {
-        const [userRes, storeRes] = await Promise.all([
-          fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/auth/me', {
-            headers: { Authorization: `Bearer ${token}` },
-            cache: 'no-store',
-          }),
-          fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api/store/me', {
-            headers: { Authorization: `Bearer ${token}` },
-            cache: 'no-store',
-          }),
-        ]);
+        const token = localStorage.getItem('access_token');
+        subject = token ? getTokenSubject(token) : null;
+      } catch (error) {
+        console.error('Unable to select the dashboard cache after a connection loss.', error);
+      }
 
-        if (userRes.status === 401) { router.push('/'); return; }
+      const cachedSnapshot = readDashboardCache(subject);
+      const inMemorySnapshot = isSnapshotForSubject(lastVerifiedSnapshot.current, subject) &&
+        isFreshDashboardSnapshot(lastVerifiedSnapshot.current)
+        ? lastVerifiedSnapshot.current
+        : null;
+      const snapshot = cachedSnapshot ?? inMemorySnapshot;
+      if (snapshot) {
+        setUser(snapshot.user);
+        setStore(snapshot.store);
+        setLastSyncedAt(snapshot.lastSyncedAt);
+      } else {
+        setUser(null);
+        setStore(null);
+        setLastSyncedAt(null);
+      }
+      setMode('offline');
+    };
 
-        if (storeRes.status === 401) { router.push('/'); return; }
-        if (storeRes.status === 404) { router.push('/onboarding'); return; }
+    window.addEventListener('kormmerce:dashboard-offline', handleConnectionLoss);
+    return () => {
+      window.removeEventListener('kormmerce:dashboard-offline', handleConnectionLoss);
+      setDashboardActive(false);
+    };
+  }, []);
 
-        const userData  = await userRes.json();
-        const storeData = await storeRes.json();
+  const loadDashboard = useCallback(async (isRetry = false) => {
+    const loadGeneration = ++dashboardLoadGeneration.current;
+    if (isRetry) setRetrying(true);
+    let tokenAtLoad: string | null = null;
+    let subject: string | null = null;
+    let cachedSnapshot: DashboardSnapshot | null = null;
+    let authenticatedUser: NonNullable<UserData> | null = null;
+    let storeRequestStarted = false;
+    const isCurrentAccount = () => {
+      if (!tokenAtLoad || !subject) return false;
+      try {
+        const currentToken = localStorage.getItem('access_token');
+        if (currentToken === tokenAtLoad) return true;
+        if (currentToken && getTokenSubject(currentToken) === subject) {
+          tokenAtLoad = currentToken;
+          return true;
+        }
+      } catch (error) {
+        console.error('Unable to verify the current dashboard account.', error);
+      }
+      return false;
+    };
 
-        setUser(userData);
-        setStore(storeData);
-      } catch {
+    try {
+      tokenAtLoad = localStorage.getItem('access_token');
+      if (!tokenAtLoad) {
+        setDashboardOfflineMode(false);
         router.push('/');
-      } finally {
+        return;
+      }
+
+      subject = getTokenSubject(tokenAtLoad);
+      cachedSnapshot = readDashboardCache(subject);
+      const userResponse = await api.get('/api/auth/me', { timeout: 10000 });
+      if (
+        loadGeneration !== dashboardLoadGeneration.current ||
+        !subject ||
+        !isCurrentAccount()
+      ) {
+        if (loadGeneration === dashboardLoadGeneration.current) {
+          lastVerifiedSnapshot.current = null;
+          setDashboardOfflineMode(true);
+          setUser(null);
+          setStore(null);
+          setLastSyncedAt(null);
+          setMode('unavailable');
+        }
+        return;
+      }
+
+      authenticatedUser = normalizeDashboardUser(userResponse.data);
+      if (!authenticatedUser) {
+        setDashboardOfflineMode(true);
+        setUser(null);
+        setStore(null);
+        setLastSyncedAt(null);
+        setMode('unavailable');
+        return;
+      }
+
+      storeRequestStarted = true;
+      const storeResponse = await api.get('/api/store/me', { timeout: 10000 });
+      if (
+        loadGeneration !== dashboardLoadGeneration.current ||
+        !subject ||
+        !isCurrentAccount()
+      ) {
+        if (loadGeneration === dashboardLoadGeneration.current) {
+          lastVerifiedSnapshot.current = null;
+          setDashboardOfflineMode(true);
+          setUser(null);
+          setStore(null);
+          setLastSyncedAt(null);
+          setMode('unavailable');
+        }
+        return;
+      }
+
+      const storeData = normalizeDashboardStore(storeResponse.data);
+      if (!storeData || storeData.user_id !== authenticatedUser.id) {
+        setDashboardOfflineMode(true);
+        setUser(null);
+        setStore(null);
+        setLastSyncedAt(null);
+        setMode('unavailable');
+        return;
+      }
+
+      if (
+        loadGeneration !== dashboardLoadGeneration.current ||
+        !subject ||
+        authenticatedUser.id !== subject ||
+        !isCurrentAccount()
+      ) {
+        if (loadGeneration === dashboardLoadGeneration.current) {
+          lastVerifiedSnapshot.current = null;
+          setDashboardOfflineMode(true);
+          setUser(null);
+          setStore(null);
+          setLastSyncedAt(null);
+          setMode('unavailable');
+        }
+        return;
+      }
+
+      const snapshot: DashboardSnapshot = {
+        user: authenticatedUser,
+        store: storeData,
+        lastSyncedAt: new Date().toISOString(),
+      };
+      lastVerifiedSnapshot.current = snapshot;
+      if (isSnapshotForSubject(snapshot, subject)) writeDashboardCache(snapshot);
+
+      setDashboardOfflineMode(false);
+      setUser(snapshot.user);
+      setStore(snapshot.store);
+      setLastSyncedAt(snapshot.lastSyncedAt);
+      setMode('online');
+    } catch (error) {
+      if (loadGeneration !== dashboardLoadGeneration.current) return;
+
+      if (
+        !isCurrentAccount()
+      ) {
+        lastVerifiedSnapshot.current = null;
+        setDashboardOfflineMode(true);
+        setUser(null);
+        setStore(null);
+        setLastSyncedAt(null);
+        setMode('unavailable');
+        return;
+      }
+
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+      if (status === 401) {
+        setDashboardOfflineMode(false);
+        setUser(null);
+        setStore(null);
+        setLastSyncedAt(null);
+        router.push('/');
+        return;
+      }
+
+      if (status === 404 && authenticatedUser && storeRequestStarted) {
+        setDashboardOfflineMode(false);
+        setUser(null);
+        setStore(null);
+        setLastSyncedAt(null);
+        router.push('/onboarding');
+        return;
+      }
+
+      const isTransientFailure = axios.isAxiosError(error) &&
+        (!error.response || (status !== undefined && status >= 500));
+      setDashboardOfflineMode(true);
+
+      if (isTransientFailure) {
+        const inMemorySnapshot = isSnapshotForSubject(lastVerifiedSnapshot.current, subject) &&
+          isFreshDashboardSnapshot(lastVerifiedSnapshot.current)
+          ? lastVerifiedSnapshot.current
+          : null;
+        const snapshot = isSnapshotForSubject(cachedSnapshot, subject)
+          ? cachedSnapshot
+          : inMemorySnapshot;
+        if (snapshot) {
+          setUser(snapshot.user);
+          setStore(snapshot.store);
+          setLastSyncedAt(snapshot.lastSyncedAt);
+        } else {
+          setUser(null);
+          setStore(null);
+          setLastSyncedAt(null);
+        }
+        setMode('offline');
+      } else {
+        setUser(null);
+        setStore(null);
+        setLastSyncedAt(null);
+        setMode('unavailable');
+      }
+    } finally {
+      if (loadGeneration === dashboardLoadGeneration.current) {
         setLoading(false);
+        setRetrying(false);
       }
     }
-    load();
   }, [router]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    const handleAccountChange = (event: StorageEvent) => {
+      if (event.key !== 'access_token') return;
+
+      lastVerifiedSnapshot.current = null;
+      setUser(null);
+      setStore(null);
+      setLastSyncedAt(null);
+      setMode('unavailable');
+      if (event.newValue) {
+        void loadDashboard();
+      } else {
+        setDashboardOfflineMode(false);
+        router.push('/');
+      }
+    };
+
+    window.addEventListener('storage', handleAccountChange);
+    return () => window.removeEventListener('storage', handleAccountChange);
+  }, [loadDashboard, router]);
+
   function handleLogout() {
+    setDashboardOfflineMode(false);
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     router.push('/signed-out');
+  }
+
+  function retryDashboard() {
+    void loadDashboard(true);
   }
 
   if (loading) {
@@ -673,7 +1185,15 @@ export default function DashboardLayout({
               onLogout={handleLogout}
             />
             <main style={{ padding: '20px 16px 100px' }}>
-              {children}
+              <DashboardStatus
+                mode={mode === 'loading' ? 'unavailable' : mode}
+                lastSyncedAt={lastSyncedAt}
+                retrying={retrying}
+                onRetry={retryDashboard}
+              />
+              {mode === 'unavailable' || (mode === 'offline' && (!user || !store))
+                ? <DashboardUnavailable mode={mode === 'offline' ? 'offline' : 'unavailable'} />
+                : children}
             </main>
             {/* Mobile bottom nav */}
             <nav style={{
@@ -700,7 +1220,15 @@ export default function DashboardLayout({
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               <DesktopTopbar user={user} store={store} />
               <main style={{ flex: 1, padding: '32px 32px', overflowY: 'auto' }}>
-                {children}
+                <DashboardStatus
+                  mode={mode === 'loading' ? 'unavailable' : mode}
+                  lastSyncedAt={lastSyncedAt}
+                  retrying={retrying}
+                  onRetry={retryDashboard}
+                />
+                {mode === 'unavailable' || (mode === 'offline' && (!user || !store))
+                  ? <DashboardUnavailable mode={mode === 'offline' ? 'offline' : 'unavailable'} />
+                  : children}
               </main>
               <footer style={{
                 borderTop: `1px solid ${C.sidebarBorder}`,

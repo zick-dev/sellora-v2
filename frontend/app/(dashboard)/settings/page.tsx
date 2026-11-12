@@ -4,7 +4,7 @@ import { useTheme } from '@/lib/theme';
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../layout';
 import ImageUpload from '@/components/ImageUpload';
-import api from '@/lib/api';
+import api, { getApiErrorDetail } from '@/lib/api';
 import { detectProPricing, ProPricing } from '@/lib/proPricing';
 import { useAuthStore } from '@/lib/auth';
 
@@ -39,7 +39,9 @@ export default function SettingsPage() {
     try {
       const res = await api.put('/api/auth/me', { avatar_url: url });
       setUser(res.data);
-    } catch {}
+    } catch (error: unknown) {
+      setProfileError(getApiErrorDetail(error) || 'Failed to update profile photo.');
+    }
     setSavingAvatar(false);
   }
   const [showFinalConfirm, setShowFinalConfirm] = useState(false);
@@ -435,4 +437,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

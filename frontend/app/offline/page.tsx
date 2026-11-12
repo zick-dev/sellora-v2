@@ -5,7 +5,9 @@
  * and tries to navigate to a page that isn't cached.
  */
 
+
 import Link from "next/link";
+import { RetryButton } from "./RetryButton";
 
 export const metadata = {
   title: "Offline — Kormerce",
@@ -22,21 +24,17 @@ export default function OfflinePage() {
           <span className="text-4xl">📡</span>
         </div>
 
-        <h1 className="text-3xl font-bold text-white mb-2">You're Offline</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">You&apos;re Offline</h1>
         <p className="text-slate-300 mb-4">
-          It looks like you've lost your internet connection.
+          It looks like you&apos;ve lost your internet connection.
         </p>
 
         <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4 mb-6">
           <p className="text-sm text-slate-200">
-            <strong>Good news:</strong> You can still access:
+            Your last synchronized dashboard profile and store information may
+            be available read-only. Products, orders, and settings are not
+            cached and may be unavailable while you are offline.
           </p>
-          <ul className="text-sm text-slate-300 mt-2 space-y-1">
-            <li>✓ Your dashboard (cached)</li>
-            <li>✓ Your products (cached)</li>
-            <li>✓ Your orders (cached)</li>
-            <li>✓ Store settings</li>
-          </ul>
         </div>
 
         <p className="text-slate-400 mb-6">
@@ -44,12 +42,7 @@ export default function OfflinePage() {
         </p>
 
         <div className="space-y-2">
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
-          >
-            Retry
-          </button>
+          <RetryButton />
           <Link
             href="/dashboard"
             className="block w-full px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition text-center"

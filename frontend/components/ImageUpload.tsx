@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { isDashboardOfflineMode } from '@/lib/api';
 
 const C = {
   card:       '#12121a',
@@ -42,6 +43,11 @@ export default function ImageUpload({
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function uploadFile(file: File) {
+    if (isDashboardOfflineMode()) {
+      setError('Dashboard is read-only while the connection is unavailable.');
+      return;
+    }
+
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file.');
       return;

@@ -2,7 +2,7 @@
 import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
-import api from '@/lib/api';
+import api, { getApiErrorDetail } from '@/lib/api';
 import ProLock from '@/components/ProLock';
 
 
@@ -58,8 +58,8 @@ export default function LeadsPage() {
       setLeads(prev =>
         prev.map(l => l.id === id ? { ...l, follow_up_sent: true } : l)
       );
-    } catch {
-      alert('Failed to update lead.');
+    } catch (error: unknown) {
+      alert(getApiErrorDetail(error) || 'Failed to update lead.');
     } finally {
       setUpdating(null);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { isDashboardOfflineMode } from '@/lib/api';
 
 const C = {
   card:       '#12121a',
@@ -51,6 +52,11 @@ export default function VideoUpload({
   }
 
   async function uploadFile(file: File) {
+    if (isDashboardOfflineMode()) {
+      setError('Dashboard is read-only while the connection is unavailable.');
+      return;
+    }
+
     if (!file.type.startsWith('video/')) {
       setError('Please select a video file.');
       return;

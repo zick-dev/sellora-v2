@@ -110,6 +110,13 @@ class TokenResponse(BaseModel):
     referral_applied: bool = False  # True if a valid referral code granted a bonus on signup
 
 
+class GoogleAuthResponse(TokenResponse):
+    is_new_user: bool = False
+    has_store: bool = False
+    fallback_mode: bool = False
+
+
 # Rebuild needed because TokenResponse references UserOut
 # which is defined after it — this resolves the forward reference
 TokenResponse.model_rebuild()
+GoogleAuthResponse.model_rebuild()

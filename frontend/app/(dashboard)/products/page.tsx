@@ -3,7 +3,7 @@ import { useTheme } from '@/lib/theme';
 
 import { useEffect, useState } from 'react';
 import VariantBuilder from '@/components/VariantBuilder';
-import api from '@/lib/api';
+import api, { getApiErrorDetail, isDashboardOfflineMode } from '@/lib/api';
 import ImageUpload from '@/components/ImageUpload';
 import { useDashboard } from '../layout';
 
@@ -142,8 +142,8 @@ export default function ProductsPage() {
     try {
       await api.delete(`/api/products/${id}`);
       setProducts(prev => prev.filter(p => p.id !== id));
-    } catch {
-      alert('Failed to delete product.');
+    } catch (error: unknown) {
+      alert(getApiErrorDetail(error) || 'Failed to delete product.');
     } finally {
       setDeleting(null);
     }
@@ -807,6 +807,11 @@ export default function ProductsPage() {
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
+                          if (isDashboardOfflineMode()) {
+                            setError('Dashboard is read-only while the connection is unavailable.');
+                            e.target.value = '';
+                            return;
+                          }
                           const fd = new FormData();
                           fd.append('file', file);
                           fd.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');

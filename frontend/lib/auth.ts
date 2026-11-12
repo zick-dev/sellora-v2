@@ -15,7 +15,8 @@
  */
 
 import { create } from "zustand";
-import api from "./api";
+import axios from "axios";
+import api, { setDashboardOfflineMode } from "./api";
 import { User, TokenResponse } from "@/types";
 
 interface AuthState {
@@ -41,7 +42,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
 
   // Log in or sign up with Google ID token
-  googleAuth: (token: string, referralCode?: string) => Promise<{ is_new_user: boolean; has_store: boolean; referral_applied: boolean }>;
+  googleAuth: (token: string, referralCode?: string) => Promise<{ is_new_user: boolean; has_store: boolean; fallback_mode: boolean; referral_applied: boolean }>;
 
   // Fetch current user profile from backend
   loadUser: () => Promise<void>;
@@ -58,6 +59,8 @@ function saveTokens(
   set: (state: Partial<AuthState>) => void,
   data: TokenResponse
 ) {
+  setDashboardOfflineMode(false);
+
   // Persist tokens so user stays logged in after page refresh
   localStorage.setItem("access_token", data.access_token);
   localStorage.setItem("refresh_token", data.refresh_token);
@@ -135,6 +138,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const res = await api.post('/api/auth/google', { token, referral_code: referralCode || undefined });
     
     // Save tokens
+    setDashboardOfflineMode(false);
     localStorage.setItem('access_token', res.data.access_token);
     localStorage.setItem('refresh_token', res.data.refresh_token);
     
@@ -148,6 +152,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     return {
       is_new_user: res.data.is_new_user,
       has_store: res.data.has_store,
+      fallback_mode: res.data.fallback_mode || false,
       referral_applied: !!res.data.referral_applied,
     };
   } catch (error) {
@@ -167,11 +172,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       const res = await api.get<User>("/api/auth/me");
       set({ user: res.data });
     } catch (error) {
-  // Token is invalid or expired — clear everything
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  set({ user: null, token: null });
-        }
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      if (status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        set({ user: null, token: null });
+      }
+      throw error;
+    }
   },
 
   // ── logout ──────────────────────────────────────────────────────
@@ -180,6 +188,7 @@ export const useAuthStore = create<AuthState>((set) => ({
      * Clear all auth state and redirect to login.
      * Removes tokens from localStorage so user is fully signed out.
      */
+    setDashboardOfflineMode(false);
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     set({ user: null, token: null, isInitialized: false });
